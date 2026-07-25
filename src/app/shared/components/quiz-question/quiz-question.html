@@ -1,0 +1,225 @@
+<div
+  class="rounded-2xl border p-5 transition duration-200"
+  [class]="
+    reviewing()
+      ? result()?.correct
+        ? 'border-emerald-300 bg-emerald-50/60 dark:border-emerald-900 dark:bg-emerald-950/30'
+        : 'border-rose-300 bg-rose-50/60 dark:border-rose-900 dark:bg-rose-950/30'
+      : 'border-ink-200 bg-white shadow-soft dark:border-ink-800 dark:bg-ink-900'
+  "
+>
+  <div class="mb-4 flex items-start gap-3">
+    <span
+      class="grid h-8 w-8 shrink-0 place-items-center rounded-full text-sm font-extrabold"
+      [class]="
+        reviewing()
+          ? result()?.correct
+            ? 'bg-emerald-500 text-white'
+            : 'bg-rose-500 text-white'
+          : 'bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300'
+      "
+    >
+      @if (reviewing()) {
+        @if (result()?.correct) {
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3.5">
+            <path d="m5 13 4 4L19 7" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <span class="sr-only">Correct. Question {{ index() + 1 }}</span>
+        } @else {
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3.5">
+            <path d="M6 6l12 12M18 6 6 18" stroke-linecap="round" />
+          </svg>
+          <span class="sr-only">Incorrect. Question {{ index() + 1 }}</span>
+        }
+      } @else {
+        {{ index() + 1 }}
+      }
+    </span>
+    <p class="pt-1 font-bold text-ink-900 dark:text-white">{{ question().prompt }}</p>
+  </div>
+
+  @switch (question().type) {
+    <!-- single-choice -->
+    @case ('single-choice') {
+      <div class="space-y-2 sm:pl-11">
+        @for (opt of $any(question()).options; track opt.id) {
+          <label
+            class="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border px-4 py-2.5 transition duration-200 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-500"
+            [class]="
+              isSingleSelected(opt.id) && !reviewing()
+                ? 'border-brand-400 bg-brand-50 dark:border-brand-600 dark:bg-brand-950/60'
+                : 'border-ink-200 hover:border-brand-300 hover:bg-ink-50 dark:border-ink-700 dark:hover:bg-ink-800'
+            "
+          >
+            <input
+              type="radio"
+              [name]="question().id"
+              class="h-4 w-4 shrink-0 accent-brand-600"
+              [checked]="isSingleSelected(opt.id)"
+              [disabled]="reviewing()"
+              (change)="selectSingle(opt.id)"
+            />
+            <span class="text-ink-700 dark:text-ink-200">{{ opt.text }}</span>
+            @if (reviewing() && opt.id === $any(question()).answer) {
+              <span class="ml-auto flex shrink-0 items-center gap-1 text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                  <path d="m5 13 4 4L19 7" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                correct
+              </span>
+            }
+          </label>
+        }
+      </div>
+    }
+
+    <!-- multiple-choice -->
+    @case ('multiple-choice') {
+      <div class="space-y-2 sm:pl-11">
+        @for (opt of $any(question()).options; track opt.id) {
+          <label
+            class="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border px-4 py-2.5 transition duration-200 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-500"
+            [class]="
+              isMultipleSelected(opt.id) && !reviewing()
+                ? 'border-brand-400 bg-brand-50 dark:border-brand-600 dark:bg-brand-950/60'
+                : 'border-ink-200 hover:border-brand-300 hover:bg-ink-50 dark:border-ink-700 dark:hover:bg-ink-800'
+            "
+          >
+            <input
+              type="checkbox"
+              class="h-4 w-4 shrink-0 accent-brand-600"
+              [checked]="isMultipleSelected(opt.id)"
+              [disabled]="reviewing()"
+              (change)="toggleMultiple(opt.id)"
+            />
+            <span class="text-ink-700 dark:text-ink-200">{{ opt.text }}</span>
+            @if (reviewing() && $any(question()).answer.includes(opt.id)) {
+              <span class="ml-auto flex shrink-0 items-center gap-1 text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                  <path d="m5 13 4 4L19 7" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                correct
+              </span>
+            }
+          </label>
+        }
+      </div>
+    }
+
+    <!-- fill-blank -->
+    @case ('fill-blank') {
+      <div class="sm:pl-11">
+        <input
+          type="text"
+          [value]="$any(answer()) || ''"
+          [disabled]="reviewing()"
+          (input)="onFillInput($event)"
+          placeholder="Type your answer…"
+          [attr.aria-label]="question().prompt"
+          class="input-field max-w-md disabled:opacity-60"
+        />
+        @if (reviewing()) {
+          <p class="prose-muted mt-2 text-sm">
+            Accepted:
+            <span class="font-bold text-ink-700 dark:text-ink-200">
+              {{ $any(question()).answer.join(', ') }}
+            </span>
+          </p>
+        }
+      </div>
+    }
+
+    <!-- ordering -->
+    @case ('ordering') {
+      <ol class="space-y-2 sm:pl-11">
+        @for (id of orderedIds(); track id; let i = $index) {
+          <li class="flex items-center gap-3 rounded-xl border border-ink-200 px-4 py-2 dark:border-ink-700">
+            <span class="w-5 shrink-0 font-mono text-sm font-bold text-ink-400 tabular-nums">{{ i + 1 }}.</span>
+            <span class="min-w-0 text-ink-700 dark:text-ink-200">{{ orderedItemText(id) }}</span>
+            <span class="ml-auto flex shrink-0 gap-1">
+              <button
+                type="button"
+                (click)="move(id, -1)"
+                [disabled]="reviewing() || i === 0"
+                class="focusable grid h-10 w-10 cursor-pointer place-items-center rounded-lg text-ink-500 transition hover:bg-ink-100 active:scale-90 disabled:cursor-not-allowed disabled:opacity-30 dark:hover:bg-ink-800"
+                [attr.aria-label]="'Move ' + orderedItemText(id) + ' up'"
+              >
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <path d="m6 15 6-6 6 6" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                (click)="move(id, 1)"
+                [disabled]="reviewing() || i === orderedIds().length - 1"
+                class="focusable grid h-10 w-10 cursor-pointer place-items-center rounded-lg text-ink-500 transition hover:bg-ink-100 active:scale-90 disabled:cursor-not-allowed disabled:opacity-30 dark:hover:bg-ink-800"
+                [attr.aria-label]="'Move ' + orderedItemText(id) + ' down'"
+              >
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
+            </span>
+          </li>
+        }
+      </ol>
+      @if (reviewing()) {
+        <p class="prose-muted mt-3 text-sm sm:pl-11">
+          Correct order:
+          <span class="font-bold text-ink-700 dark:text-ink-200">
+            @for (id of $any(question()).answer; track id; let last = $last) {
+              {{ orderedItemText(id) }}{{ last ? '' : ' → ' }}
+            }
+          </span>
+        </p>
+      }
+    }
+
+    <!-- match-pair -->
+    @case ('match-pair') {
+      <div class="space-y-2 sm:pl-11">
+        @for (pair of $any(question()).pairs; track pair.left) {
+          <div
+            class="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-ink-200 px-4 py-2.5 dark:border-ink-700"
+          >
+            <span class="min-w-32 font-bold text-ink-700 dark:text-ink-200">{{ pair.left }}</span>
+            <svg class="h-4 w-4 shrink-0 text-ink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path d="M5 12h14m-6-6 6 6-6 6" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <select
+              [value]="matchValue(pair.left)"
+              [disabled]="reviewing()"
+              (change)="onMatchSelect(pair.left, $event)"
+              [attr.aria-label]="'Match for ' + pair.left"
+              class="focusable min-h-11 flex-1 cursor-pointer rounded-xl border border-ink-200 bg-white px-3 py-1.5 text-ink-800 transition focus:border-brand-500 disabled:opacity-60 dark:border-ink-700 dark:bg-ink-800 dark:text-ink-100"
+            >
+              <option value="">— choose —</option>
+              @for (opt of matchOptions(); track opt) {
+                <option [value]="opt">{{ opt }}</option>
+              }
+            </select>
+            @if (reviewing()) {
+              <span class="shrink-0 text-sm font-bold text-emerald-600 dark:text-emerald-400">= {{ pair.right }}</span>
+            }
+          </div>
+        }
+      </div>
+    }
+  }
+
+  @if (reviewing() && question().explanation) {
+    <div class="mt-4 flex gap-2.5 rounded-xl bg-ink-100 p-3.5 text-sm text-ink-600 dark:bg-ink-800 dark:text-ink-300">
+      <svg
+        class="h-4 w-4 shrink-0 translate-y-0.5 text-brand-500"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <path d="M12 16v-4M12 8.5v.5" stroke-linecap="round" />
+        <circle cx="12" cy="12" r="9" />
+      </svg>
+      <span><span class="font-bold">Explanation:</span> {{ question().explanation }}</span>
+    </div>
+  }
+</div>

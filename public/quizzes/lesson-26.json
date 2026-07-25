@@ -1,0 +1,79 @@
+{
+  "id": "quiz-26",
+  "lessonId": "lesson-26",
+  "title": "Angular CDK Deep Dive: Virtual Scroll & Drag/Drop",
+  "passingScore": 70,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single-choice",
+      "prompt": "What does virtual scrolling do?",
+      "options": [
+        { "id": "a", "text": "Renders every list item but hides the off-screen ones with CSS" },
+        { "id": "b", "text": "Renders only the DOM elements currently visible (plus a small buffer), recycling nodes as you scroll" },
+        { "id": "c", "text": "Loads the whole list from the server at once" },
+        { "id": "d", "text": "Disables scrolling on large lists" }
+      ],
+      "answer": "b",
+      "explanation": "Only the visible window of items is in the DOM, so a 100,000-row list scrolls like a 20-row one."
+    },
+    {
+      "id": "q2",
+      "type": "single-choice",
+      "prompt": "Why must a cdk-virtual-scroll-viewport have an explicit height in CSS?",
+      "options": [
+        { "id": "a", "text": "For accessibility only" },
+        { "id": "b", "text": "The CDK computes the visible item range from the viewport's dimensions and scroll offset; without a bounded height there's nothing to scroll" },
+        { "id": "c", "text": "To enable drag and drop" },
+        { "id": "d", "text": "It doesn't — height is optional" }
+      ],
+      "answer": "b",
+      "explanation": "A bounded height (plus itemSize) lets the FixedSizeVirtualScrollStrategy calculate which rows to render."
+    },
+    {
+      "id": "q3",
+      "type": "single-choice",
+      "prompt": "After a drag, who is responsible for updating your underlying data array?",
+      "options": [
+        { "id": "a", "text": "The CDK updates the data automatically" },
+        { "id": "b", "text": "You are — in the (cdkDropListDropped) handler, using moveItemInArray or transferArrayItem" },
+        { "id": "c", "text": "Angular's change detection" },
+        { "id": "d", "text": "The cdkDrag directive" }
+      ],
+      "answer": "b",
+      "explanation": "The CDK only moves the visual representation; you own the data and call the helper functions in the drop handler."
+    },
+    {
+      "id": "q4",
+      "type": "match-pair",
+      "prompt": "Match each drag/drop helper or directive to its role.",
+      "pairs": [
+        { "left": "moveItemInArray", "right": "Reorder within a single list" },
+        { "left": "transferArrayItem", "right": "Move an item between two lists' arrays" },
+        { "left": "cdkDropListGroup", "right": "Connect multiple drop lists automatically" },
+        { "left": "cdkDragHandle", "right": "Restrict the grabbable area to a child element" }
+      ],
+      "explanation": "These building blocks compose into reorderable and Kanban-style interfaces."
+    },
+    {
+      "id": "q5",
+      "type": "single-choice",
+      "prompt": "You use moveItemInArray on a signal-backed array under OnPush, but the UI doesn't update. Why?",
+      "options": [
+        { "id": "a", "text": "moveItemInArray is asynchronous" },
+        { "id": "b", "text": "The helper mutates the array in place, so you must replace the reference (e.g. signal.update(a => [...a]))" },
+        { "id": "c", "text": "OnPush disables drag and drop" },
+        { "id": "d", "text": "You must reload the page" }
+      ],
+      "answer": "b",
+      "explanation": "moveItemInArray/transferArrayItem mutate by reference; produce a new reference or call markForCheck() so change detection picks it up."
+    },
+    {
+      "id": "q6",
+      "type": "fill-blank",
+      "prompt": "For fixed-size virtual scrolling, which viewport attribute must match the real pixel height of one row?",
+      "answer": ["itemSize"],
+      "explanation": "A mismatched itemSize is the #1 cause of janky/jumpy virtual scrolling."
+    }
+  ]
+}

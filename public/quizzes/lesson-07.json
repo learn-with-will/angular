@@ -1,0 +1,79 @@
+{
+  "id": "quiz-07",
+  "lessonId": "lesson-07",
+  "title": "Templating Syntax: Interpolation & Binding",
+  "passingScore": 70,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single-choice",
+      "prompt": "Which syntax renders a component value into the page as text?",
+      "options": [
+        { "id": "a", "text": "[value]=\"expr\"" },
+        { "id": "b", "text": "{{ value }}" },
+        { "id": "c", "text": "(value)=\"expr\"" },
+        { "id": "d", "text": "[(value)]=\"expr\"" }
+      ],
+      "answer": "b",
+      "explanation": "Interpolation, {{ value }}, embeds a value into the template as a string."
+    },
+    {
+      "id": "q2",
+      "type": "single-choice",
+      "prompt": "Why should you write [disabled]=\"isSaving()\" instead of disabled=\"{{ isSaving() }}\"?",
+      "options": [
+        { "id": "a", "text": "Interpolation is slower than property binding" },
+        { "id": "b", "text": "Property binding sets the real boolean DOM property; interpolation produces the string \"false\", which the browser still treats as disabled" },
+        { "id": "c", "text": "The disabled attribute does not exist on buttons" },
+        { "id": "d", "text": "There is no difference; both work identically" }
+      ],
+      "answer": "b",
+      "explanation": "The string \"false\" is truthy for the attribute's presence, so the button never re-enables. Property binding binds a genuine boolean."
+    },
+    {
+      "id": "q3",
+      "type": "single-choice",
+      "prompt": "When must you use attribute binding ([attr.name]) instead of property binding?",
+      "options": [
+        { "id": "a", "text": "Whenever the value is a string" },
+        { "id": "b", "text": "When the attribute has no matching DOM property, such as ARIA, SVG, or colspan" },
+        { "id": "c", "text": "Only inside form controls" },
+        { "id": "d", "text": "Never — property binding always works" }
+      ],
+      "answer": "b",
+      "explanation": "ARIA attributes, SVG attributes, and colspan have no DOM property, so plain property binding silently fails; use [attr.*]."
+    },
+    {
+      "id": "q4",
+      "type": "multiple-choice",
+      "prompt": "Which statements about template expressions are true? (Select all that apply.)",
+      "options": [
+        { "id": "a", "text": "They are evaluated against the component instance, not global scope" },
+        { "id": "b", "text": "You can reference window, document, and console" },
+        { "id": "c", "text": "Assignments are not allowed (outside event bindings)" },
+        { "id": "d", "text": "You can use the new operator to construct objects" }
+      ],
+      "answer": ["a", "c"],
+      "explanation": "Template expressions run against the component and forbid globals, new, assignments (outside events), and chained statements."
+    },
+    {
+      "id": "q5",
+      "type": "fill-blank",
+      "prompt": "What is the modern function that declares a two-way bindable signal input on a custom component (e.g. value = ____<number>(0))?",
+      "answer": ["model"],
+      "explanation": "model() creates an input that can be read and written and propagates changes back to the parent binding."
+    },
+    {
+      "id": "q6",
+      "type": "match-pair",
+      "prompt": "Match each binding syntax to the data-flow direction it represents.",
+      "pairs": [
+        { "left": "{{ value }}", "right": "Component to view (as text)" },
+        { "left": "[prop]=\"expr\"", "right": "Component to view (property)" },
+        { "left": "(event)=\"handler()\"", "right": "View to component" },
+        { "left": "[(value)]=\"x\"", "right": "Both directions" }
+      ],
+      "explanation": "Interpolation and property binding flow in; event binding flows out; two-way combines both."
+    }
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "id": "quiz-28",
+  "lessonId": "lesson-28",
+  "title": "Unit Testing with Jest & Component Harnesses",
+  "passingScore": 70,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single-choice",
+      "prompt": "What does TestBed provide for a component test?",
+      "options": [
+        { "id": "a", "text": "A production server" },
+        { "id": "b", "text": "A fresh, isolated Angular injector and compiled component tree per test, without booting the whole app" },
+        { "id": "c", "text": "A real browser instance" },
+        { "id": "d", "text": "Automatic end-to-end coverage" }
+      ],
+      "answer": "b",
+      "explanation": "TestBed builds a throwaway module and injector so each test starts clean and components render in isolation."
+    },
+    {
+      "id": "q2",
+      "type": "single-choice",
+      "prompt": "Why prefer await fixture.whenStable() over fixture.detectChanges() in zoneless tests?",
+      "options": [
+        { "id": "a", "text": "It's shorter to type" },
+        { "id": "b", "text": "It waits for Angular's reactive scheduling to settle, matching production, while detectChanges() forces a synchronous pass that can mask scheduling issues" },
+        { "id": "c", "text": "detectChanges() no longer exists" },
+        { "id": "d", "text": "whenStable() disables change detection" }
+      ],
+      "answer": "b",
+      "explanation": "whenStable() reflects how zoneless Angular actually schedules updates and avoids ExpressionChangedAfterItHasBeenChecked from repeated manual passes."
+    },
+    {
+      "id": "q3",
+      "type": "single-choice",
+      "prompt": "What problem do Angular CDK Component Harnesses solve?",
+      "options": [
+        { "id": "a", "text": "They make tests run in a real browser" },
+        { "id": "b", "text": "They replace brittle CSS-selector/DOM queries with a stable, behavior-based API, so markup refactors don't break tests" },
+        { "id": "c", "text": "They mock HTTP requests" },
+        { "id": "d", "text": "They generate components automatically" }
+      ],
+      "answer": "b",
+      "explanation": "A harness exposes methods like click()/getText(); only the harness's internal selectors change when markup does."
+    },
+    {
+      "id": "q4",
+      "type": "single-choice",
+      "prompt": "Why do locatorFor()/locatorForAll() return functions rather than cached element references?",
+      "options": [
+        { "id": "a", "text": "To reduce memory usage" },
+        { "id": "b", "text": "So they re-query the DOM on each call, staying correct across @if/@for re-renders" },
+        { "id": "c", "text": "Because Angular requires all locators to be async" },
+        { "id": "d", "text": "To support multiple browsers" }
+      ],
+      "answer": "b",
+      "explanation": "Control-flow blocks destroy and recreate nodes, so a cached reference would go stale; re-querying keeps it valid."
+    },
+    {
+      "id": "q5",
+      "type": "single-choice",
+      "prompt": "In a Jest project, which API do you use to wrap an existing service method and assert on its calls?",
+      "options": [
+        { "id": "a", "text": "jasmine.createSpy()" },
+        { "id": "b", "text": "jest.spyOn(obj, 'method')" },
+        { "id": "c", "text": "TestBed.spy()" },
+        { "id": "d", "text": "cy.intercept()" }
+      ],
+      "answer": "b",
+      "explanation": "jest.spyOn wraps the real method so you can assert calls and optionally replace the implementation; mixing in jasmine APIs throws."
+    },
+    {
+      "id": "q6",
+      "type": "fill-blank",
+      "prompt": "Which adapter creates a HarnessLoader from a TestBed ComponentFixture (e.g. ____.loader(fixture))?",
+      "answer": ["TestbedHarnessEnvironment"],
+      "explanation": "TestbedHarnessEnvironment.loader(fixture) bridges a TestBed fixture to the CDK harness system."
+    }
+  ]
+}

@@ -1,0 +1,161 @@
+<!-- Hero -->
+<section class="relative isolate overflow-hidden border-b border-ink-200 dark:border-ink-800">
+  <div
+    aria-hidden="true"
+    class="surface-grid pointer-events-none absolute inset-0 -z-10 [mask-image:radial-gradient(ellipse_at_top_left,black,transparent_65%)]"
+  ></div>
+  <div
+    aria-hidden="true"
+    class="pointer-events-none absolute -top-40 -left-32 -z-10 h-96 w-96 rounded-full bg-magenta-400/20 blur-3xl dark:bg-magenta-600/20"
+  ></div>
+  <div
+    aria-hidden="true"
+    class="pointer-events-none absolute -top-32 right-0 -z-10 h-96 w-96 rounded-full bg-brand-400/20 blur-3xl dark:bg-brand-600/20"
+  ></div>
+
+  <div class="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24">
+    <div class="max-w-2xl animate-fade-up">
+      <span
+        class="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-white/70 px-3 py-1 text-sm font-bold text-brand-700 backdrop-blur dark:border-brand-800 dark:bg-brand-950/50 dark:text-brand-300"
+      >
+        <span class="gradient-rule h-2 w-2 rounded-full"></span>
+        Frontend-only · File-driven
+      </span>
+
+      <h1 class="heading mt-5 text-4xl text-balance sm:text-6xl">
+        Learn <span class="gradient-text">Angular</span>, one focused lesson at a time.
+      </h1>
+
+      <p class="prose-muted mt-5 max-w-xl text-lg text-pretty">
+        Read bite-sized lessons, test yourself with quizzes, and track your progress — all in the
+        browser. No sign-up, no backend.
+      </p>
+
+      <div class="mt-8 flex flex-wrap gap-3">
+        <a routerLink="/roadmap" class="btn-gradient px-6 py-3 text-base">
+          Explore the roadmap
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path d="M5 12h14m-6-6 6 6-6 6" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </a>
+
+        @if (continueLesson(); as lesson) {
+          <a [routerLink]="['/lesson', lesson.slug]" class="btn-secondary max-w-full px-6 py-3 text-base">
+            <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path d="M8 5.5v13l11-6.5-11-6.5Z" stroke-linejoin="round" />
+            </svg>
+            <span class="truncate">
+              {{ progress.lastOpenedLesson() ? 'Continue' : 'Start' }}: {{ lesson.title }}
+            </span>
+          </a>
+        }
+      </div>
+
+      @if (completionPct() > 0) {
+        <div class="mt-8 max-w-sm">
+          <div class="mb-1.5 flex items-center justify-between text-sm">
+            <span class="font-semibold text-ink-700 dark:text-ink-200">Your progress</span>
+            <span class="font-bold text-brand-600 dark:text-brand-300">{{ completionPct() }}%</span>
+          </div>
+          <div
+            class="h-2.5 overflow-hidden rounded-full bg-ink-200 dark:bg-ink-800"
+            role="progressbar"
+            [attr.aria-valuenow]="completionPct()"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-label="Course completion"
+          >
+            <div
+              class="h-full rounded-full transition-all duration-500"
+              style="background-image: var(--gradient-angular)"
+              [style.width.%]="completionPct()"
+            ></div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<div class="mx-auto max-w-7xl px-4 py-12 sm:px-6">
+  <!-- Statistics -->
+  <section class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+    @for (stat of stats(); track stat.label) {
+      <div class="card p-5">
+        <span
+          class="mb-3 grid h-10 w-10 place-items-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-950 dark:text-brand-300"
+        >
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+            <path [attr.d]="stat.icon" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </span>
+        <p class="text-3xl font-extrabold tabular-nums text-ink-900 dark:text-white">{{ stat.value }}</p>
+        <p class="prose-muted mt-0.5 text-sm font-medium">{{ stat.label }}</p>
+      </div>
+    }
+  </section>
+
+  <!-- Roadmap overview -->
+  <section class="mt-14">
+    <h2 class="heading text-2xl">Roadmap overview</h2>
+    <p class="prose-muted mt-1">Three levels, built to be taken in order.</p>
+
+    <div class="mt-5 grid gap-4 sm:grid-cols-3">
+      @for (level of levels; track level) {
+        <a routerLink="/roadmap" fragment="{{ level }}" class="card-interactive group overflow-hidden p-6">
+          <span class="mb-4 block h-1.5 w-12 rounded-full bg-gradient-to-r" [class]="levelAccents[level]"></span>
+          <div class="flex items-center justify-between gap-2">
+            <h3 class="text-lg font-bold text-ink-900 dark:text-white">{{ levelLabels[level] }}</h3>
+            <span
+              class="shrink-0 rounded-full bg-ink-100 px-2.5 py-0.5 text-xs font-bold tabular-nums text-ink-600 dark:bg-ink-800 dark:text-ink-300"
+            >
+              {{ levelCount(level) }}
+            </span>
+          </div>
+          <p class="prose-muted mt-2 text-sm">{{ levelBlurbs[level] }}</p>
+          <span
+            class="mt-4 inline-flex items-center gap-1 text-sm font-bold text-brand-600 transition-transform duration-200 group-hover:translate-x-1 dark:text-brand-300"
+          >
+            Browse lessons
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path d="M5 12h14m-6-6 6 6-6 6" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </span>
+        </a>
+      }
+    </div>
+  </section>
+
+  <!-- Featured lessons -->
+  @if (featured().length) {
+    <section class="mt-14">
+      <div class="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 class="heading text-2xl">Start here</h2>
+          <p class="prose-muted mt-1">The first few lessons, in order.</p>
+        </div>
+        <a
+          routerLink="/roadmap"
+          class="focusable inline-flex items-center gap-1 rounded-full text-sm font-bold text-brand-600 hover:text-magenta-600 dark:text-brand-300 dark:hover:text-magenta-400"
+        >
+          View all
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path d="M5 12h14m-6-6 6 6-6 6" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </a>
+      </div>
+      <div class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        @for (lesson of featured(); track lesson.id) {
+          <app-lesson-card [lesson]="lesson" />
+        }
+      </div>
+    </section>
+  } @else if (course.loaded()) {
+    <section class="card mt-14 border-dashed p-12 text-center">
+      <p class="prose-muted">
+        No lessons found. Add entries to
+        <code class="font-mono text-brand-600">content/course-manifest.json</code>.
+      </p>
+    </section>
+  }
+</div>

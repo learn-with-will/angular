@@ -1,0 +1,80 @@
+{
+  "id": "quiz-19",
+  "lessonId": "lesson-19",
+  "title": "Route Parameters & Dynamic Routes",
+  "passingScore": 70,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single-choice",
+      "prompt": "How is a route parameter declared in a route's path?",
+      "options": [
+        { "id": "a", "text": "products/{id}" },
+        { "id": "b", "text": "products/:id" },
+        { "id": "c", "text": "products?id" },
+        { "id": "d", "text": "products/*id" }
+      ],
+      "answer": "b",
+      "explanation": "A colon prefix (:id) marks a dynamic segment that matches any value in that URL position."
+    },
+    {
+      "id": "q2",
+      "type": "single-choice",
+      "prompt": "What must you enable to bind route params directly to component inputs?",
+      "options": [
+        { "id": "a", "text": "provideHttpClient()" },
+        { "id": "b", "text": "withComponentInputBinding() in provideRouter(...)" },
+        { "id": "c", "text": "ReactiveFormsModule" },
+        { "id": "d", "text": "withRouterConfig()" }
+      ],
+      "answer": "b",
+      "explanation": "withComponentInputBinding() maps route/query params onto matching component inputs automatically."
+    },
+    {
+      "id": "q3",
+      "type": "single-choice",
+      "prompt": "Why can reading a param only in ngOnInit() via snapshot cause stale-data bugs?",
+      "options": [
+        { "id": "a", "text": "snapshot is deprecated" },
+        { "id": "b", "text": "Angular reuses the same component instance when navigating between sibling routes, so ngOnInit doesn't re-run" },
+        { "id": "c", "text": "snapshot only works with query params" },
+        { "id": "d", "text": "ngOnInit runs before the router is ready" }
+      ],
+      "answer": "b",
+      "explanation": "On /products/1 → /products/2 the component is reused; use paramMap observable, toSignal, or input binding to react."
+    },
+    {
+      "id": "q4",
+      "type": "single-choice",
+      "prompt": "What is the key difference between a route parameter and a query parameter?",
+      "options": [
+        { "id": "a", "text": "Route params are optional; query params are required" },
+        { "id": "b", "text": "A route param identifies which resource you're viewing; a query param carries optional context like sort or page" },
+        { "id": "c", "text": "Query params always appear before the path" },
+        { "id": "d", "text": "There is no difference" }
+      ],
+      "answer": "b",
+      "explanation": "If removing the value means a different thing, it's a route param; if it just changes how the same thing displays, it's a query param."
+    },
+    {
+      "id": "q5",
+      "type": "single-choice",
+      "prompt": "Route parameters are always delivered to your code as what type?",
+      "options": [
+        { "id": "a", "text": "number" },
+        { "id": "b", "text": "string" },
+        { "id": "c", "text": "boolean" },
+        { "id": "d", "text": "the inferred type" }
+      ],
+      "answer": "b",
+      "explanation": "Params are always strings; use a transform like numberAttribute or Number() to convert, e.g. for numeric ids."
+    },
+    {
+      "id": "q6",
+      "type": "fill-blank",
+      "prompt": "When a param change should trigger a new HTTP request, which RxJS operator cancels the previous in-flight request?",
+      "answer": ["switchMap"],
+      "explanation": "switchMap re-triggers the request on each paramMap emission and cancels stale requests to avoid race conditions."
+    }
+  ]
+}

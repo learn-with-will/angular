@@ -1,0 +1,80 @@
+{
+  "id": "quiz-16",
+  "lessonId": "lesson-16",
+  "title": "Computed Signals & Effects",
+  "passingScore": 70,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single-choice",
+      "prompt": "Which two properties make computed() efficient?",
+      "options": [
+        { "id": "a", "text": "Eager and shared" },
+        { "id": "b", "text": "Lazy and memoized" },
+        { "id": "c", "text": "Asynchronous and cancellable" },
+        { "id": "d", "text": "Writable and observable" }
+      ],
+      "answer": "b",
+      "explanation": "A computed signal doesn't run until first read (lazy) and caches its result until a dependency changes (memoized)."
+    },
+    {
+      "id": "q2",
+      "type": "single-choice",
+      "prompt": "How many times does an effect() run when it is first created?",
+      "options": [
+        { "id": "a", "text": "Zero — only on later changes" },
+        { "id": "b", "text": "At least once, immediately" },
+        { "id": "c", "text": "Only when read in a template" },
+        { "id": "d", "text": "Exactly twice" }
+      ],
+      "answer": "b",
+      "explanation": "Effects always execute once immediately on creation, then again whenever a tracked dependency changes."
+    },
+    {
+      "id": "q3",
+      "type": "single-choice",
+      "prompt": "Copying a value from one signal into another inside an effect() is best replaced by what?",
+      "options": [
+        { "id": "a", "text": "A second effect()" },
+        { "id": "b", "text": "computed()" },
+        { "id": "c", "text": "A plain getter" },
+        { "id": "d", "text": "untracked()" }
+      ],
+      "answer": "b",
+      "explanation": "Deriving state with computed() avoids the ExpressionChangedAfterItHasBeenChecked errors and extra cycles that state-copying effects cause."
+    },
+    {
+      "id": "q4",
+      "type": "multiple-choice",
+      "prompt": "Which are appropriate use cases for effect()? (Select all that apply.)",
+      "options": [
+        { "id": "a", "text": "Syncing a signal to localStorage" },
+        { "id": "b", "text": "Logging signal values for analytics" },
+        { "id": "c", "text": "Deriving a full name from first and last name signals" },
+        { "id": "d", "text": "Driving a third-party charting library" }
+      ],
+      "answer": ["a", "b", "d"],
+      "explanation": "effect() bridges signals to non-reactive APIs; deriving a full name is pure derived state, so it belongs in computed()."
+    },
+    {
+      "id": "q5",
+      "type": "fill-blank",
+      "prompt": "Which function reads a signal's value inside a reactive context WITHOUT registering it as a dependency?",
+      "answer": ["untracked", "untracked()"],
+      "explanation": "untracked() lets an effect or computed read a signal without tracking it, avoiding unwanted re-runs."
+    },
+    {
+      "id": "q6",
+      "type": "single-choice",
+      "prompt": "Where must effect() be called by default?",
+      "options": [
+        { "id": "a", "text": "Anywhere, with no restrictions" },
+        { "id": "b", "text": "Only inside ngOnDestroy" },
+        { "id": "c", "text": "Within an injection context (or pass an explicit Injector)" },
+        { "id": "d", "text": "Only inside a template" }
+      ],
+      "answer": "c",
+      "explanation": "effect() needs an injection context so Angular can tie its lifecycle to something; otherwise pass { injector }."
+    }
+  ]
+}

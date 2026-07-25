@@ -1,0 +1,80 @@
+{
+  "id": "quiz-09",
+  "lessonId": "lesson-09",
+  "title": "Angular Control Flow: @if, @for, and @switch",
+  "passingScore": 70,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single-choice",
+      "prompt": "Which expression is required in every @for block?",
+      "options": [
+        { "id": "a", "text": "@empty" },
+        { "id": "b", "text": "track" },
+        { "id": "c", "text": "let i = $index" },
+        { "id": "d", "text": "as alias" }
+      ],
+      "answer": "b",
+      "explanation": "track is mandatory in @for — the template won't compile without it. It gives each item a stable identity for efficient DOM reuse."
+    },
+    {
+      "id": "q2",
+      "type": "single-choice",
+      "prompt": "Do you need to import CommonModule to use @if, @for, and @switch?",
+      "options": [
+        { "id": "a", "text": "Yes, always" },
+        { "id": "b", "text": "No — they are built into the template compiler" },
+        { "id": "c", "text": "Only in standalone components" },
+        { "id": "d", "text": "Only when using @empty" }
+      ],
+      "answer": "b",
+      "explanation": "Built-in control flow is part of the compiler, so no CommonModule import is needed."
+    },
+    {
+      "id": "q3",
+      "type": "single-choice",
+      "prompt": "What operator does @switch use to match a @case, and does it fall through?",
+      "options": [
+        { "id": "a", "text": "Loose equality (==), with fallthrough" },
+        { "id": "b", "text": "Strict equality (===), no fallthrough" },
+        { "id": "c", "text": "Object.is, with fallthrough" },
+        { "id": "d", "text": "Reference equality, no fallthrough" }
+      ],
+      "answer": "b",
+      "explanation": "@switch matches with strict === and never falls through, so no break is needed."
+    },
+    {
+      "id": "q4",
+      "type": "multiple-choice",
+      "prompt": "Which contextual variables are available inside an @for block? (Select all that apply.)",
+      "options": [
+        { "id": "a", "text": "$index" },
+        { "id": "b", "text": "$last" },
+        { "id": "c", "text": "$even" },
+        { "id": "d", "text": "$key" }
+      ],
+      "answer": ["a", "b", "c"],
+      "explanation": "@for exposes $index, $count, $first, $last, $even, and $odd. There is no $key."
+    },
+    {
+      "id": "q5",
+      "type": "fill-blank",
+      "prompt": "Which optional @for block renders when the collection has zero items?",
+      "answer": ["@empty", "empty"],
+      "explanation": "@empty gives lists a friendly, intentional empty state."
+    },
+    {
+      "id": "q6",
+      "type": "single-choice",
+      "prompt": "When is tracking by $index safe?",
+      "options": [
+        { "id": "a", "text": "Always — it is the most efficient option" },
+        { "id": "b", "text": "Only for static lists that never reorder or change" },
+        { "id": "c", "text": "Only when the list has unique ids" },
+        { "id": "d", "text": "Never — $index cannot be used for track" }
+      ],
+      "answer": "b",
+      "explanation": "For dynamic lists, track by a stable unique property like id; $index can cause Angular to reuse the wrong DOM nodes."
+    }
+  ]
+}

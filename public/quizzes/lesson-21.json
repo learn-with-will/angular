@@ -1,0 +1,80 @@
+{
+  "id": "quiz-21",
+  "lessonId": "lesson-21",
+  "title": "Heavy Computation: Web Workers & Pure Pipes",
+  "passingScore": 70,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single-choice",
+      "prompt": "What problem do Web Workers solve in an Angular app?",
+      "options": [
+        { "id": "a", "text": "They make pipes re-run less often" },
+        { "id": "b", "text": "They move CPU-intensive work off the main thread so the UI stays responsive" },
+        { "id": "c", "text": "They give components access to a second DOM" },
+        { "id": "d", "text": "They replace change detection" }
+      ],
+      "answer": "b",
+      "explanation": "Workers run on a separate thread, so long computations don't freeze rendering, animations, or input on the main thread."
+    },
+    {
+      "id": "q2",
+      "type": "single-choice",
+      "prompt": "How do the main thread and a worker exchange data?",
+      "options": [
+        { "id": "a", "text": "By sharing variables directly" },
+        { "id": "b", "text": "Through message passing (postMessage/onmessage); data is copied via structured clone" },
+        { "id": "c", "text": "Through Angular's dependency injection" },
+        { "id": "d", "text": "By reading the DOM together" }
+      ],
+      "answer": "b",
+      "explanation": "Workers are isolated — they communicate only by copied (or transferred) messages, never shared references."
+    },
+    {
+      "id": "q3",
+      "type": "single-choice",
+      "prompt": "When does a pure pipe's transform() method re-run?",
+      "options": [
+        { "id": "a", "text": "On every change detection cycle" },
+        { "id": "b", "text": "Only when a primitive input changes value, or an object/array input changes by reference" },
+        { "id": "c", "text": "Only once, when the component is created" },
+        { "id": "d", "text": "Whenever any signal in the app changes" }
+      ],
+      "answer": "b",
+      "explanation": "Pure pipes memoize by reference/value equality and reuse the cached output otherwise."
+    },
+    {
+      "id": "q4",
+      "type": "single-choice",
+      "prompt": "Why doesn't a pure pipe re-run after array.push(item)?",
+      "options": [
+        { "id": "a", "text": "push() is asynchronous" },
+        { "id": "b", "text": "push() mutates in place, so the array reference stays the same and the pipe sees no change" },
+        { "id": "c", "text": "Pipes cannot accept arrays" },
+        { "id": "d", "text": "The pipe cache never expires" }
+      ],
+      "answer": "b",
+      "explanation": "Create a new reference instead, e.g. items.set([...items(), item]), so the reference-equality check detects the change."
+    },
+    {
+      "id": "q5",
+      "type": "single-choice",
+      "prompt": "What must you always do with a worker you no longer need?",
+      "options": [
+        { "id": "a", "text": "Call worker.pause()" },
+        { "id": "b", "text": "Call worker.terminate() (on completion, on error, and on destroy)" },
+        { "id": "c", "text": "Nothing — Angular cleans it up" },
+        { "id": "d", "text": "Re-post an empty message" }
+      ],
+      "answer": "b",
+      "explanation": "An un-terminated worker keeps running in the background; use DestroyRef.onDestroy() as a safety net too."
+    },
+    {
+      "id": "q6",
+      "type": "fill-blank",
+      "prompt": "Which signal API offers the same lazy, memoized derivation as a pure pipe but works anywhere in TypeScript, not just templates?",
+      "answer": ["computed", "computed()"],
+      "explanation": "computed() recomputes only when a dependency changes and caches its result, usable throughout component logic."
+    }
+  ]
+}

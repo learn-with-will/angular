@@ -1,0 +1,80 @@
+{
+  "id": "quiz-11",
+  "lessonId": "lesson-11",
+  "title": "Basic Pipes in Angular",
+  "passingScore": 70,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single-choice",
+      "prompt": "What does a pipe do to the underlying data it transforms?",
+      "options": [
+        { "id": "a", "text": "It permanently converts the stored value" },
+        { "id": "b", "text": "It leaves the data unchanged and only changes how it is displayed" },
+        { "id": "c", "text": "It deletes the original and replaces it" },
+        { "id": "d", "text": "It moves the value into a signal" }
+      ],
+      "answer": "b",
+      "explanation": "A pipe transforms a value for display via the | operator without modifying the underlying data."
+    },
+    {
+      "id": "q2",
+      "type": "single-choice",
+      "prompt": "In a standalone component, what must you do before using CurrencyPipe in the template?",
+      "options": [
+        { "id": "a", "text": "Nothing — built-in pipes are always available" },
+        { "id": "b", "text": "Import it and add it to the component's imports array" },
+        { "id": "c", "text": "Register it in main.ts" },
+        { "id": "d", "text": "Declare it in an NgModule" }
+      ],
+      "answer": "b",
+      "explanation": "Standalone components must import each pipe by name, e.g. imports: [CurrencyPipe]; otherwise you get 'No pipe found'."
+    },
+    {
+      "id": "q3",
+      "type": "single-choice",
+      "prompt": "Why is the async pipe recommended for displaying Observables?",
+      "options": [
+        { "id": "a", "text": "It caches values forever" },
+        { "id": "b", "text": "It subscribes, shows the latest value, and unsubscribes automatically when the component is destroyed" },
+        { "id": "c", "text": "It converts the Observable into a signal" },
+        { "id": "d", "text": "It runs only once" }
+      ],
+      "answer": "b",
+      "explanation": "The async pipe manages the whole subscription lifecycle, preventing memory leaks and removing manual subscribe/unsubscribe code."
+    },
+    {
+      "id": "q4",
+      "type": "multiple-choice",
+      "prompt": "Which of the following built-in pipes are impure (re-run on every change detection cycle)? (Select all that apply.)",
+      "options": [
+        { "id": "a", "text": "async" },
+        { "id": "b", "text": "json" },
+        { "id": "c", "text": "slice" },
+        { "id": "d", "text": "uppercase" }
+      ],
+      "answer": ["a", "b", "c"],
+      "explanation": "async, json, slice, and keyvalue are impure by design. uppercase is a pure pipe."
+    },
+    {
+      "id": "q5",
+      "type": "fill-blank",
+      "prompt": "Which character passes an argument to a pipe, as in date____'short'?",
+      "answer": [":", "colon"],
+      "explanation": "A colon separates each pipe argument, e.g. {{ today | date:'short' }} or currency:'USD':'symbol':'1.2-2'."
+    },
+    {
+      "id": "q6",
+      "type": "single-choice",
+      "prompt": "Why should you avoid writing data$ | async more than once for the same Observable?",
+      "options": [
+        { "id": "a", "text": "It causes a compile error" },
+        { "id": "b", "text": "Each occurrence creates a new subscription (and possibly a new HTTP request)" },
+        { "id": "c", "text": "The async pipe can only be used once per template" },
+        { "id": "d", "text": "It disables change detection" }
+      ],
+      "answer": "b",
+      "explanation": "Subscribe once with @if (data$ | async; as data) and reuse the alias to avoid duplicate subscriptions."
+    }
+  ]
+}

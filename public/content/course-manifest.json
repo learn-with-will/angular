@@ -1,0 +1,457 @@
+[
+  {
+    "id": "lesson-01",
+    "slug": "introduction-angular-cli",
+    "title": "Introduction & the Angular CLI",
+    "level": "beginner",
+    "order": 1,
+    "duration": 35,
+    "file": "beginner/lesson-01.md",
+    "summary": "What Angular is, why it exists, and how to scaffold and run a project with the CLI.",
+    "tags": [
+      "angular",
+      "cli",
+      "setup",
+      "intro"
+    ]
+  },
+  {
+    "id": "lesson-02",
+    "slug": "components-and-templates",
+    "title": "Components & Pages",
+    "level": "beginner",
+    "order": 2,
+    "duration": 45,
+    "file": "beginner/lesson-02.md",
+    "summary": "Build standalone components with signal inputs/outputs, then turn them into routed, lazy-loaded pages.",
+    "tags": [
+      "components",
+      "templates",
+      "standalone",
+      "routing",
+      "signals"
+    ]
+  },
+  {
+    "id": "lesson-07",
+    "slug": "templating-syntax-interpolation-and-binding",
+    "title": "Templating Syntax: Interpolation & Binding",
+    "level": "beginner",
+    "order": 3,
+    "duration": 35,
+    "file": "beginner/lesson-07.md",
+    "summary": "Interpolation, property/attribute/class/style binding, event binding, and two-way binding with signals and model().",
+    "tags": [
+      "templates",
+      "interpolation",
+      "binding",
+      "two-way-binding",
+      "signals"
+    ]
+  },
+  {
+    "id": "lesson-08",
+    "slug": "introduction-to-signals",
+    "title": "Introduction to Signals",
+    "level": "beginner",
+    "order": 4,
+    "duration": 30,
+    "file": "beginner/lesson-08.md",
+    "summary": "Reactive state with signals, computed values, and effects — the foundation of change detection in modern Angular.",
+    "tags": [
+      "signals",
+      "reactivity",
+      "state-management",
+      "change-detection"
+    ]
+  },
+  {
+    "id": "lesson-03",
+    "slug": "data-binding-and-signals",
+    "title": "Data Binding & Signals",
+    "level": "beginner",
+    "order": 5,
+    "duration": 25,
+    "file": "beginner/lesson-03.md",
+    "summary": "Interpolation, property/event binding, and reactive state with Angular signals.",
+    "tags": [
+      "signals",
+      "binding",
+      "reactivity",
+      "state"
+    ]
+  },
+  {
+    "id": "lesson-09",
+    "slug": "control-flow-syntax",
+    "title": "Angular Control Flow: @if, @for, and @switch",
+    "level": "beginner",
+    "order": 6,
+    "duration": 30,
+    "file": "beginner/lesson-09.md",
+    "summary": "Render conditionals and lists in templates with the built-in @if, @for, and @switch control flow blocks.",
+    "tags": [
+      "templates",
+      "control-flow",
+      "conditional-rendering",
+      "lists",
+      "signals"
+    ]
+  },
+  {
+    "id": "lesson-10",
+    "slug": "event-binding-and-user-interactions",
+    "title": "Event Binding & User Interactions",
+    "level": "beginner",
+    "order": 7,
+    "duration": 40,
+    "file": "beginner/lesson-10.md",
+    "summary": "Respond to clicks, input, and keyboard events with event binding, $event, and custom component outputs.",
+    "tags": [
+      "event-binding",
+      "user-interaction",
+      "templates",
+      "signals",
+      "components"
+    ]
+  },
+  {
+    "id": "lesson-11",
+    "slug": "basic-pipes",
+    "title": "Basic Pipes in Angular",
+    "level": "beginner",
+    "order": 8,
+    "duration": 25,
+    "file": "beginner/lesson-11.md",
+    "summary": "Transform and format values right in the template with built-in pipes like date, currency, and async.",
+    "tags": [
+      "pipes",
+      "templates",
+      "formatting",
+      "data-transformation"
+    ]
+  },
+  {
+    "id": "lesson-12",
+    "slug": "template-driven-forms",
+    "title": "Template-Driven Forms",
+    "level": "beginner",
+    "order": 9,
+    "duration": 40,
+    "file": "beginner/lesson-12.md",
+    "summary": "Build forms with ngModel, two-way binding, and validation using Angular's template-driven approach.",
+    "tags": [
+      "forms",
+      "template-driven-forms",
+      "ngmodel",
+      "validation",
+      "two-way-binding"
+    ]
+  },
+  {
+    "id": "lesson-13",
+    "slug": "component-communication",
+    "title": "Component Communication in Angular",
+    "level": "intermediate",
+    "order": 10,
+    "duration": 40,
+    "file": "intermediate/lesson-13.md",
+    "summary": "Pass data down with input(), emit events up with output(), two-way bind with model(), and share state across components using signal-based services.",
+    "tags": [
+      "components",
+      "input",
+      "output",
+      "signals",
+      "two-way-binding"
+    ]
+  },
+  {
+    "id": "lesson-14",
+    "slug": "component-lifecycle-hooks",
+    "title": "Angular Component Lifecycle Hooks",
+    "level": "intermediate",
+    "order": 11,
+    "duration": 45,
+    "file": "intermediate/lesson-14.md",
+    "summary": "Hook into a component's life with ngOnInit, ngOnChanges, ngAfterViewInit, and ngOnDestroy, and clean up safely with DestroyRef and takeUntilDestroyed.",
+    "tags": [
+      "lifecycle-hooks",
+      "components",
+      "ngoninit",
+      "ngondestroy",
+      "cleanup"
+    ]
+  },
+  {
+    "id": "lesson-15",
+    "slug": "content-projection",
+    "title": "Content Projection in Angular",
+    "level": "intermediate",
+    "order": 12,
+    "duration": 45,
+    "file": "intermediate/lesson-15.md",
+    "summary": "Build flexible, reusable components with <ng-content>, multiple named slots, fallback content, and contentChild()/contentChildren() queries.",
+    "tags": [
+      "content-projection",
+      "ng-content",
+      "components",
+      "composition",
+      "slots"
+    ]
+  },
+  {
+    "id": "lesson-04",
+    "slug": "services-and-dependency-injection",
+    "title": "Services & Dependency Injection",
+    "level": "intermediate",
+    "order": 13,
+    "duration": 45,
+    "file": "intermediate/lesson-04.md",
+    "summary": "Share logic and state with injectable services and inject(), scope them with hierarchical injectors, and swap implementations using InjectionToken.",
+    "tags": [
+      "services",
+      "di",
+      "inject",
+      "architecture",
+      "injection-token"
+    ]
+  },
+  {
+    "id": "lesson-16",
+    "slug": "computed-signals-and-effects",
+    "title": "Computed Signals & Effects",
+    "level": "intermediate",
+    "order": 14,
+    "duration": 45,
+    "file": "intermediate/lesson-16.md",
+    "summary": "Derive state with lazy, memoized computed() signals and sync with the outside world using effect() — plus when to reach for linkedSignal().",
+    "tags": [
+      "signals",
+      "computed",
+      "effects",
+      "reactivity",
+      "state-management"
+    ]
+  },
+  {
+    "id": "lesson-17",
+    "slug": "observables-rxjs-basics",
+    "title": "Observables & RxJS Basics",
+    "level": "intermediate",
+    "order": 15,
+    "duration": 45,
+    "file": "intermediate/lesson-17.md",
+    "summary": "Understand Observables vs Promises, subscribe safely, transform streams with map/filter/switchMap/catchError, and use the async pipe in templates.",
+    "tags": [
+      "rxjs",
+      "observables",
+      "operators",
+      "async-pipe",
+      "async"
+    ]
+  },
+  {
+    "id": "lesson-18",
+    "slug": "reactive-forms-and-validation",
+    "title": "Reactive Forms & Validation",
+    "level": "intermediate",
+    "order": 16,
+    "duration": 50,
+    "file": "intermediate/lesson-18.md",
+    "summary": "Build typed forms with FormControl, FormGroup, FormArray, and FormBuilder, then add built-in, custom, and cross-field validation.",
+    "tags": [
+      "reactive-forms",
+      "forms",
+      "validation",
+      "formbuilder",
+      "typed-forms"
+    ]
+  },
+  {
+    "id": "lesson-19",
+    "slug": "route-parameters-and-dynamic-routes",
+    "title": "Route Parameters & Dynamic Routes",
+    "level": "intermediate",
+    "order": 17,
+    "duration": 45,
+    "file": "intermediate/lesson-19.md",
+    "summary": "Define dynamic :id routes, read params via component input binding or ActivatedRoute, and handle param changes when Angular reuses a component.",
+    "tags": [
+      "routing",
+      "route-parameters",
+      "dynamic-routes",
+      "router",
+      "query-params"
+    ]
+  },
+  {
+    "id": "lesson-20",
+    "slug": "performance-optimization-onpush",
+    "title": "Performance Optimization with OnPush Change Detection",
+    "level": "advanced",
+    "order": 18,
+    "duration": 55,
+    "file": "advanced/lesson-20.md",
+    "summary": "Cut wasted change detection with ChangeDetectionStrategy.OnPush, avoid the mutation staleness trap, pair it with signals, and use markForCheck() — the path toward zoneless Angular.",
+    "tags": [
+      "performance",
+      "change-detection",
+      "onpush",
+      "signals",
+      "zoneless"
+    ]
+  },
+  {
+    "id": "lesson-21",
+    "slug": "heavy-computation-web-workers-pure-pipes",
+    "title": "Heavy Computation: Web Workers & Pure Pipes",
+    "level": "advanced",
+    "order": 19,
+    "duration": 55,
+    "file": "advanced/lesson-21.md",
+    "summary": "Keep the UI responsive by offloading big computations to Web Workers, and cut redundant work by memoizing with pure pipes — plus when to reach for each.",
+    "tags": [
+      "web-workers",
+      "pipes",
+      "performance",
+      "change-detection",
+      "memoization"
+    ]
+  },
+  {
+    "id": "lesson-22",
+    "slug": "advanced-rxjs-operators",
+    "title": "Advanced RxJS Operators in Angular",
+    "level": "advanced",
+    "order": 20,
+    "duration": 70,
+    "file": "advanced/lesson-22.md",
+    "summary": "Pick the right flattening operator (switchMap/mergeMap/concatMap/exhaustMap), combine streams, build typeahead search, and recover from errors — leak-free with takeUntilDestroyed.",
+    "tags": [
+      "rxjs",
+      "observables",
+      "operators",
+      "reactive-programming",
+      "http"
+    ]
+  },
+  {
+    "id": "lesson-23",
+    "slug": "advanced-routing-guards-resolvers",
+    "title": "Advanced Routing: Guards & Resolvers",
+    "level": "advanced",
+    "order": 21,
+    "duration": 55,
+    "file": "advanced/lesson-23.md",
+    "summary": "Control when navigation is allowed with functional guards, pre-fetch data with ResolveFn, and bind resolved data to component inputs with withComponentInputBinding().",
+    "tags": [
+      "routing",
+      "guards",
+      "resolvers",
+      "angular-router",
+      "standalone-components"
+    ]
+  },
+  {
+    "id": "lesson-24",
+    "slug": "custom-and-async-validators",
+    "title": "Custom & Asynchronous Validators",
+    "level": "advanced",
+    "order": 22,
+    "duration": 55,
+    "file": "advanced/lesson-24.md",
+    "summary": "Write reusable synchronous ValidatorFns and async validators that check against a server with RxJS — handling PENDING state, debouncing, and cancellation.",
+    "tags": [
+      "reactive-forms",
+      "forms",
+      "validators",
+      "async-validators",
+      "rxjs"
+    ]
+  },
+  {
+    "id": "lesson-25",
+    "slug": "custom-form-controls-control-value-accessor",
+    "title": "Custom Form Controls with ControlValueAccessor",
+    "level": "advanced",
+    "order": 23,
+    "duration": 75,
+    "file": "advanced/lesson-25.md",
+    "summary": "Turn any component into a first-class form control by implementing ControlValueAccessor, registering it with NG_VALUE_ACCESSOR, and adding self-validation.",
+    "tags": [
+      "forms",
+      "reactive-forms",
+      "control-value-accessor",
+      "custom-components",
+      "accessibility"
+    ]
+  },
+  {
+    "id": "lesson-26",
+    "slug": "angular-cdk-virtual-scroll-drag-drop",
+    "title": "Angular CDK Deep Dive: Virtual Scroll & Drag/Drop",
+    "level": "advanced",
+    "order": 24,
+    "duration": 75,
+    "file": "advanced/lesson-26.md",
+    "summary": "Render huge lists smoothly with CdkVirtualScrollViewport and build reorderable, Kanban-style drag/drop interfaces with cdkDrag and cdkDropList.",
+    "tags": [
+      "angular-cdk",
+      "virtual-scroll",
+      "drag-and-drop",
+      "performance",
+      "signals"
+    ]
+  },
+  {
+    "id": "lesson-27",
+    "slug": "state-management-ngrx-component-store",
+    "title": "State Management with NgRx & Component Store",
+    "level": "advanced",
+    "order": 25,
+    "duration": 90,
+    "file": "advanced/lesson-27.md",
+    "summary": "Model global state with NgRx actions, reducers, selectors, and effects; scope local state with ComponentStore; and decide when SignalStore is the better modern fit.",
+    "tags": [
+      "ngrx",
+      "state-management",
+      "rxjs",
+      "component-store",
+      "signals"
+    ]
+  },
+  {
+    "id": "lesson-28",
+    "slug": "unit-testing-jest-component-harnesses",
+    "title": "Unit Testing with Jest & Component Harnesses",
+    "level": "advanced",
+    "order": 26,
+    "duration": 65,
+    "file": "advanced/lesson-28.md",
+    "summary": "Run TestBed under Jest, test zoneless components with whenStable(), and write refactor-resistant tests using custom Angular CDK component harnesses.",
+    "tags": [
+      "testing",
+      "jest",
+      "testbed",
+      "component-harness",
+      "zoneless"
+    ]
+  },
+  {
+    "id": "lesson-29",
+    "slug": "end-to-end-testing-with-cypress",
+    "title": "End-to-End Testing with Cypress",
+    "level": "advanced",
+    "order": 27,
+    "duration": 55,
+    "file": "advanced/lesson-29.md",
+    "summary": "Test authentic user flows in a real browser with Cypress — navigation, forms, and routing — using cy.intercept and data-cy selectors for a maintainable suite.",
+    "tags": [
+      "cypress",
+      "e2e-testing",
+      "testing",
+      "angular-router",
+      "ci-cd"
+    ]
+  }
+]

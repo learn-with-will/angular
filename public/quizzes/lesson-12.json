@@ -1,0 +1,80 @@
+{
+  "id": "quiz-12",
+  "lessonId": "lesson-12",
+  "title": "Template-Driven Forms",
+  "passingScore": 70,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single-choice",
+      "prompt": "Which module must you import to use ngModel, ngForm, and ngModelGroup?",
+      "options": [
+        { "id": "a", "text": "ReactiveFormsModule" },
+        { "id": "b", "text": "FormsModule" },
+        { "id": "c", "text": "CommonModule" },
+        { "id": "d", "text": "BrowserModule" }
+      ],
+      "answer": "b",
+      "explanation": "Template-driven form directives come from FormsModule; add it to the standalone component's imports array."
+    },
+    {
+      "id": "q2",
+      "type": "single-choice",
+      "prompt": "Why is the name attribute required on an ngModel input inside a <form>?",
+      "options": [
+        { "id": "a", "text": "It sets the input's placeholder" },
+        { "id": "b", "text": "Angular uses it as the key to register the control within the form's FormGroup" },
+        { "id": "c", "text": "It enables two-way binding" },
+        { "id": "d", "text": "It is only needed for styling" }
+      ],
+      "answer": "b",
+      "explanation": "Without name (and without standalone options), Angular can't register the control and throws a runtime error."
+    },
+    {
+      "id": "q3",
+      "type": "single-choice",
+      "prompt": "The [(ngModel)] \"banana in a box\" syntax is shorthand for which combination?",
+      "options": [
+        { "id": "a", "text": "[ngModel] plus (ngModelChange)" },
+        { "id": "b", "text": "(ngSubmit) plus [disabled]" },
+        { "id": "c", "text": "[value] plus (input)" },
+        { "id": "d", "text": "[formControl] plus (change)" }
+      ],
+      "answer": "a",
+      "explanation": "[(ngModel)]=\"x\" expands to [ngModel]=\"x\" (ngModelChange)=\"x = $event\" — property binding in, event binding out."
+    },
+    {
+      "id": "q4",
+      "type": "single-choice",
+      "prompt": "When should validation error messages be shown for the best UX?",
+      "options": [
+        { "id": "a", "text": "Immediately when the form loads" },
+        { "id": "b", "text": "Only after the field is touched and/or dirty" },
+        { "id": "c", "text": "Only after the form is submitted successfully" },
+        { "id": "d", "text": "Never — rely on the disabled button" }
+      ],
+      "answer": "b",
+      "explanation": "Gating messages behind touched/dirty avoids scolding users before they've interacted with the field."
+    },
+    {
+      "id": "q5",
+      "type": "fill-blank",
+      "prompt": "Which directive groups related controls into a nested FormGroup (e.g. an address block)?",
+      "answer": ["ngModelGroup"],
+      "explanation": "ngModelGroup=\"address\" produces a nested form value like { address: { street, city } } that mirrors your data model."
+    },
+    {
+      "id": "q6",
+      "type": "single-choice",
+      "prompt": "Even with [disabled]=\"form.invalid\" on the submit button, why should onSubmit re-check form.invalid?",
+      "options": [
+        { "id": "a", "text": "The disabled property is deprecated" },
+        { "id": "b", "text": "A disabled button can be bypassed, so it is not real validation/security" },
+        { "id": "c", "text": "resetForm() requires it" },
+        { "id": "d", "text": "It improves rendering performance" }
+      ],
+      "answer": "b",
+      "explanation": "Disabling the button is only UX; always re-validate in the handler (and on the server)."
+    }
+  ]
+}

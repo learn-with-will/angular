@@ -1,0 +1,80 @@
+{
+  "id": "quiz-20",
+  "lessonId": "lesson-20",
+  "title": "Performance Optimization with OnPush Change Detection",
+  "passingScore": 70,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single-choice",
+      "prompt": "What does ChangeDetectionStrategy.OnPush tell Angular to do?",
+      "options": [
+        { "id": "a", "text": "Never run change detection on the component" },
+        { "id": "b", "text": "Skip checking the component's view unless a specific trigger occurs" },
+        { "id": "c", "text": "Check the component twice per cycle" },
+        { "id": "d", "text": "Disable Zone.js globally" }
+      ],
+      "answer": "b",
+      "explanation": "OnPush prunes checks to only when there's a trackable reason — it doesn't disable change detection entirely."
+    },
+    {
+      "id": "q2",
+      "type": "single-choice",
+      "prompt": "Why does mutating an object passed via @Input() fail to update an OnPush component?",
+      "options": [
+        { "id": "a", "text": "Angular does a deep structural comparison that's too slow" },
+        { "id": "b", "text": "Angular compares inputs by reference, so mutating in place leaves the reference unchanged" },
+        { "id": "c", "text": "OnPush ignores all @Input() changes" },
+        { "id": "d", "text": "Objects cannot be used as inputs" }
+      ],
+      "answer": "b",
+      "explanation": "Reference (Object.is) comparison means you must produce a new object/array for OnPush to detect the change."
+    },
+    {
+      "id": "q3",
+      "type": "multiple-choice",
+      "prompt": "Which of the following trigger a check on an OnPush component? (Select all that apply.)",
+      "options": [
+        { "id": "a", "text": "An @Input() receives a new reference" },
+        { "id": "b", "text": "An event fires within the component or its children" },
+        { "id": "c", "text": "An async pipe in the template emits a new value" },
+        { "id": "d", "text": "A signal read in the template changes" }
+      ],
+      "answer": ["a", "b", "c", "d"],
+      "explanation": "New input reference, an internal event, an async pipe emission, a markForCheck() call, or a changed signal all trigger a check."
+    },
+    {
+      "id": "q4",
+      "type": "single-choice",
+      "prompt": "What is the difference between markForCheck() and detectChanges()?",
+      "options": [
+        { "id": "a", "text": "They are identical" },
+        { "id": "b", "text": "markForCheck() schedules a check for the next cycle; detectChanges() runs one immediately and synchronously" },
+        { "id": "c", "text": "detectChanges() only works with signals" },
+        { "id": "d", "text": "markForCheck() disables OnPush" }
+      ],
+      "answer": "b",
+      "explanation": "Prefer markForCheck() (safe, scheduled) unless you specifically need the immediate synchronous run of detectChanges()."
+    },
+    {
+      "id": "q5",
+      "type": "single-choice",
+      "prompt": "Do signals require OnPush or Zone.js to update the UI?",
+      "options": [
+        { "id": "a", "text": "Yes, both are required" },
+        { "id": "b", "text": "No — reading a signal in a template registers it as a dependency, so Angular schedules a targeted update independent of Zone.js" },
+        { "id": "c", "text": "Only Zone.js is required" },
+        { "id": "d", "text": "Signals cannot update the UI at all" }
+      ],
+      "answer": "b",
+      "explanation": "Signals wire fine-grained updates automatically, which is why OnPush + Signals is the on-ramp to zoneless Angular."
+    },
+    {
+      "id": "q6",
+      "type": "fill-blank",
+      "prompt": "The async pipe works seamlessly under OnPush because it internally calls which ChangeDetectorRef method on every emission?",
+      "answer": ["markForCheck", "markForCheck()"],
+      "explanation": "The async pipe calls markForCheck() for you, so observable data 'just works' with OnPush."
+    }
+  ]
+}

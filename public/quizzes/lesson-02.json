@@ -1,0 +1,41 @@
+{
+  "id": "quiz-02",
+  "lessonId": "lesson-02",
+  "title": "Components & Templates",
+  "passingScore": 70,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single-choice",
+      "prompt": "Which decorator turns a class into a component?",
+      "options": [
+        { "id": "a", "text": "@Injectable" },
+        { "id": "b", "text": "@Component" },
+        { "id": "c", "text": "@Directive" },
+        { "id": "d", "text": "@Pipe" }
+      ],
+      "answer": "b",
+      "explanation": "@Component links a class to its template, styles, and selector."
+    },
+    {
+      "id": "q2",
+      "type": "multiple-choice",
+      "prompt": "Which are valid built-in control flow blocks? (Select all that apply.)",
+      "options": [
+        { "id": "a", "text": "@if" },
+        { "id": "b", "text": "@for" },
+        { "id": "c", "text": "@while" },
+        { "id": "d", "text": "@switch" }
+      ],
+      "answer": ["a", "b", "d"],
+      "explanation": "Angular provides @if, @for, and @switch. There is no @while block."
+    },
+    {
+      "id": "q3",
+      "type": "fill-blank",
+      "prompt": "Every @for block must include a ____ expression for performance.",
+      "answer": ["track"],
+      "explanation": "The track expression gives Angular a stable identity for each item."
+    }
+  ]
+}

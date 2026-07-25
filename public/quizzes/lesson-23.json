@@ -1,0 +1,87 @@
+{
+  "id": "quiz-23",
+  "lessonId": "lesson-23",
+  "title": "Advanced Routing: Guards & Resolvers",
+  "passingScore": 70,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single-choice",
+      "prompt": "What is the difference between canActivate and canMatch returning false?",
+      "options": [
+        { "id": "a", "text": "They behave identically" },
+        { "id": "b", "text": "canActivate blocks navigation; canMatch tells the router to try the next route definition with the same path" },
+        { "id": "c", "text": "canMatch blocks navigation; canActivate retries" },
+        { "id": "d", "text": "Both silently redirect to /login" }
+      ],
+      "answer": "b",
+      "explanation": "canMatch's false means 'not a match here, try the next config' — ideal for feature flags and A/B testing."
+    },
+    {
+      "id": "q2",
+      "type": "single-choice",
+      "prompt": "How should a functional guard redirect a user?",
+      "options": [
+        { "id": "a", "text": "Call router.navigate() and return false" },
+        { "id": "b", "text": "Return a UrlTree (or RedirectCommand)" },
+        { "id": "c", "text": "Throw an error" },
+        { "id": "d", "text": "Return the string '/login'" }
+      ],
+      "answer": "b",
+      "explanation": "Returning a UrlTree/RedirectCommand is the value the router is built around; navigate()+false can race with the router."
+    },
+    {
+      "id": "q3",
+      "type": "single-choice",
+      "prompt": "What does a resolver do?",
+      "options": [
+        { "id": "a", "text": "Blocks navigation for unauthenticated users" },
+        { "id": "b", "text": "Fetches data before a route finishes activating, so the component has it on first render" },
+        { "id": "c", "text": "Confirms before leaving a route" },
+        { "id": "d", "text": "Lazy-loads a component" }
+      ],
+      "answer": "b",
+      "explanation": "A ResolveFn pre-fetches data; the router waits for it before activation, avoiding empty-then-spinner flicker."
+    },
+    {
+      "id": "q4",
+      "type": "single-choice",
+      "prompt": "How can a component receive resolved data without injecting ActivatedRoute?",
+      "options": [
+        { "id": "a", "text": "Enable withComponentInputBinding() and declare an input matching the resolve key" },
+        { "id": "b", "text": "Use @ViewChild" },
+        { "id": "c", "text": "Import ResolveFn into the component" },
+        { "id": "d", "text": "It's not possible" }
+      ],
+      "answer": "a",
+      "explanation": "withComponentInputBinding() flows resolved data (and route/query params) into matching input()/input.required() properties."
+    },
+    {
+      "id": "q5",
+      "type": "single-choice",
+      "prompt": "Why shouldn't client-side route guards be treated as a complete security solution?",
+      "options": [
+        { "id": "a", "text": "They only run on the server" },
+        { "id": "b", "text": "Guard code runs in the user's browser and can be inspected or modified, so the server must enforce authorization too" },
+        { "id": "c", "text": "They cannot check authentication" },
+        { "id": "d", "text": "They are deprecated" }
+      ],
+      "answer": "b",
+      "explanation": "Guards improve UX and cut unnecessary requests, but authorization must be independently enforced on the server."
+    },
+    {
+      "id": "q6",
+      "type": "ordering",
+      "prompt": "Order these navigation-lifecycle steps as the router evaluates them.",
+      "items": [
+        { "id": "s1", "text": "canMatch (route matching)" },
+        { "id": "s2", "text": "canActivate / canActivateChild" },
+        { "id": "s3", "text": "canDeactivate (leaving the current route)" },
+        { "id": "s4", "text": "resolve (fetch data)" },
+        { "id": "s5", "text": "Activation (component renders)" }
+      ],
+      "answer": ["s1", "s2", "s3", "s4", "s5"],
+      "explanation": "The router runs canMatch, then activation guards, then deactivation guards, then resolvers, and finally activates the component."
+    }
+  ]
+}

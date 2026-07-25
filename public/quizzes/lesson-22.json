@@ -1,0 +1,79 @@
+{
+  "id": "quiz-22",
+  "lessonId": "lesson-22",
+  "title": "Advanced RxJS Operators in Angular",
+  "passingScore": 70,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single-choice",
+      "prompt": "Which flattening operator should you use for a typeahead search box?",
+      "options": [
+        { "id": "a", "text": "concatMap" },
+        { "id": "b", "text": "switchMap" },
+        { "id": "c", "text": "mergeMap" },
+        { "id": "d", "text": "exhaustMap" }
+      ],
+      "answer": "b",
+      "explanation": "switchMap cancels the previous in-flight request when a new term arrives, so a stale response can't overwrite a newer one."
+    },
+    {
+      "id": "q2",
+      "type": "match-pair",
+      "prompt": "Match each combination operator to its behavior.",
+      "pairs": [
+        { "left": "combineLatest", "right": "Emit latest of each when any source emits" },
+        { "left": "forkJoin", "right": "Wait for all sources to complete, then emit once" },
+        { "left": "withLatestFrom", "right": "Emit on the primary stream, adding the latest of a secondary" },
+        { "left": "zip", "right": "Pair values by index" }
+      ],
+      "explanation": "Each combines independent streams differently; picking the right one expresses the intended data dependency."
+    },
+    {
+      "id": "q3",
+      "type": "single-choice",
+      "prompt": "Where should catchError usually be placed relative to a flattening operator, and why?",
+      "options": [
+        { "id": "a", "text": "After the flattening operator, to catch everything at once" },
+        { "id": "b", "text": "Inside the flattening operator's callback, so an inner failure doesn't terminate the whole outer stream" },
+        { "id": "c", "text": "Before the flattening operator, on the source" },
+        { "id": "d", "text": "It doesn't matter where it goes" }
+      ],
+      "answer": "b",
+      "explanation": "Placing catchError after the operator lets an inner error kill the outer stream permanently; inside it catches only that inner failure."
+    },
+    {
+      "id": "q4",
+      "type": "single-choice",
+      "prompt": "When would you choose exhaustMap over switchMap?",
+      "options": [
+        { "id": "a", "text": "For a live search where only the latest input matters" },
+        { "id": "b", "text": "To ignore new triggers while an operation is in flight, e.g. preventing duplicate form submits" },
+        { "id": "c", "text": "To run all requests in parallel" },
+        { "id": "d", "text": "To strictly preserve order" }
+      ],
+      "answer": "b",
+      "explanation": "exhaustMap ignores new source values until the current inner Observable completes — ideal for a Save button."
+    },
+    {
+      "id": "q5",
+      "type": "single-choice",
+      "prompt": "Why prefer shareReplay({ bufferSize: 1, refCount: true }) over shareReplay(1)?",
+      "options": [
+        { "id": "a", "text": "It replays more values" },
+        { "id": "b", "text": "refCount: true tears down the source subscription when there are no subscribers, avoiding a memory leak" },
+        { "id": "c", "text": "It makes the Observable cold" },
+        { "id": "d", "text": "It disables multicasting" }
+      ],
+      "answer": "b",
+      "explanation": "The bare shareReplay(1) shorthand keeps the source alive forever; refCount cleans up when unused."
+    },
+    {
+      "id": "q6",
+      "type": "fill-blank",
+      "prompt": "Which @angular/core/rxjs-interop operator auto-completes a manual subscription when the component is destroyed?",
+      "answer": ["takeUntilDestroyed", "takeUntilDestroyed()"],
+      "explanation": "takeUntilDestroyed() replaces the manual Subject + takeUntil + ngOnDestroy cleanup boilerplate."
+    }
+  ]
+}

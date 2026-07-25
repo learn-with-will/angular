@@ -1,0 +1,79 @@
+{
+  "id": "quiz-04",
+  "lessonId": "lesson-04",
+  "title": "Services & Dependency Injection",
+  "passingScore": 70,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single-choice",
+      "prompt": "What is the recommended way to register a service as an app-wide, tree-shakable singleton?",
+      "options": [
+        { "id": "a", "text": "Add it to every component's providers array" },
+        { "id": "b", "text": "@Injectable({ providedIn: 'root' })" },
+        { "id": "c", "text": "Create it manually with new" },
+        { "id": "d", "text": "Declare it in an NgModule's declarations" }
+      ],
+      "answer": "b",
+      "explanation": "providedIn: 'root' gives one shared instance app-wide and lets the bundler drop it if never injected."
+    },
+    {
+      "id": "q2",
+      "type": "single-choice",
+      "prompt": "What happens if you add a service that is already providedIn: 'root' to a component's own providers array?",
+      "options": [
+        { "id": "a", "text": "Nothing changes; it stays a global singleton" },
+        { "id": "b", "text": "That component and its children get their own separate instance" },
+        { "id": "c", "text": "Angular throws a duplicate-provider error" },
+        { "id": "d", "text": "The service becomes unavailable" }
+      ],
+      "answer": "b",
+      "explanation": "A component-level provider creates a new scoped instance for that subtree, which can silently break singleton state sharing."
+    },
+    {
+      "id": "q3",
+      "type": "single-choice",
+      "prompt": "Why does calling inject() inside a setTimeout callback throw an error?",
+      "options": [
+        { "id": "a", "text": "inject() only works in constructors literally" },
+        { "id": "b", "text": "inject() must run synchronously within a valid injection context, which is gone once the async callback fires" },
+        { "id": "c", "text": "setTimeout is deprecated in Angular" },
+        { "id": "d", "text": "You can only inject one dependency per callback" }
+      ],
+      "answer": "b",
+      "explanation": "Capture the dependency in a field during construction, then use it later inside the callback."
+    },
+    {
+      "id": "q4",
+      "type": "single-choice",
+      "prompt": "When should you use an InjectionToken instead of a class for a dependency?",
+      "options": [
+        { "id": "a", "text": "Always, for every dependency" },
+        { "id": "b", "text": "When the dependency is not a class — e.g. config objects, primitives, functions, or browser APIs" },
+        { "id": "c", "text": "Only for HttpClient" },
+        { "id": "d", "text": "Only inside unit tests" }
+      ],
+      "answer": "b",
+      "explanation": "InjectionToken gives type-safe DI for non-class values and avoids the collisions of raw string tokens."
+    },
+    {
+      "id": "q5",
+      "type": "match-pair",
+      "prompt": "Match each provider recipe to what it does.",
+      "pairs": [
+        { "left": "useClass", "right": "Instantiate a (possibly different) class" },
+        { "left": "useValue", "right": "Provide a pre-built value directly" },
+        { "left": "useFactory", "right": "Call a function to compute the value" },
+        { "left": "useExisting", "right": "Alias one token to another" }
+      ],
+      "explanation": "These four recipes are the mechanism behind swapping implementations and mocking in tests."
+    },
+    {
+      "id": "q6",
+      "type": "fill-blank",
+      "prompt": "Which modern function is the recommended way to retrieve a dependency, usable in guards, resolvers, and effect() as well as constructors?",
+      "answer": ["inject", "inject()"],
+      "explanation": "inject() works as a field initializer and in any valid injection context, not just constructors."
+    }
+  ]
+}

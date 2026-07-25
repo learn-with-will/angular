@@ -1,0 +1,169 @@
+<div class="mx-auto max-w-5xl px-4 py-12 sm:px-6">
+  <header class="mb-8 flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <h1 class="heading text-4xl">Your <span class="gradient-text">dashboard</span></h1>
+      <p class="prose-muted mt-3 text-lg">Track your learning progress and quiz history.</p>
+    </div>
+    <button type="button" (click)="resetProgress()" class="btn-danger">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+      Reset progress
+    </button>
+  </header>
+
+  <!-- Top stats -->
+  <section class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+    <div class="card p-5">
+      <p class="text-3xl font-extrabold tabular-nums text-ink-900 dark:text-white">
+        {{ progress.completedCount() }}<span class="text-ink-400">/{{ totalLessons() }}</span>
+      </p>
+      <p class="prose-muted mt-0.5 text-sm font-medium">Lessons done</p>
+    </div>
+    <div class="card p-5">
+      <p class="gradient-text text-3xl font-extrabold tabular-nums">{{ completionPct() }}%</p>
+      <p class="prose-muted mt-0.5 text-sm font-medium">Course complete</p>
+    </div>
+    <div class="card p-5">
+      <p class="text-3xl font-extrabold tabular-nums text-ink-900 dark:text-white">
+        {{ progress.averageScore() }}%
+      </p>
+      <p class="prose-muted mt-0.5 text-sm font-medium">Avg quiz score</p>
+    </div>
+    <div class="card p-5">
+      <p class="text-3xl font-extrabold tabular-nums text-ink-900 dark:text-white">
+        {{ progress.bookmarks().length }}
+      </p>
+      <p class="prose-muted mt-0.5 text-sm font-medium">Bookmarks</p>
+    </div>
+  </section>
+
+  <!-- Progress by level -->
+  <section class="mt-12">
+    <h2 class="heading mb-5 text-xl">Progress by level</h2>
+    <div class="card divide-y divide-ink-100 dark:divide-ink-800">
+      @for (level of levels; track level) {
+        @let lp = levelProgress(level);
+        @if (lp.total) {
+          <div class="p-5">
+            <div class="mb-2 flex items-center justify-between gap-3 text-sm">
+              <span class="flex items-center gap-2 font-bold text-ink-800 dark:text-ink-100">
+                <span class="h-2.5 w-2.5 rounded-full bg-gradient-to-r" [class]="levelAccents[level]"></span>
+                {{ levelLabels[level] }}
+              </span>
+              <span class="prose-muted font-semibold tabular-nums">{{ lp.done }}/{{ lp.total }}</span>
+            </div>
+            <div
+              class="h-2.5 overflow-hidden rounded-full bg-ink-200 dark:bg-ink-800"
+              role="progressbar"
+              [attr.aria-valuenow]="lp.pct"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              [attr.aria-label]="levelLabels[level] + ' progress'"
+            >
+              <div
+                class="h-full rounded-full bg-gradient-to-r transition-all duration-500"
+                [class]="levelAccents[level]"
+                [style.width.%]="lp.pct"
+              ></div>
+            </div>
+          </div>
+        }
+      }
+    </div>
+  </section>
+
+  <!-- Quiz history -->
+  <section class="mt-12">
+    <h2 class="heading mb-5 text-xl">Quiz history</h2>
+    @if (quizHistory().length) {
+      <div class="card overflow-hidden">
+        <!-- Wide tables must scroll inside their own container, not the page. -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-ink-50 text-left dark:bg-ink-950/50">
+              <tr class="prose-muted">
+                <th scope="col" class="px-4 py-3 font-bold">Lesson</th>
+                <th scope="col" class="px-4 py-3 font-bold">Score</th>
+                <th scope="col" class="px-4 py-3 font-bold">Result</th>
+                <th scope="col" class="px-4 py-3 font-bold">Taken</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-ink-100 dark:divide-ink-800">
+              @for (row of quizHistory(); track row.completedAt) {
+                <tr class="transition hover:bg-ink-50 dark:hover:bg-ink-800/50">
+                  <td class="px-4 py-3">
+                    @if (row.lesson) {
+                      <a
+                        [routerLink]="['/lesson', row.lesson.slug]"
+                        class="focusable rounded font-bold text-brand-600 hover:text-magenta-600 dark:text-brand-300 dark:hover:text-magenta-400"
+                      >
+                        {{ row.lesson.title }}
+                      </a>
+                    } @else {
+                      <span class="text-ink-400">Unknown lesson</span>
+                    }
+                  </td>
+                  <td class="px-4 py-3 font-bold tabular-nums text-ink-800 dark:text-ink-100">{{ row.score }}%</td>
+                  <td class="px-4 py-3">
+                    <span
+                      [class]="
+                        row.passed
+                          ? 'badge bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                          : 'badge bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
+                      "
+                    >
+                      <!-- Icon backs up the colour so pass/fail isn't colour-only. -->
+                      @if (row.passed) {
+                        <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3.5">
+                          <path d="m5 13 4 4L19 7" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        Passed
+                      } @else {
+                        <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3.5">
+                          <path d="M6 6l12 12M18 6 6 18" stroke-linecap="round" />
+                        </svg>
+                        Failed
+                      }
+                    </span>
+                  </td>
+                  <td class="prose-muted px-4 py-3 whitespace-nowrap">{{ row.completedAt | date: 'medium' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    } @else {
+      <div class="card border-dashed p-10 text-center">
+        <p class="font-semibold text-ink-700 dark:text-ink-200">No quizzes taken yet.</p>
+        <p class="prose-muted mt-1 text-sm">Finish a lesson and take its quiz to see scores here.</p>
+      </div>
+    }
+  </section>
+
+  <!-- Completed lessons -->
+  @if (completedLessons().length) {
+    <section class="mt-12">
+      <h2 class="heading mb-5 text-xl">Completed lessons</h2>
+      <ul class="flex flex-wrap gap-2">
+        @for (lesson of completedLessons(); track lesson.id) {
+          <li>
+            <a [routerLink]="['/lesson', lesson.slug]" class="chip">
+              <svg
+                class="h-3.5 w-3.5 text-emerald-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="3.5"
+              >
+                <path d="m5 13 4 4L19 7" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              {{ lesson.title }}
+            </a>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+</div>

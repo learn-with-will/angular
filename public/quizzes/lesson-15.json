@@ -1,0 +1,86 @@
+{
+  "id": "quiz-15",
+  "lessonId": "lesson-15",
+  "title": "Content Projection in Angular",
+  "passingScore": 70,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single-choice",
+      "prompt": "What element marks where projected content should render inside a component?",
+      "options": [
+        { "id": "a", "text": "<ng-container>" },
+        { "id": "b", "text": "<ng-content>" },
+        { "id": "c", "text": "<ng-template>" },
+        { "id": "d", "text": "<slot>" }
+      ],
+      "answer": "b",
+      "explanation": "<ng-content> is the compile-time placeholder for projected content (Angular's equivalent of the native <slot>)."
+    },
+    {
+      "id": "q2",
+      "type": "single-choice",
+      "prompt": "Against which component's class do bindings inside projected content resolve?",
+      "options": [
+        { "id": "a", "text": "The child component that defines <ng-content>" },
+        { "id": "b", "text": "The parent component that supplies the content" },
+        { "id": "c", "text": "The root App component" },
+        { "id": "d", "text": "Whichever is closest in the DOM" }
+      ],
+      "answer": "b",
+      "explanation": "Projected content is compiled against the parent's class even though it renders inside the child's DOM."
+    },
+    {
+      "id": "q3",
+      "type": "single-choice",
+      "prompt": "With multiple select-based slots and no catch-all, what happens to an element that matches no selector?",
+      "options": [
+        { "id": "a", "text": "It renders in the first slot" },
+        { "id": "b", "text": "Angular throws a compile error" },
+        { "id": "c", "text": "It is silently dropped and not rendered" },
+        { "id": "d", "text": "It renders after the last slot" }
+      ],
+      "answer": "c",
+      "explanation": "Without a plain <ng-content> catch-all, unmatched elements silently disappear from the DOM."
+    },
+    {
+      "id": "q4",
+      "type": "single-choice",
+      "prompt": "What is ngProjectAs used for?",
+      "options": [
+        { "id": "a", "text": "To conditionally render a slot" },
+        { "id": "b", "text": "To alias an element's selector identity so it matches a slot (e.g. when wrapped in <ng-container>)" },
+        { "id": "c", "text": "To query projected children" },
+        { "id": "d", "text": "To provide fallback content" }
+      ],
+      "answer": "b",
+      "explanation": "ngProjectAs takes a static string and tells Angular to treat the element as if it matched that selector."
+    },
+    {
+      "id": "q5",
+      "type": "single-choice",
+      "prompt": "Which is the modern, signal-based way to query projected content (stable since v19)?",
+      "options": [
+        { "id": "a", "text": "@ViewChild / viewChild()" },
+        { "id": "b", "text": "contentChild() / contentChildren()" },
+        { "id": "c", "text": "@Input() / input()" },
+        { "id": "d", "text": "ngContentChildren()" }
+      ],
+      "answer": "b",
+      "explanation": "contentChild()/contentChildren() return signals; view queries (viewChild) only see the component's own template."
+    },
+    {
+      "id": "q6",
+      "type": "single-choice",
+      "prompt": "Why shouldn't you wrap <ng-content> in @if inside the child's own template?",
+      "options": [
+        { "id": "a", "text": "It causes a syntax error" },
+        { "id": "b", "text": "Angular still creates the projected DOM nodes regardless, so it doesn't give true conditional rendering — use [hidden] or omit the slot instead" },
+        { "id": "c", "text": "@if cannot be used in child components" },
+        { "id": "d", "text": "It projects content twice" }
+      ],
+      "answer": "b",
+      "explanation": "Conditionally wrapping <ng-content> doesn't lazily create content; prefer a CSS toggle like [hidden] or fallback content."
+    }
+  ]
+}

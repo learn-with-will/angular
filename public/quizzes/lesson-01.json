@@ -1,0 +1,40 @@
+{
+  "id": "quiz-01",
+  "lessonId": "lesson-01",
+  "title": "Introduction & the Angular CLI",
+  "passingScore": 70,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single-choice",
+      "prompt": "Which command starts the development server with live reload?",
+      "options": [
+        { "id": "a", "text": "ng build" },
+        { "id": "b", "text": "ng serve" },
+        { "id": "c", "text": "ng test" },
+        { "id": "d", "text": "ng new" }
+      ],
+      "answer": "b",
+      "explanation": "ng serve compiles the app and serves it locally, rebuilding on every change."
+    },
+    {
+      "id": "q2",
+      "type": "single-choice",
+      "prompt": "Modern Angular apps default to which component style?",
+      "options": [
+        { "id": "a", "text": "NgModule-based components" },
+        { "id": "b", "text": "Standalone components" },
+        { "id": "c", "text": "Web Components only" }
+      ],
+      "answer": "b",
+      "explanation": "Since v17, the CLI scaffolds standalone components with no NgModule boilerplate."
+    },
+    {
+      "id": "q3",
+      "type": "fill-blank",
+      "prompt": "What language is Angular primarily written in?",
+      "answer": ["typescript", "ts"],
+      "explanation": "Angular is built with TypeScript, which adds static typing on top of JavaScript."
+    }
+  ]
+}

@@ -1,0 +1,85 @@
+{
+  "id": "quiz-25",
+  "lessonId": "lesson-25",
+  "title": "Custom Form Controls with ControlValueAccessor",
+  "passingScore": 70,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single-choice",
+      "prompt": "What is the primary purpose of ControlValueAccessor?",
+      "options": [
+        { "id": "a", "text": "To validate form values" },
+        { "id": "b", "text": "To bridge Angular's forms API and a custom component's UI so it behaves like a native control" },
+        { "id": "c", "text": "To lazy-load form modules" },
+        { "id": "d", "text": "To style form controls" }
+      ],
+      "answer": "b",
+      "explanation": "CVA lets any component work with formControlName/[formControl]/ngModel by syncing value, touched, and disabled state."
+    },
+    {
+      "id": "q2",
+      "type": "single-choice",
+      "prompt": "Which CVA method handles the model → view direction (e.g. setValue, patchValue, reset)?",
+      "options": [
+        { "id": "a", "text": "registerOnChange" },
+        { "id": "b", "text": "registerOnTouched" },
+        { "id": "c", "text": "writeValue" },
+        { "id": "d", "text": "setDisabledState" }
+      ],
+      "answer": "c",
+      "explanation": "writeValue updates the component's internal state when the FormControl's value changes programmatically."
+    },
+    {
+      "id": "q3",
+      "type": "single-choice",
+      "prompt": "Why does the NG_VALUE_ACCESSOR provider need forwardRef(() => MyComponent)?",
+      "options": [
+        { "id": "a", "text": "To lazy-load the component" },
+        { "id": "b", "text": "Because the provider is evaluated in the class's own decorator metadata, before the class identifier is fully initialized" },
+        { "id": "c", "text": "To enable OnPush change detection" },
+        { "id": "d", "text": "It is optional and never needed" }
+      ],
+      "answer": "b",
+      "explanation": "forwardRef defers resolving the self-reference until Angular actually needs it."
+    },
+    {
+      "id": "q4",
+      "type": "single-choice",
+      "prompt": "What happens if you forget multi: true on the NG_VALUE_ACCESSOR provider?",
+      "options": [
+        { "id": "a", "text": "Nothing changes" },
+        { "id": "b", "text": "Your provider replaces the list of accessors instead of joining it, which can break others or cause 'no value accessor' errors" },
+        { "id": "c", "text": "The component throws a compile error" },
+        { "id": "d", "text": "Validation stops working" }
+      ],
+      "answer": "b",
+      "explanation": "NG_VALUE_ACCESSOR is a multi-provider token; multi: true adds to the list rather than replacing it."
+    },
+    {
+      "id": "q5",
+      "type": "single-choice",
+      "prompt": "Does ControlValueAccessor perform validation?",
+      "options": [
+        { "id": "a", "text": "Yes, it validates automatically" },
+        { "id": "b", "text": "No — it only syncs value, touched, and disabled; validation uses Validators or the Validator/NG_VALIDATORS interface" },
+        { "id": "c", "text": "Only for async validation" },
+        { "id": "d", "text": "Only when setDisabledState is implemented" }
+      ],
+      "answer": "b",
+      "explanation": "Value synchronization and validation are intentionally separate concerns with separate tokens."
+    },
+    {
+      "id": "q6",
+      "type": "match-pair",
+      "prompt": "Match each ControlValueAccessor method to its role.",
+      "pairs": [
+        { "left": "writeValue", "right": "Model → view: update UI from the FormControl" },
+        { "left": "registerOnChange", "right": "Store the callback to call on user value changes" },
+        { "left": "registerOnTouched", "right": "Store the callback to call on blur/touch" },
+        { "left": "setDisabledState", "right": "Sync UI with .disable()/.enable()" }
+      ],
+      "explanation": "Together these four methods implement the full contract Angular's forms directives expect."
+    }
+  ]
+}

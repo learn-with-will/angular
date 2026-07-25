@@ -1,0 +1,81 @@
+{
+  "id": "quiz-14",
+  "lessonId": "lesson-14",
+  "title": "Angular Component Lifecycle Hooks",
+  "passingScore": 70,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single-choice",
+      "prompt": "Which hook is the earliest safe place to read a @ViewChild reference?",
+      "options": [
+        { "id": "a", "text": "constructor()" },
+        { "id": "b", "text": "ngOnInit()" },
+        { "id": "c", "text": "ngAfterViewInit()" },
+        { "id": "d", "text": "ngOnChanges()" }
+      ],
+      "answer": "c",
+      "explanation": "The view isn't created during ngOnInit, so @ViewChild is undefined until ngAfterViewInit runs."
+    },
+    {
+      "id": "q2",
+      "type": "single-choice",
+      "prompt": "What condition must be true for ngOnChanges to fire on an input?",
+      "options": [
+        { "id": "a", "text": "Any property of the bound object is mutated" },
+        { "id": "b", "text": "The bound value's reference changes (a new object/array/primitive)" },
+        { "id": "c", "text": "Change detection runs at all" },
+        { "id": "d", "text": "The component is destroyed" }
+      ],
+      "answer": "b",
+      "explanation": "ngOnChanges triggers only on a new reference; mutating an existing object in place does not trigger it."
+    },
+    {
+      "id": "q3",
+      "type": "single-choice",
+      "prompt": "What is the modern, recommended way to clean up an RxJS subscription tied to a component?",
+      "options": [
+        { "id": "a", "text": "Never unsubscribe; Angular handles it" },
+        { "id": "b", "text": "Pipe through takeUntilDestroyed() (with DestroyRef when outside an injection context)" },
+        { "id": "c", "text": "Call subscription.unsubscribe() in the constructor" },
+        { "id": "d", "text": "Use ngDoCheck to check if destroyed" }
+      ],
+      "answer": "b",
+      "explanation": "takeUntilDestroyed() from @angular/core/rxjs-interop auto-completes on destroy, removing the 'forgot to unsubscribe' leak."
+    },
+    {
+      "id": "q4",
+      "type": "single-choice",
+      "prompt": "Why should you avoid putting expensive logic in ngDoCheck or ngAfterViewChecked?",
+      "options": [
+        { "id": "a", "text": "They only run once, so it's wasteful" },
+        { "id": "b", "text": "They run on every change detection cycle, so heavy work can run many times per interaction" },
+        { "id": "c", "text": "They cannot access component state" },
+        { "id": "d", "text": "They are deprecated" }
+      ],
+      "answer": "b",
+      "explanation": "'Check' hooks fire on every change detection run; expensive work there degrades performance."
+    },
+    {
+      "id": "q5",
+      "type": "ordering",
+      "prompt": "Order these lifecycle hooks in the sequence Angular calls them (for a component with inputs).",
+      "items": [
+        { "id": "s1", "text": "constructor()" },
+        { "id": "s2", "text": "ngOnChanges()" },
+        { "id": "s3", "text": "ngOnInit()" },
+        { "id": "s4", "text": "ngAfterViewInit()" },
+        { "id": "s5", "text": "ngOnDestroy()" }
+      ],
+      "answer": ["s1", "s2", "s3", "s4", "s5"],
+      "explanation": "The constructor runs first, then ngOnChanges before ngOnInit, then ngAfterViewInit, and finally ngOnDestroy at teardown."
+    },
+    {
+      "id": "q6",
+      "type": "fill-blank",
+      "prompt": "Which injectable class (since v16) lets you register a cleanup callback without implementing ngOnDestroy?",
+      "answer": ["DestroyRef"],
+      "explanation": "DestroyRef.onDestroy() registers teardown, and it's what takeUntilDestroyed() uses under the hood."
+    }
+  ]
+}

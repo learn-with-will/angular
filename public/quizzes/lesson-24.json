@@ -1,0 +1,86 @@
+{
+  "id": "quiz-24",
+  "lessonId": "lesson-24",
+  "title": "Custom & Asynchronous Validators",
+  "passingScore": 70,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single-choice",
+      "prompt": "What must a synchronous ValidatorFn return?",
+      "options": [
+        { "id": "a", "text": "true or false" },
+        { "id": "b", "text": "null when valid, or a ValidationErrors object when invalid" },
+        { "id": "c", "text": "An Observable of the result" },
+        { "id": "d", "text": "The control's value" }
+      ],
+      "answer": "b",
+      "explanation": "A ValidatorFn is (control) => ValidationErrors | null; null means valid, an errors object describes what failed."
+    },
+    {
+      "id": "q2",
+      "type": "single-choice",
+      "prompt": "Why must an async validator's Observable complete?",
+      "options": [
+        { "id": "a", "text": "Otherwise it uses too much memory" },
+        { "id": "b", "text": "Angular waits for completion to move the control out of PENDING; a non-completing stream leaves it pending forever" },
+        { "id": "c", "text": "Completion triggers the sync validators" },
+        { "id": "d", "text": "It doesn't need to complete" }
+      ],
+      "answer": "b",
+      "explanation": "Use first() or take(1) (or rely on HttpClient completing) so the control can resolve to VALID/INVALID."
+    },
+    {
+      "id": "q3",
+      "type": "single-choice",
+      "prompt": "What is a validator factory?",
+      "options": [
+        { "id": "a", "text": "A service that stores all validators" },
+        { "id": "b", "text": "A function that returns a ValidatorFn/AsyncValidatorFn, so the rule can be parameterized and reused" },
+        { "id": "c", "text": "A built-in Angular class" },
+        { "id": "d", "text": "A directive applied in templates" }
+      ],
+      "answer": "b",
+      "explanation": "Factories like minAgeValidator(18) return a configured validator, keeping rules reusable across the app."
+    },
+    {
+      "id": "q4",
+      "type": "single-choice",
+      "prompt": "While an async validator is running, what is the control's status?",
+      "options": [
+        { "id": "a", "text": "VALID" },
+        { "id": "b", "text": "INVALID" },
+        { "id": "c", "text": "PENDING" },
+        { "id": "d", "text": "DISABLED" }
+      ],
+      "answer": "c",
+      "explanation": "PENDING means 'I don't know yet' — neither valid nor invalid — so the UI can show a 'checking…' state."
+    },
+    {
+      "id": "q5",
+      "type": "multiple-choice",
+      "prompt": "Which techniques keep an async validator tied to live typing efficient and race-condition-free? (Select all that apply.)",
+      "options": [
+        { "id": "a", "text": "debounceTime" },
+        { "id": "b", "text": "switchMap" },
+        { "id": "c", "text": "catchError" },
+        { "id": "d", "text": "distinctUntilChanged" }
+      ],
+      "answer": ["a", "b", "c", "d"],
+      "explanation": "debounce and distinctUntilChanged cut requests, switchMap cancels stale ones, and catchError degrades gracefully on failure."
+    },
+    {
+      "id": "q6",
+      "type": "single-choice",
+      "prompt": "Where should a validator that compares two sibling fields be attached?",
+      "options": [
+        { "id": "a", "text": "On one of the individual FormControls" },
+        { "id": "b", "text": "On the parent FormGroup (or FormArray), which can read both via group.get()" },
+        { "id": "c", "text": "On the ReactiveFormsModule import" },
+        { "id": "d", "text": "In the component's ngOnInit" }
+      ],
+      "answer": "b",
+      "explanation": "A single control can't read its siblings; cross-field checks belong on the group that contains them."
+    }
+  ]
+}

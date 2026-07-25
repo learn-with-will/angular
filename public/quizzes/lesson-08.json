@@ -1,0 +1,80 @@
+{
+  "id": "quiz-08",
+  "lessonId": "lesson-08",
+  "title": "Introduction to Signals",
+  "passingScore": 70,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single-choice",
+      "prompt": "How do you read the current value of a signal named total?",
+      "options": [
+        { "id": "a", "text": "total" },
+        { "id": "b", "text": "total.value" },
+        { "id": "c", "text": "total()" },
+        { "id": "d", "text": "total.get()" }
+      ],
+      "answer": "c",
+      "explanation": "A signal is a getter function — call it with parentheses to read its value, both in templates and TypeScript."
+    },
+    {
+      "id": "q2",
+      "type": "multiple-choice",
+      "prompt": "Which methods change the value of a writable signal? (Select all that apply.)",
+      "options": [
+        { "id": "a", "text": ".set()" },
+        { "id": "b", "text": ".update()" },
+        { "id": "c", "text": ".mutate()" },
+        { "id": "d", "text": ".next()" }
+      ],
+      "answer": ["a", "b"],
+      "explanation": ".set() replaces the value and .update() derives the next value from the current one. There is no .mutate() method."
+    },
+    {
+      "id": "q3",
+      "type": "single-choice",
+      "prompt": "Which describes a computed() signal?",
+      "options": [
+        { "id": "a", "text": "A writable signal you change with .set()" },
+        { "id": "b", "text": "A read-only signal derived from other signals; lazy and memoized" },
+        { "id": "c", "text": "A way to run side effects like logging" },
+        { "id": "d", "text": "A replacement for Zone.js" }
+      ],
+      "answer": "b",
+      "explanation": "computed() creates a read-only signal that recalculates automatically, only when a dependency changes, and caches its result."
+    },
+    {
+      "id": "q4",
+      "type": "single-choice",
+      "prompt": "What is effect() intended for?",
+      "options": [
+        { "id": "a", "text": "Deriving new state from existing signals" },
+        { "id": "b", "text": "Side effects that reach outside Angular state, like logging or persistence" },
+        { "id": "c", "text": "Replacing computed() for performance" },
+        { "id": "d", "text": "Making a signal read-only" }
+      ],
+      "answer": "b",
+      "explanation": "Reserve effect() for true side effects; use computed() to keep derived state in sync."
+    },
+    {
+      "id": "q5",
+      "type": "fill-blank",
+      "prompt": "Which method converts a writable signal into a read-only view for safe exposure from a service?",
+      "answer": ["asReadonly", "asReadonly()", ".asReadonly()"],
+      "explanation": "Keep the writable signal private and expose this._state.asReadonly() so consumers can read but not overwrite it."
+    },
+    {
+      "id": "q6",
+      "type": "single-choice",
+      "prompt": "Why does items().push(item) often fail to update the UI?",
+      "options": [
+        { "id": "a", "text": "push() is not a valid array method" },
+        { "id": "b", "text": "Signals compare with Object.is, so mutating in place keeps the same reference and detects no change" },
+        { "id": "c", "text": "Arrays cannot be stored in signals" },
+        { "id": "d", "text": "You must call .mutate() after pushing" }
+      ],
+      "answer": "b",
+      "explanation": "Because comparison uses Object.is, you must produce a new array, e.g. items.update(curr => [...curr, item])."
+    }
+  ]
+}

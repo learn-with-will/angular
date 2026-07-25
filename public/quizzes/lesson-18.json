@@ -1,0 +1,80 @@
+{
+  "id": "quiz-18",
+  "lessonId": "lesson-18",
+  "title": "Reactive Forms & Validation",
+  "passingScore": 70,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single-choice",
+      "prompt": "What is the core difference between reactive and template-driven forms?",
+      "options": [
+        { "id": "a", "text": "Reactive forms cannot use validators" },
+        { "id": "b", "text": "In reactive forms the form model is defined explicitly in the component class and is the source of truth" },
+        { "id": "c", "text": "Template-driven forms are more testable" },
+        { "id": "d", "text": "Reactive forms require no imports" }
+      ],
+      "answer": "b",
+      "explanation": "Reactive forms build an explicit FormControl/FormGroup/FormArray tree in TypeScript, giving synchronous access and testability."
+    },
+    {
+      "id": "q2",
+      "type": "single-choice",
+      "prompt": "What must a synchronous custom validator return?",
+      "options": [
+        { "id": "a", "text": "true if valid, false if invalid" },
+        { "id": "b", "text": "null if valid, or a ValidationErrors object describing what failed" },
+        { "id": "c", "text": "An Observable in all cases" },
+        { "id": "d", "text": "The control's value" }
+      ],
+      "answer": "b",
+      "explanation": "A ValidatorFn returns null when valid or an errors object like { passwordMismatch: true } when invalid."
+    },
+    {
+      "id": "q3",
+      "type": "single-choice",
+      "prompt": "Where should a validator that compares password and confirmPassword be attached?",
+      "options": [
+        { "id": "a", "text": "On the password FormControl" },
+        { "id": "b", "text": "On the FormGroup that contains both fields" },
+        { "id": "c", "text": "On the confirmPassword FormControl" },
+        { "id": "d", "text": "On the ReactiveFormsModule import" }
+      ],
+      "answer": "b",
+      "explanation": "Cross-field validators need both sibling values, so they live on the containing FormGroup."
+    },
+    {
+      "id": "q4",
+      "type": "single-choice",
+      "prompt": "What's the difference between form.value and form.getRawValue()?",
+      "options": [
+        { "id": "a", "text": "They are identical" },
+        { "id": "b", "text": "form.value excludes disabled controls; getRawValue() includes every control's value" },
+        { "id": "c", "text": "getRawValue() excludes disabled controls" },
+        { "id": "d", "text": "form.value only works on FormArrays" }
+      ],
+      "answer": "b",
+      "explanation": "Disabled controls are silently omitted from form.value; use getRawValue() when you need them all."
+    },
+    {
+      "id": "q5",
+      "type": "single-choice",
+      "prompt": "Which control type handles a dynamic, repeatable list where the number of controls isn't known ahead of time?",
+      "options": [
+        { "id": "a", "text": "FormControl" },
+        { "id": "b", "text": "FormGroup" },
+        { "id": "c", "text": "FormArray" },
+        { "id": "d", "text": "FormBuilder" }
+      ],
+      "answer": "c",
+      "explanation": "FormArray indexes controls by position, ideal for user-added items like a list of skills or phone numbers."
+    },
+    {
+      "id": "q6",
+      "type": "fill-blank",
+      "prompt": "In a submit handler, which method forces validation messages to appear when a user submits without touching any field (form.____())?",
+      "answer": ["markAllAsTouched", "markAllAsTouched()"],
+      "explanation": "markAllAsTouched() reveals touched-gated error messages even when the user never focused a field."
+    }
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "id": "quiz-29",
+  "lessonId": "lesson-29",
+  "title": "End-to-End Testing with Cypress",
+  "passingScore": 70,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single-choice",
+      "prompt": "What is the fundamental difference between a Cypress E2E test and a TestBed unit test?",
+      "options": [
+        { "id": "a", "text": "Cypress tests are always faster" },
+        { "id": "b", "text": "Cypress boots the actual compiled app in a real browser with real clicks, routing, and network calls; TestBed runs components in a simulated, isolated environment" },
+        { "id": "c", "text": "TestBed uses a real browser; Cypress simulates the DOM" },
+        { "id": "d", "text": "They are interchangeable" }
+      ],
+      "answer": "b",
+      "explanation": "Cypress proves a user can complete a flow end to end; TestBed proves a unit behaves correctly in isolation."
+    },
+    {
+      "id": "q2",
+      "type": "single-choice",
+      "prompt": "What does Cypress's 'retry-ability' mean?",
+      "options": [
+        { "id": "a", "text": "Failed tests are automatically re-run three times" },
+        { "id": "b", "text": "Commands and assertions are automatically retried against the live DOM until they pass or a timeout elapses" },
+        { "id": "c", "text": "Cypress retries the whole spec on network errors" },
+        { "id": "d", "text": "You must manually retry each command" }
+      ],
+      "answer": "b",
+      "explanation": "Auto-retrying until an element is actionable removes the need for arbitrary manual waits and reduces flakiness."
+    },
+    {
+      "id": "q3",
+      "type": "single-choice",
+      "prompt": "How do you make an E2E test independent of a live backend for a specific request?",
+      "options": [
+        { "id": "a", "text": "cy.wait(3000)" },
+        { "id": "b", "text": "Use cy.intercept() to observe or stub the request (optionally with a fixture), alias it, and cy.wait('@alias')" },
+        { "id": "c", "text": "Disable the network in the browser" },
+        { "id": "d", "text": "Use TestBed instead" }
+      ],
+      "answer": "b",
+      "explanation": "cy.intercept stubs the response so the test is deterministic and doesn't depend on real backend data."
+    },
+    {
+      "id": "q4",
+      "type": "single-choice",
+      "prompt": "Why should you use data-cy attributes instead of CSS classes or IDs for selectors?",
+      "options": [
+        { "id": "a", "text": "They render faster" },
+        { "id": "b", "text": "They exist solely for testing and are decoupled from styling/behavior, so redesigns don't silently break tests" },
+        { "id": "c", "text": "Cypress cannot read CSS classes" },
+        { "id": "d", "text": "They improve accessibility" }
+      ],
+      "answer": "b",
+      "explanation": "Dedicated test hooks survive markup and styling refactors that would break class/ID-based selectors."
+    },
+    {
+      "id": "q5",
+      "type": "single-choice",
+      "prompt": "Why is cy.wait(3000) considered a bad practice for waiting on a response?",
+      "options": [
+        { "id": "a", "text": "It is not a valid command" },
+        { "id": "b", "text": "It's slow when the response is fast and still flaky when it's slow; cy.wait('@alias') waits exactly as long as needed" },
+        { "id": "c", "text": "It only works in headless mode" },
+        { "id": "d", "text": "It disables retry-ability permanently" }
+      ],
+      "answer": "b",
+      "explanation": "Aliasing an intercept and waiting on it waits precisely for the request, unlike a hardcoded arbitrary delay."
+    },
+    {
+      "id": "q6",
+      "type": "fill-blank",
+      "prompt": "Which Cypress API caches authenticated browser state across tests so you don't re-login for every test?",
+      "answer": ["cy.session", "cy.session()", "session"],
+      "explanation": "cy.session() caches cookies/localStorage per session key, keeping large suites fast while assertions stay independent."
+    }
+  ]
+}

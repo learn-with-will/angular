@@ -1,0 +1,80 @@
+{
+  "id": "quiz-13",
+  "lessonId": "lesson-13",
+  "title": "Component Communication in Angular",
+  "passingScore": 70,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single-choice",
+      "prompt": "Which function passes data from a parent down to a child component?",
+      "options": [
+        { "id": "a", "text": "output()" },
+        { "id": "b", "text": "input()" },
+        { "id": "c", "text": "viewChild()" },
+        { "id": "d", "text": "inject()" }
+      ],
+      "answer": "b",
+      "explanation": "input() declares a read-only property a parent binds data into; events flow back up via output()."
+    },
+    {
+      "id": "q2",
+      "type": "single-choice",
+      "prompt": "What does model() create?",
+      "options": [
+        { "id": "a", "text": "A one-way input only" },
+        { "id": "b", "text": "An input and output pair bundled for two-way [(binding)]" },
+        { "id": "c", "text": "A shared service" },
+        { "id": "d", "text": "A DOM reference" }
+      ],
+      "answer": "b",
+      "explanation": "model() wires an input and matching output together so a value flows both directions via [(prop)]."
+    },
+    {
+      "id": "q3",
+      "type": "single-choice",
+      "prompt": "How should two completely unrelated sibling components share state?",
+      "options": [
+        { "id": "a", "text": "By prop drilling through every ancestor" },
+        { "id": "b", "text": "Through a shared injectable service, typically providedIn: 'root'" },
+        { "id": "c", "text": "With viewChild() on each other" },
+        { "id": "d", "text": "Using global window variables" }
+      ],
+      "answer": "b",
+      "explanation": "Inputs/outputs only work parent-child; unrelated components inject the same singleton service and react to its signals."
+    },
+    {
+      "id": "q4",
+      "type": "single-choice",
+      "prompt": "Why should you avoid mutating an input() value directly inside a child?",
+      "options": [
+        { "id": "a", "text": "It causes a memory leak" },
+        { "id": "b", "text": "input() is a read-only signal representing parent-owned data; mutating it breaks unidirectional data flow" },
+        { "id": "c", "text": "Inputs cannot hold objects" },
+        { "id": "d", "text": "It disables change detection" }
+      ],
+      "answer": "b",
+      "explanation": "Use model() for shared two-way values or emit an output() and let the parent update its own state."
+    },
+    {
+      "id": "q5",
+      "type": "single-choice",
+      "prompt": "When is viewChild() the appropriate tool?",
+      "options": [
+        { "id": "a", "text": "For passing data down to a child" },
+        { "id": "b", "text": "For imperative access to a child instance, like calling .focus() or .reset()" },
+        { "id": "c", "text": "For sharing state between siblings" },
+        { "id": "d", "text": "For every parent-child interaction" }
+      ],
+      "answer": "b",
+      "explanation": "viewChild() bypasses the input/output contract, so reserve it for genuinely imperative needs."
+    },
+    {
+      "id": "q6",
+      "type": "fill-blank",
+      "prompt": "Which variant of input() forces the parent to supply a value or fail at compile time (e.g. title = input.____<string>())?",
+      "answer": ["required", "required()"],
+      "explanation": "input.required<T>() fails fast at compile time instead of silently rendering with undefined."
+    }
+  ]
+}

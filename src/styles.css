@@ -1,0 +1,468 @@
+@import 'tailwindcss';
+
+/* Class-based dark mode toggled by ThemeService (adds .dark on <html>) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------------------------------------------------------------------------
+   Design tokens
+
+   Colour is anchored on Angular's own brand gradient — red #E40035 through
+   magenta #F20089 into purple #6002EE. `brand-*` is the purple end (primary
+   actions, links), `magenta-*` is the warm end (accents, highlights).
+--------------------------------------------------------------------------- */
+@theme {
+  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  /* Angular purple */
+  --color-brand-50: #f5f2ff;
+  --color-brand-100: #ece5ff;
+  --color-brand-200: #dbcdff;
+  --color-brand-300: #c2a8ff;
+  --color-brand-400: #a375ff;
+  --color-brand-500: #8a3ffc;
+  --color-brand-600: #6002ee;
+  --color-brand-700: #5202c9;
+  --color-brand-800: #4304a3;
+  --color-brand-900: #380683;
+  --color-brand-950: #21014f;
+
+  /* Angular magenta */
+  --color-magenta-50: #fff0f8;
+  --color-magenta-100: #ffe3f3;
+  --color-magenta-200: #ffc7e7;
+  --color-magenta-300: #ff9bd4;
+  --color-magenta-400: #ff5bb8;
+  --color-magenta-500: #f20089;
+  --color-magenta-600: #d40077;
+  --color-magenta-700: #b00062;
+  --color-magenta-800: #900051;
+  --color-magenta-900: #780045;
+  --color-magenta-950: #4a002a;
+
+  /* Angular red (gradient origin) */
+  --color-ember-500: #e40035;
+  --color-ember-600: #c30030;
+
+  /* Purple-tinted neutrals — warmer and friendlier than stock slate */
+  --color-ink-50: #f8f7fb;
+  --color-ink-100: #f1eff7;
+  --color-ink-200: #e4e1ee;
+  --color-ink-300: #cdc8dd;
+  --color-ink-400: #9d96b4;
+  --color-ink-500: #6f6889;
+  --color-ink-600: #514a68;
+  --color-ink-700: #3d3651;
+  --color-ink-800: #2a2440;
+  --color-ink-900: #1b1630;
+  --color-ink-950: #100c1f;
+
+  /* Soft, purple-tinted shadows — black shadows read harsh at this radius */
+  --shadow-soft: 0 1px 2px rgb(33 1 79 / 0.04), 0 4px 16px rgb(33 1 79 / 0.06);
+  --shadow-lift: 0 2px 6px rgb(33 1 79 / 0.05), 0 14px 32px rgb(33 1 79 / 0.13);
+  --shadow-glow: 0 6px 20px rgb(96 2 238 / 0.3);
+
+  --animate-fade-up: fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-fade-in: fade-in 0.35s ease-out both;
+  --animate-pop: pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+:root {
+  --gradient-angular: linear-gradient(135deg, #e40035 0%, #f20089 48%, #6002ee 100%);
+}
+
+html {
+  scroll-behavior: smooth;
+  /* Match native controls (scrollbars, form widgets, autofill) to the active
+     theme, and opt out of the browser's automatic dark-mode remapping — this
+     app themes itself via the `.dark` class. */
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-ink-50 text-ink-700 antialiased;
+}
+
+.dark body {
+  @apply bg-ink-950 text-ink-300;
+}
+
+/* Global keyboard focus ring — deliberately UNLAYERED. Unlayered declarations
+   outrank every `@layer` (including Tailwind's `utilities`), so this wins even
+   over a utility like `outline-none` on the same element. That guarantees every
+   interactive element shows a visible, on-brand focus outline in both themes,
+   regardless of the utility classes it carries. */
+:where(a, button, select, summary, [tabindex]:not([tabindex='-1'])):focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+}
+
+/* Motion is decoration here; never let it fight the user's OS preference. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Component classes
+
+   Templates were repeating ~8 utility classes per surface, which made the
+   markup hard to scan and let styles drift apart. These names are the
+   vocabulary the templates use instead.
+--------------------------------------------------------------------------- */
+/* Outline (not a ring) so it survives being pulled into other utilities via
+   `@apply`, which drops nested variants in Tailwind v4. outline-offset shows the
+   element's own background as the gap, so one rule works in light and dark. */
+@utility focusable {
+  &:focus-visible {
+    outline: 2px solid var(--color-brand-500);
+    outline-offset: 2px;
+  }
+}
+
+@utility card {
+  @apply rounded-2xl border border-ink-200 bg-white shadow-soft dark:border-ink-800 dark:bg-ink-900;
+}
+
+/* Hover lift uses transform only — animating box positions would reflow.
+   The card styles are spelled out in full rather than `@apply card`: composing a
+   custom utility that carries `dark:` variants drops those variants in Tailwind
+   v4, which left these surfaces white in dark mode. Focus is handled by the
+   global :focus-visible outline below, so no ring utilities are needed here. */
+@utility card-interactive {
+  @apply rounded-2xl border border-ink-200 bg-white shadow-soft transition duration-200 hover:-translate-y-1 hover:border-brand-300 hover:shadow-lift dark:border-ink-800 dark:bg-ink-900 dark:hover:border-brand-700;
+}
+
+@utility btn {
+  @apply focusable inline-flex cursor-pointer items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition duration-200 disabled:pointer-events-none disabled:opacity-50;
+}
+
+@utility btn-primary {
+  @apply btn bg-brand-600 text-white hover:bg-brand-700 hover:shadow-glow active:scale-[0.97];
+}
+
+@utility btn-gradient {
+  @apply btn text-white active:scale-[0.97];
+  background-image: var(--gradient-angular);
+  background-size: 160% 160%;
+  background-position: 0% 50%;
+
+  &:hover {
+    background-position: 100% 50%;
+    box-shadow: var(--shadow-glow);
+  }
+}
+
+@utility btn-secondary {
+  @apply btn border border-ink-200 bg-white text-ink-700 hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 active:scale-[0.97] dark:border-ink-700 dark:bg-ink-900 dark:text-ink-200 dark:hover:border-brand-700 dark:hover:bg-ink-800 dark:hover:text-brand-300;
+}
+
+@utility btn-ghost {
+  @apply btn text-ink-500 hover:bg-ink-100 hover:text-ink-800 dark:text-ink-400 dark:hover:bg-ink-800 dark:hover:text-ink-100;
+}
+
+@utility btn-danger {
+  @apply btn border border-rose-300 text-rose-600 hover:bg-rose-50 active:scale-[0.97] dark:border-rose-900 dark:text-rose-400 dark:hover:bg-rose-950/40;
+}
+
+/* Icon-only controls still need a 44px hit area even though the glyph is 20px. */
+@utility btn-icon {
+  @apply focusable grid h-11 w-11 shrink-0 cursor-pointer place-items-center rounded-full text-ink-500 transition duration-200 hover:bg-ink-100 hover:text-brand-600 active:scale-95 dark:text-ink-400 dark:hover:bg-ink-800 dark:hover:text-brand-300;
+}
+
+@utility badge {
+  @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold;
+}
+
+@utility badge-beginner {
+  @apply badge bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300;
+}
+
+@utility badge-intermediate {
+  @apply badge bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300;
+}
+
+@utility badge-advanced {
+  @apply badge bg-magenta-100 text-magenta-800 dark:bg-magenta-950 dark:text-magenta-300;
+}
+
+@utility input-field {
+  @apply w-full rounded-2xl border border-ink-200 bg-white px-4 py-3 text-base text-ink-800 outline-none transition placeholder:text-ink-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 dark:border-ink-700 dark:bg-ink-900 dark:text-ink-100;
+}
+
+@utility chip {
+  @apply focusable inline-flex items-center gap-1.5 rounded-full border border-ink-200 bg-white px-3 py-1.5 text-sm text-ink-700 transition hover:border-brand-300 hover:text-brand-700 dark:border-ink-800 dark:bg-ink-900 dark:text-ink-200 dark:hover:border-brand-700 dark:hover:text-brand-300;
+}
+
+@utility heading {
+  @apply font-extrabold tracking-tight text-ink-900 dark:text-white;
+}
+
+@utility prose-muted {
+  @apply text-ink-500 dark:text-ink-400;
+}
+
+@utility gradient-text {
+  background-image: var(--gradient-angular);
+  @apply bg-clip-text text-transparent;
+}
+
+@utility gradient-rule {
+  background-image: var(--gradient-angular);
+  @apply h-1 w-full rounded-full;
+}
+
+/* The Angular shield, filled with the brand gradient. */
+@utility brand-mark {
+  background-image: var(--gradient-angular);
+  @apply grid place-items-center rounded-xl text-white shadow-glow;
+}
+
+@utility surface-grid {
+  background-image:
+    linear-gradient(to right, rgb(96 2 238 / 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(96 2 238 / 0.06) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* ---------------------------------------------------------------------------
+   Markdown / lesson content typography
+   ngx-markdown renders into .lesson-content; style the raw HTML here.
+--------------------------------------------------------------------------- */
+.lesson-content {
+  @apply text-[1.0625rem] leading-relaxed text-ink-700 dark:text-ink-300;
+}
+.lesson-content h1 {
+  @apply mt-10 mb-4 scroll-mt-24 text-3xl font-extrabold tracking-tight text-ink-900 dark:text-white;
+}
+.lesson-content h2 {
+  @apply mt-10 mb-3 flex scroll-mt-24 items-center gap-3 text-2xl font-bold text-ink-900 dark:text-white;
+}
+/* Gradient tick instead of a full rule — lighter, and on-brand. */
+.lesson-content h2::before {
+  content: '';
+  background-image: var(--gradient-angular);
+  @apply h-6 w-1 shrink-0 rounded-full;
+}
+.lesson-content h3 {
+  @apply mt-8 mb-2 scroll-mt-24 text-xl font-bold text-ink-900 dark:text-white;
+}
+.lesson-content p {
+  @apply my-4;
+}
+.lesson-content ul {
+  @apply my-4 list-disc space-y-1.5 pl-6 marker:text-brand-400;
+}
+.lesson-content ol {
+  @apply my-4 list-decimal space-y-1.5 pl-6 marker:font-bold marker:text-brand-500;
+}
+.lesson-content a {
+  @apply font-medium text-brand-600 underline decoration-brand-300 underline-offset-2 transition hover:text-magenta-600 hover:decoration-magenta-400 dark:text-brand-300 dark:decoration-brand-700 dark:hover:text-magenta-400;
+}
+.lesson-content blockquote {
+  @apply my-5 rounded-r-xl border-l-4 border-brand-400 bg-brand-50 py-3 pr-4 pl-4 text-ink-600 italic dark:bg-brand-950/40 dark:text-ink-300;
+}
+.lesson-content table {
+  @apply my-5 w-full border-collapse overflow-hidden rounded-xl text-sm;
+}
+.lesson-content th,
+.lesson-content td {
+  @apply border border-ink-200 px-3 py-2 text-left dark:border-ink-800;
+}
+.lesson-content th {
+  @apply bg-ink-100 font-bold text-ink-800 dark:bg-ink-800 dark:text-ink-100;
+}
+/* inline code (not inside a highlighted code block) */
+.lesson-content :not(pre) > code {
+  @apply rounded-md bg-brand-50 px-1.5 py-0.5 font-mono text-[0.85em] font-medium text-brand-700 ring-1 ring-brand-100 ring-inset dark:bg-brand-950/60 dark:text-brand-300 dark:ring-brand-900;
+}
+.lesson-content pre {
+  @apply my-5 overflow-x-auto rounded-2xl text-sm shadow-soft;
+}
+.lesson-content img {
+  @apply my-5 max-w-full rounded-2xl;
+}
+.lesson-content hr {
+  @apply my-10 border-ink-200 dark:border-ink-800;
+}
+
+/* ---------------------------------------------------------------------------
+   Flash cards
+
+   LessonPage.onMarkdownReady() rewrites the "Flash Cards" markdown list into
+   this markup: a responsive grid of 3D flip cards. Question on the front,
+   gradient answer on the back. Spelled out in plain CSS (not @apply) so the
+   dark: variants survive Tailwind v4's utility composition.
+--------------------------------------------------------------------------- */
+.flashcard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15.5rem, 1fr));
+  gap: 1rem;
+  margin: 1.75rem 0 2.25rem;
+}
+
+.flashcard {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  perspective: 1200px;
+  min-height: 11rem;
+}
+
+.flashcard-inner {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: inherit;
+  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+  transform-style: preserve-3d;
+}
+
+.flashcard.is-flipped .flashcard-inner {
+  transform: rotateY(180deg);
+}
+
+.flashcard-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 1.15rem 1.25rem;
+  border-radius: 1rem;
+  overflow: auto;
+  border: 1px solid var(--color-ink-200);
+  box-shadow: var(--shadow-soft);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transition: box-shadow 0.2s ease;
+}
+
+.flashcard-front {
+  background: #fff;
+}
+
+.flashcard-back {
+  transform: rotateY(180deg);
+  border-color: transparent;
+  background-image: var(--gradient-angular);
+  color: #fff;
+}
+
+.dark .flashcard-face {
+  border-color: var(--color-ink-800);
+}
+.dark .flashcard-front {
+  background: var(--color-ink-900);
+}
+
+.flashcard:hover .flashcard-face {
+  box-shadow: var(--shadow-lift);
+}
+
+.flashcard-tag {
+  display: inline-grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  background: var(--color-brand-50);
+  color: var(--color-brand-700);
+}
+.dark .flashcard-front .flashcard-tag {
+  background: var(--color-brand-950);
+  color: var(--color-brand-300);
+}
+.flashcard-back .flashcard-tag {
+  background: rgb(255 255 255 / 0.22);
+  color: #fff;
+}
+
+.flashcard-body {
+  flex: 1 1 auto;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--color-ink-800);
+}
+.dark .flashcard-front .flashcard-body {
+  color: var(--color-ink-200);
+}
+.flashcard-back .flashcard-body {
+  color: #fff;
+}
+/* Keep inline code legible on the gradient back face. */
+.flashcard-back .flashcard-body :not(pre) > code {
+  background: rgb(255 255 255 / 0.18);
+  color: #fff;
+  --tw-ring-color: transparent;
+}
+
+.flashcard-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-ink-400);
+}
+.flashcard-hint svg {
+  width: 0.85rem;
+  height: 0.85rem;
+  transition: transform 0.4s ease;
+}
+.flashcard:hover .flashcard-hint svg {
+  transform: rotate(-90deg);
+}

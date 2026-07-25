@@ -1,0 +1,79 @@
+{
+  "id": "quiz-27",
+  "lessonId": "lesson-27",
+  "title": "State Management with NgRx & Component Store",
+  "passingScore": 70,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single-choice",
+      "prompt": "What is the difference between an action and a reducer in NgRx?",
+      "options": [
+        { "id": "a", "text": "An action mutates state; a reducer describes an event" },
+        { "id": "b", "text": "An action is a plain object describing that something happened; a reducer is a pure function computing new state from state + action" },
+        { "id": "c", "text": "They are the same thing" },
+        { "id": "d", "text": "A reducer performs HTTP calls" }
+      ],
+      "answer": "b",
+      "explanation": "Actions carry intent with no logic; reducers purely derive the next state, never mutating the existing state."
+    },
+    {
+      "id": "q2",
+      "type": "match-pair",
+      "prompt": "Match each NgRx building block to its responsibility.",
+      "pairs": [
+        { "left": "Action", "right": "Describes an event that happened" },
+        { "left": "Reducer", "right": "Purely computes new state" },
+        { "left": "Selector", "right": "Reads/derives data from state (memoized)" },
+        { "left": "Effect", "right": "Performs side effects like HTTP and dispatches results" }
+      ],
+      "explanation": "These four pieces implement the unidirectional Redux data flow that makes state changes traceable."
+    },
+    {
+      "id": "q3",
+      "type": "single-choice",
+      "prompt": "Where should HTTP/API calls happen in an NgRx app?",
+      "options": [
+        { "id": "a", "text": "Directly inside components" },
+        { "id": "b", "text": "Inside reducers" },
+        { "id": "c", "text": "Inside effects, which then dispatch success/failure actions" },
+        { "id": "d", "text": "Inside selectors" }
+      ],
+      "answer": "c",
+      "explanation": "Isolating side effects in effects keeps reducers pure and preserves the traceable action-to-API narrative."
+    },
+    {
+      "id": "q4",
+      "type": "single-choice",
+      "prompt": "When should you choose ComponentStore over the global Store?",
+      "options": [
+        { "id": "a", "text": "For state shared across many unrelated features" },
+        { "id": "b", "text": "For state local to one component or small feature (filters, pagination, UI flags)" },
+        { "id": "c", "text": "Only for authentication state" },
+        { "id": "d", "text": "Never — always use the global Store" }
+      ],
+      "answer": "b",
+      "explanation": "ComponentStore keeps local state reactive and immutable without adding global actions/reducers."
+    },
+    {
+      "id": "q5",
+      "type": "single-choice",
+      "prompt": "How do you scope a ComponentStore to a single component instance?",
+      "options": [
+        { "id": "a", "text": "Use @Injectable({ providedIn: 'root' })" },
+        { "id": "b", "text": "Add it to that component's own providers array" },
+        { "id": "c", "text": "Register it with provideStore()" },
+        { "id": "d", "text": "It is always a singleton" }
+      ],
+      "answer": "b",
+      "explanation": "Providing it in the component's providers ties its lifecycle to that instance; providedIn: 'root' would make it an app-wide singleton."
+    },
+    {
+      "id": "q6",
+      "type": "fill-blank",
+      "prompt": "Which @ngrx/operators helper safely handles success/error inside an effect so an error doesn't terminate the effect's source stream?",
+      "answer": ["tapResponse", "tapResponse()"],
+      "explanation": "A plain catchError that rethrows can kill the effect; tapResponse separates next/error handling safely."
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "id": "quiz-03",
+  "lessonId": "lesson-03",
+  "title": "Data Binding & Signals",
+  "passingScore": 70,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single-choice",
+      "prompt": "How do you read the current value of a signal named count?",
+      "options": [
+        { "id": "a", "text": "count" },
+        { "id": "b", "text": "count()" },
+        { "id": "c", "text": "count.value" },
+        { "id": "d", "text": "count.get()" }
+      ],
+      "answer": "b",
+      "explanation": "Signals are read by calling them like a function: count()."
+    },
+    {
+      "id": "q2",
+      "type": "fill-blank",
+      "prompt": "Which function creates derived, read-only state from other signals?",
+      "answer": ["computed", "computed()"],
+      "explanation": "computed() recalculates automatically when its dependencies change."
+    },
+    {
+      "id": "q3",
+      "type": "match-pair",
+      "prompt": "Match each binding syntax to what it does.",
+      "pairs": [
+        { "left": "{{ value }}", "right": "Interpolation" },
+        { "left": "[disabled]=\"x\"", "right": "Property binding" },
+        { "left": "(click)=\"f()\"", "right": "Event binding" }
+      ],
+      "explanation": "Curly braces interpolate text, [] binds properties, () binds events."
+    },
+    {
+      "id": "q4",
+      "type": "ordering",
+      "prompt": "Order these steps to update a counter signal by one.",
+      "items": [
+        { "id": "s1", "text": "Declare const count = signal(0)" },
+        { "id": "s2", "text": "Read the current value with count()" },
+        { "id": "s3", "text": "Call count.update(n => n + 1)" },
+        { "id": "s4", "text": "Template re-renders with the new value" }
+      ],
+      "answer": ["s1", "s2", "s3", "s4"],
+      "explanation": "Create the signal, read it, update it, and the view reacts automatically."
+    }
+  ]
+}

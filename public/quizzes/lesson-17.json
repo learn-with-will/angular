@@ -1,0 +1,79 @@
+{
+  "id": "quiz-17",
+  "lessonId": "lesson-17",
+  "title": "Observables & RxJS Basics",
+  "passingScore": 70,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single-choice",
+      "prompt": "What is a key difference between a Promise and an Observable?",
+      "options": [
+        { "id": "a", "text": "Promises can emit many values; Observables emit exactly one" },
+        { "id": "b", "text": "An Observable is lazy, can emit many values over time, and is cancellable via unsubscribe()" },
+        { "id": "c", "text": "Observables run eagerly when created" },
+        { "id": "d", "text": "Promises support operators like map and filter" }
+      ],
+      "answer": "b",
+      "explanation": "A Promise is eager and single-value; an Observable is lazy (runs on subscribe), multi-value, and cancellable."
+    },
+    {
+      "id": "q2",
+      "type": "single-choice",
+      "prompt": "What does the async pipe do in a template?",
+      "options": [
+        { "id": "a", "text": "Converts an Observable into a Promise" },
+        { "id": "b", "text": "Subscribes, shows the latest value, and unsubscribes automatically when the component is destroyed" },
+        { "id": "c", "text": "Runs the Observable only once and caches it forever" },
+        { "id": "d", "text": "Adds error handling to the stream" }
+      ],
+      "answer": "b",
+      "explanation": "The async pipe manages the subscription lifecycle for you, preventing leaks and removing manual subscribe/unsubscribe."
+    },
+    {
+      "id": "q3",
+      "type": "single-choice",
+      "prompt": "Which operator cancels a previous in-flight HTTP request when a new search term arrives?",
+      "options": [
+        { "id": "a", "text": "mergeMap" },
+        { "id": "b", "text": "concatMap" },
+        { "id": "c", "text": "switchMap" },
+        { "id": "d", "text": "exhaustMap" }
+      ],
+      "answer": "c",
+      "explanation": "switchMap cancels the previous inner Observable and switches to the newest — ideal for typeahead search."
+    },
+    {
+      "id": "q4",
+      "type": "match-pair",
+      "prompt": "Match each flattening operator to its behavior.",
+      "pairs": [
+        { "left": "switchMap", "right": "Cancel the old, use the new" },
+        { "left": "concatMap", "right": "Run in order, one at a time" },
+        { "left": "mergeMap", "right": "Run concurrently" },
+        { "left": "exhaustMap", "right": "Ignore new triggers while busy" }
+      ],
+      "explanation": "Choosing the right flattening operator prevents race conditions and duplicate submissions."
+    },
+    {
+      "id": "q5",
+      "type": "single-choice",
+      "prompt": "For a manual subscription in component logic, what's the modern way to avoid a memory leak without ngOnDestroy boilerplate?",
+      "options": [
+        { "id": "a", "text": "Never unsubscribe" },
+        { "id": "b", "text": "Pipe through takeUntilDestroyed() from @angular/core/rxjs-interop" },
+        { "id": "c", "text": "Call complete() manually" },
+        { "id": "d", "text": "Wrap it in a Promise" }
+      ],
+      "answer": "b",
+      "explanation": "takeUntilDestroyed() ties the subscription to the component's DestroyRef and completes it on destroy."
+    },
+    {
+      "id": "q6",
+      "type": "fill-blank",
+      "prompt": "By convention, variable names holding Observables are suffixed with which single character (e.g. user__)?",
+      "answer": ["$", "dollar"],
+      "explanation": "The $ suffix (user$, results$) is a widely adopted convention that makes Observables easy to spot."
+    }
+  ]
+}

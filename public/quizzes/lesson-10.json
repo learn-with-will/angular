@@ -1,0 +1,80 @@
+{
+  "id": "quiz-10",
+  "lessonId": "lesson-10",
+  "title": "Event Binding & User Interactions",
+  "passingScore": 70,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single-choice",
+      "prompt": "What is the correct syntax to run onSave() when a button is clicked?",
+      "options": [
+        { "id": "a", "text": "[click]=\"onSave()\"" },
+        { "id": "b", "text": "(click)=\"onSave()\"" },
+        { "id": "c", "text": "{{ click: onSave() }}" },
+        { "id": "d", "text": "on-click=\"onSave\"" }
+      ],
+      "answer": "b",
+      "explanation": "Event binding wraps the event name in parentheses and runs a template statement: (click)=\"onSave()\"."
+    },
+    {
+      "id": "q2",
+      "type": "single-choice",
+      "prompt": "What does the $event variable contain for a native DOM event?",
+      "options": [
+        { "id": "a", "text": "The component instance" },
+        { "id": "b", "text": "The DOM Event object (with target, target.value, etc.)" },
+        { "id": "c", "text": "Always a string value" },
+        { "id": "d", "text": "The signal that changed" }
+      ],
+      "answer": "b",
+      "explanation": "For native events $event is the DOM Event; for custom outputs it's the emitted value."
+    },
+    {
+      "id": "q3",
+      "type": "single-choice",
+      "prompt": "What is the modern function for defining a custom event on a component?",
+      "options": [
+        { "id": "a", "text": "@Output() with EventEmitter" },
+        { "id": "b", "text": "output()" },
+        { "id": "c", "text": "emit()" },
+        { "id": "d", "text": "@HostListener()" }
+      ],
+      "answer": "b",
+      "explanation": "output() is the current recommended API; it replaces the legacy @Output() + EventEmitter pattern."
+    },
+    {
+      "id": "q4",
+      "type": "single-choice",
+      "prompt": "Which binding runs submit() only when the Enter key is released in an input?",
+      "options": [
+        { "id": "a", "text": "(keyup)=\"submit()\"" },
+        { "id": "b", "text": "(keyup.enter)=\"submit()\"" },
+        { "id": "c", "text": "[keyup.enter]=\"submit\"" },
+        { "id": "d", "text": "(enter)=\"submit()\"" }
+      ],
+      "answer": "b",
+      "explanation": "The (keyup.enter) key modifier makes Angular filter for the Enter key so you don't inspect event.key by hand."
+    },
+    {
+      "id": "q5",
+      "type": "single-choice",
+      "prompt": "What is the difference between [value]=\"x\" and (input)=\"y($event)\"?",
+      "options": [
+        { "id": "a", "text": "They are identical" },
+        { "id": "b", "text": "[value] flows data into the element; (input) flows events out to your handler" },
+        { "id": "c", "text": "(input) flows data in; [value] flows events out" },
+        { "id": "d", "text": "Both only work inside forms" }
+      ],
+      "answer": "b",
+      "explanation": "Square brackets are property binding (data in); parentheses are event binding (events out)."
+    },
+    {
+      "id": "q6",
+      "type": "fill-blank",
+      "prompt": "After emitting from an output, which method actually sends the value to listeners (e.g. this.rated.____(value))?",
+      "answer": ["emit", "emit()"],
+      "explanation": "Call .emit(value) on the output to notify whoever is listening in the parent."
+    }
+  ]
+}

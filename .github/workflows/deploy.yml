@@ -1,0 +1,62 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Permissions the GITHUB_TOKEN needs to publish Pages.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one Pages deploy at a time; newer pushes cancel in-flight runs.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Project sites are served from https://<user>.github.io/<repo>/, so the
+      # app must be built with that subpath as its base href. This derives it
+      # from the repo name automatically — no need to hard-code it.
+      # (If you later add a custom domain or use a <user>.github.io repo, change
+      #  this to: npm run build -- --base-href "/")
+      - name: Build
+        run: npm run build -- --base-href "/${GITHUB_REPOSITORY#*/}/"
+
+      # SPA deep-link fallback: GitHub Pages has no server-side URL rewriting,
+      # so a direct hit on /lesson/:slug returns 404.html. Serving a copy of
+      # index.html there lets the Angular router take over and render the route.
+      - name: Add SPA 404 fallback
+        run: cp dist/learning-portal/browser/index.html dist/learning-portal/browser/404.html
+
+      # Skip Jekyll processing (harmless for Angular output, avoids surprises).
+      - name: Disable Jekyll
+        run: touch dist/learning-portal/browser/.nojekyll
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/learning-portal/browser
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
