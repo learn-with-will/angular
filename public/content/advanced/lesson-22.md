@@ -3,7 +3,7 @@ id: lesson-22
 slug: advanced-rxjs-operators
 title: "Advanced RxJS Operators in Angular"
 level: advanced
-order: 20
+order: 23
 duration: 70
 tags:
   - rxjs

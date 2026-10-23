@@ -3,7 +3,7 @@ id: lesson-25
 slug: custom-form-controls-control-value-accessor
 title: "Custom Form Controls with ControlValueAccessor"
 level: advanced
-order: 23
+order: 26
 duration: 75
 tags:
   - forms

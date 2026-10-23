@@ -1,0 +1,78 @@
+{
+  "id": "quiz-33",
+  "lessonId": "lesson-33",
+  "title": "Singleton Services & the Facade Pattern",
+  "passingScore": 70,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single-choice",
+      "prompt": "CartService is providedIn: 'root'. A product page also lists it in its component providers. What happens?",
+      "options": [
+        { "id": "a", "text": "Nothing changes; Angular reuses the root instance" },
+        { "id": "b", "text": "The product page and its children get a second, separate instance, so the rest of the app doesn't see their changes" },
+        { "id": "c", "text": "Angular throws a duplicate provider error" },
+        { "id": "d", "text": "The root instance is destroyed and replaced" }
+      ],
+      "answer": "b",
+      "explanation": "Each injector caches its own instance. A component-level provider creates a new instance for that subtree, which breaks sharing with the rest of the app."
+    },
+    {
+      "id": "q2",
+      "type": "match-pair",
+      "prompt": "Match each provider location to what it gives you.",
+      "pairs": [
+        { "left": "providedIn: 'root'", "right": "One instance for the whole app" },
+        { "left": "A route's providers array", "right": "One instance shared by a feature's route subtree" },
+        { "left": "A component's providers array", "right": "A private instance per component, shared with its children" }
+      ],
+      "explanation": "Use root for shared state, route providers to scope state to one feature, and component providers for state that must be private to one widget."
+    },
+    {
+      "id": "q3",
+      "type": "multiple-choice",
+      "prompt": "Which belong in a facade's public API? (Select all that apply)",
+      "options": [
+        { "id": "a", "text": "Read-only computed() selectors like entries and loading" },
+        { "id": "b", "text": "Intent methods like add() and remove(id)" },
+        { "id": "c", "text": "The private writable state signal" },
+        { "id": "d", "text": "The injected HttpClient so components can make their own calls" }
+      ],
+      "answer": ["a", "b"],
+      "explanation": "Components should read state through read-only selectors and change it only through intent methods. Writable state and HttpClient stay hidden."
+    },
+    {
+      "id": "q4",
+      "type": "ordering",
+      "prompt": "Order the steps of an optimistic delete inside a facade.",
+      "items": [
+        { "id": "s1", "text": "Remember the entry and its position" },
+        { "id": "s2", "text": "Patch state with a new array that leaves the entry out" },
+        { "id": "s3", "text": "Call the API to delete it" },
+        { "id": "s4", "text": "If the call fails, put the entry back and set an error message" }
+      ],
+      "answer": ["s1", "s2", "s3", "s4"],
+      "explanation": "Save what you need to undo, update the UI immediately, call the server, and roll back on failure."
+    },
+    {
+      "id": "q5",
+      "type": "single-choice",
+      "prompt": "Why split a feature into an API service and a facade?",
+      "options": [
+        { "id": "a", "text": "Angular requires HttpClient to be injected in a separate class" },
+        { "id": "b", "text": "The API service knows endpoints and mapping; the facade knows state and rules, so each stays small and testable" },
+        { "id": "c", "text": "It makes HTTP requests faster" },
+        { "id": "d", "text": "Facades can't be providedIn: 'root'" }
+      ],
+      "answer": "b",
+      "explanation": "Separating HTTP from state lets you test the facade with a stubbed API and change endpoints without touching state logic."
+    },
+    {
+      "id": "q6",
+      "type": "fill-blank",
+      "prompt": "Which signal method returns a read-only view of a writable signal, so other classes can read it but not set it?",
+      "answer": ["asReadonly", "asReadonly()"],
+      "explanation": "Keep the writable signal private and expose signal.asReadonly() or a computed() selector."
+    }
+  ]
+}

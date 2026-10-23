@@ -3,7 +3,7 @@ id: lesson-23
 slug: advanced-routing-guards-resolvers
 title: "Advanced Routing: Guards & Resolvers"
 level: advanced
-order: 21
+order: 24
 duration: 55
 tags:
   - routing

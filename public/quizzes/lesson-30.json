@@ -1,0 +1,78 @@
+{
+  "id": "quiz-30",
+  "lessonId": "lesson-30",
+  "title": "TypeScript Patterns for Angular",
+  "passingScore": 70,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single-choice",
+      "prompt": "What does http.get<Order>('/api/orders/1') guarantee at runtime?",
+      "options": [
+        { "id": "a", "text": "That the response body matches the Order interface" },
+        { "id": "b", "text": "Nothing about the shape: the generic only tells the compiler what you expect" },
+        { "id": "c", "text": "That the response is an instance of the Order class" },
+        { "id": "d", "text": "That missing fields are filled with defaults" }
+      ],
+      "answer": "b",
+      "explanation": "Types are erased at runtime. The generic is a promise to the compiler, not a check. Validate data at the boundary if you need guarantees."
+    },
+    {
+      "id": "q2",
+      "type": "match-pair",
+      "prompt": "Match each kind of code to the TypeScript construct it should usually use.",
+      "pairs": [
+        { "left": "Shape of an API response", "right": "interface" },
+        { "left": "'idle' | 'loading' | 'error'", "right": "type alias" },
+        { "left": "An injectable service", "right": "class" }
+      ],
+      "explanation": "Interfaces describe plain data, type aliases express unions and derived types, and classes hold behavior that Angular instantiates and injects."
+    },
+    {
+      "id": "q3",
+      "type": "fill-blank",
+      "prompt": "Which type accepts any value but forces you to narrow it before you can use it?",
+      "answer": ["unknown"],
+      "explanation": "unknown is the safe replacement for any at trust boundaries such as JSON.parse results, caught errors, and postMessage data."
+    },
+    {
+      "id": "q4",
+      "type": "multiple-choice",
+      "prompt": "Which of these narrow a value to a more specific type? (Select all that apply)",
+      "options": [
+        { "id": "a", "text": "typeof value === 'string'" },
+        { "id": "b", "text": "error instanceof HttpErrorResponse" },
+        { "id": "c", "text": "'id' in value" },
+        { "id": "d", "text": "value as Order" }
+      ],
+      "answer": ["a", "b", "c"],
+      "explanation": "typeof, instanceof, and in are real runtime checks that TypeScript understands. A cast with 'as' checks nothing; it only silences the compiler."
+    },
+    {
+      "id": "q5",
+      "type": "single-choice",
+      "prompt": "Why add a default branch that calls assertNever(question) in a switch over a discriminated union?",
+      "options": [
+        { "id": "a", "text": "It makes the switch run faster" },
+        { "id": "b", "text": "It logs unknown values in production" },
+        { "id": "c", "text": "The compiler errors as soon as a new union member is added but not handled" },
+        { "id": "d", "text": "It converts the union into an enum" }
+      ],
+      "answer": "c",
+      "explanation": "If every case is handled, the value is 'never' in the default branch. A new, unhandled member makes it not-never, so passing it to assertNever fails to compile."
+    },
+    {
+      "id": "q6",
+      "type": "single-choice",
+      "prompt": "Given interface ExerciseSet { id: string; exercise: string; reps: number }, which type best describes an entry that hasn't been saved yet (the server assigns the id)?",
+      "options": [
+        { "id": "a", "text": "Partial<ExerciseSet>" },
+        { "id": "b", "text": "Omit<ExerciseSet, 'id'>" },
+        { "id": "c", "text": "Pick<ExerciseSet, 'id'>" },
+        { "id": "d", "text": "Readonly<ExerciseSet>" }
+      ],
+      "answer": "b",
+      "explanation": "Omit removes the id but keeps every other field required. Partial would make every field optional, which is too loose for a create payload."
+    }
+  ]
+}

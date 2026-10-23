@@ -1,0 +1,78 @@
+{
+  "id": "quiz-32",
+  "lessonId": "lesson-32",
+  "title": "Feature-Based Architecture & Lazy Boundaries",
+  "passingScore": 70,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "match-pair",
+      "prompt": "Match each item to the folder it belongs in.",
+      "pairs": [
+        { "left": "authInterceptor and the navbar shell", "right": "core/" },
+        { "left": "A presentational Badge component and a duration pipe", "right": "shared/" },
+        { "left": "DiaryStore and the diary edit page", "right": "features/diary/" }
+      ],
+      "explanation": "core/ holds app-wide singletons and the shell, shared/ holds feature-agnostic building blocks, and each feature folder holds its own pages and state."
+    },
+    {
+      "id": "q2",
+      "type": "single-choice",
+      "prompt": "The diary feature needs an exercise picker that currently lives in features/exercises. What should you do?",
+      "options": [
+        { "id": "a", "text": "Import it directly from ../exercises/exercise-picker" },
+        { "id": "b", "text": "Copy the file into the diary folder and keep both in sync" },
+        { "id": "c", "text": "Move the picker to shared/ if it's generic, so both features import it from there" },
+        { "id": "d", "text": "Merge the two features into one folder" }
+      ],
+      "answer": "c",
+      "explanation": "Features shouldn't import from each other. A generic, reusable piece belongs in shared/; an app-wide service belongs in core/."
+    },
+    {
+      "id": "q3",
+      "type": "single-choice",
+      "prompt": "app.routes.ts uses loadComponent for the diary page, but the page still appears in the main bundle. What is the most likely cause?",
+      "options": [
+        { "id": "a", "text": "Lazy loading only works in development builds" },
+        { "id": "b", "text": "The page is also imported statically somewhere that the main bundle includes, such as the top of app.routes.ts" },
+        { "id": "c", "text": "loadComponent only works with NgModules" },
+        { "id": "d", "text": "The page component is missing standalone: true" }
+      ],
+      "answer": "b",
+      "explanation": "A single static import pulls the code back into the main bundle. Keep feature code behind dynamic import() calls only. (Standalone is the default since Angular 19.)"
+    },
+    {
+      "id": "q4",
+      "type": "fill-blank",
+      "prompt": "Which route property registers a service shared by a route and all of its child routes?",
+      "answer": ["providers"],
+      "explanation": "Route-level providers create an injector for that route subtree, so every page in the feature gets the same instance without using the root injector."
+    },
+    {
+      "id": "q5",
+      "type": "multiple-choice",
+      "prompt": "Which tools help keep bundles small as the app grows? (Select all that apply)",
+      "options": [
+        { "id": "a", "text": "Size budgets in angular.json" },
+        { "id": "b", "text": "withPreloading(PreloadAllModules) for background loading of lazy chunks" },
+        { "id": "c", "text": "@defer for heavy, non-critical parts of a page" },
+        { "id": "d", "text": "A SHARED_IMPORTS array spread into every component" }
+      ],
+      "answer": ["a", "b", "c"],
+      "explanation": "Budgets catch growth, preloading and @defer keep the first load small. A giant shared imports array does the opposite: every component depends on everything."
+    },
+    {
+      "id": "q6",
+      "type": "single-choice",
+      "prompt": "What is the standalone-era version of the 'single-module app' anti-pattern?",
+      "options": [
+        { "id": "a", "text": "Using loadComponent instead of loadChildren" },
+        { "id": "b", "text": "One shared imports list (or one flat folder) that every component depends on" },
+        { "id": "c", "text": "Using route-level providers" },
+        { "id": "d", "text": "Using path aliases like @shared/*" }
+      ],
+      "answer": "b",
+      "explanation": "Both anti-patterns remove boundaries: everything depends on everything, so nothing can be found, split, or owned separately."
+    }
+  ]
+}

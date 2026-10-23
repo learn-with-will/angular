@@ -3,7 +3,7 @@ id: lesson-29
 slug: end-to-end-testing-with-cypress
 title: "End-to-End Testing with Cypress"
 level: advanced
-order: 27
+order: 30
 duration: 55
 tags:
   - cypress

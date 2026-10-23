@@ -3,7 +3,7 @@ id: lesson-24
 slug: custom-and-async-validators
 title: "Custom & Asynchronous Validators"
 level: advanced
-order: 22
+order: 25
 duration: 55
 tags:
   - reactive-forms

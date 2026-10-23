@@ -1,0 +1,78 @@
+{
+  "id": "quiz-35",
+  "lessonId": "lesson-35",
+  "title": "Micro Frontends with Angular Elements",
+  "passingScore": 70,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single-choice",
+      "prompt": "What is the strongest reason to split an Angular app into micro frontends?",
+      "options": [
+        { "id": "a", "text": "It always makes the app load faster" },
+        { "id": "b", "text": "Several teams need to build and deploy their parts independently" },
+        { "id": "c", "text": "It removes the need for a design system" },
+        { "id": "d", "text": "Angular apps can't be lazy-loaded otherwise" }
+      ],
+      "answer": "b",
+      "explanation": "Micro frontends are mainly an organizational pattern. They usually cost performance and consistency, so they pay off when teams truly need independent deploys."
+    },
+    {
+      "id": "q2",
+      "type": "single-choice",
+      "prompt": "Which split follows the 'slice vertically' rule?",
+      "options": [
+        { "id": "a", "text": "A header micro frontend, a forms micro frontend, and a services micro frontend" },
+        { "id": "b", "text": "One micro frontend per CSS framework" },
+        { "id": "c", "text": "An exercise-catalog micro frontend and a checkout micro frontend, each with its own UI, state, and API calls" },
+        { "id": "d", "text": "One micro frontend per developer" }
+      ],
+      "answer": "c",
+      "explanation": "Vertical slices cover a whole business capability, so each team can ship features alone. Horizontal slices need several teams for every change."
+    },
+    {
+      "id": "q3",
+      "type": "match-pair",
+      "prompt": "Match each part of an Angular component to what Angular Elements turns it into.",
+      "pairs": [
+        { "left": "input() named maxItems", "right": "A maxItems property and a max-items attribute" },
+        { "left": "output() named saved", "right": "A 'saved' CustomEvent with the value in event.detail" },
+        { "left": "The component class", "right": "A custom element registered with customElements.define()" }
+      ],
+      "explanation": "Inputs become properties (and dash-case attributes), outputs become DOM CustomEvents, and the component is registered as a custom element."
+    },
+    {
+      "id": "q4",
+      "type": "multiple-choice",
+      "prompt": "An Angular host must load an Angular Element built with the CLI's application builder. Which are needed? (Select all that apply)",
+      "options": [
+        { "id": "a", "text": "Build the element zoneless so the page doesn't get two copies of zone.js" },
+        { "id": "b", "text": "Load main.js with <script type=\"module\">" },
+        { "id": "c", "text": "Add CUSTOM_ELEMENTS_SCHEMA to the host component that uses the tag" },
+        { "id": "d", "text": "Declare the element's component in the host's NgModule" }
+      ],
+      "answer": ["a", "b", "c"],
+      "explanation": "Only one zone.js can run per page, the builder outputs ES modules, and the host compiler must accept the unknown tag. The host never imports the element's component."
+    },
+    {
+      "id": "q5",
+      "type": "fill-blank",
+      "prompt": "Which function from @angular/elements wraps a component so it can be registered as a custom element?",
+      "answer": ["createCustomElement", "createCustomElement()"],
+      "explanation": "createCustomElement(Component, { injector }) returns a class you pass to customElements.define()."
+    },
+    {
+      "id": "q6",
+      "type": "single-choice",
+      "prompt": "Why should each micro frontend release be deployed to a versioned URL like /mfe/exercise-form/1.4.0/main.js?",
+      "options": [
+        { "id": "a", "text": "Browsers refuse to load unversioned scripts" },
+        { "id": "b", "text": "So the host can pin, upgrade, and roll back deliberately instead of being broken by another team's deploy or by stale caches" },
+        { "id": "c", "text": "It makes the bundle smaller" },
+        { "id": "d", "text": "Angular Elements requires it" }
+      ],
+      "answer": "b",
+      "explanation": "With outputHashing set to none, versioned paths are what keep caching and independent deploys safe."
+    }
+  ]
+}

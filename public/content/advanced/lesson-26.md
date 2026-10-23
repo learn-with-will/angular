@@ -3,7 +3,7 @@ id: lesson-26
 slug: angular-cdk-virtual-scroll-drag-drop
 title: "Angular CDK Deep Dive: Virtual Scroll & Drag/Drop"
 level: advanced
-order: 24
+order: 27
 duration: 75
 tags:
   - angular-cdk

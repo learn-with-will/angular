@@ -3,7 +3,7 @@ id: lesson-21
 slug: heavy-computation-web-workers-pure-pipes
 title: "Heavy Computation: Web Workers & Pure Pipes"
 level: advanced
-order: 19
+order: 22
 duration: 55
 tags:
   - web-workers

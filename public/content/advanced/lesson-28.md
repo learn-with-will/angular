@@ -3,7 +3,7 @@ id: lesson-28
 slug: unit-testing-jest-component-harnesses
 title: "Unit Testing with Jest & Component Harnesses"
 level: advanced
-order: 26
+order: 29
 duration: 65
 tags:
   - testing

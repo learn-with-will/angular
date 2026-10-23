@@ -1,0 +1,81 @@
+{
+  "id": "quiz-34",
+  "lessonId": "lesson-34",
+  "title": "The Interceptor Pattern: HTTP Interceptors",
+  "passingScore": 70,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "ordering",
+      "prompt": "With withInterceptors([a, b]), put the steps of one request and its response in order.",
+      "items": [
+        { "id": "s1", "text": "Interceptor a sees the request" },
+        { "id": "s2", "text": "Interceptor b sees the request" },
+        { "id": "s3", "text": "The server responds" },
+        { "id": "s4", "text": "Interceptor b sees the response" },
+        { "id": "s5", "text": "Interceptor a sees the response" }
+      ],
+      "answer": ["s1", "s2", "s3", "s4", "s5"],
+      "explanation": "Requests flow through the array in order, and responses flow back in reverse."
+    },
+    {
+      "id": "q2",
+      "type": "single-choice",
+      "prompt": "How should an interceptor add an Authorization header?",
+      "options": [
+        { "id": "a", "text": "req.headers.set('Authorization', value) and then next(req)" },
+        { "id": "b", "text": "next(req.clone({ setHeaders: { Authorization: value } }))" },
+        { "id": "c", "text": "req.url += '?token=' + value" },
+        { "id": "d", "text": "Store the header in localStorage so the browser sends it" }
+      ],
+      "answer": "b",
+      "explanation": "HttpRequest is immutable. headers.set() returns a new HttpHeaders object without changing the request, so you must clone the request."
+    },
+    {
+      "id": "q3",
+      "type": "single-choice",
+      "prompt": "Two requests run in parallel. A loading interceptor sets a boolean to true on start and false in finalize. What goes wrong?",
+      "options": [
+        { "id": "a", "text": "Nothing; finalize waits for all requests" },
+        { "id": "b", "text": "The loader hides when the first request finishes, while the second is still running" },
+        { "id": "c", "text": "The loader never appears" },
+        { "id": "d", "text": "finalize doesn't run on errors" }
+      ],
+      "answer": "b",
+      "explanation": "Each request finishes independently. Count pending requests and show the loader while the count is above zero."
+    },
+    {
+      "id": "q4",
+      "type": "fill-blank",
+      "prompt": "Which class creates a typed key for per-request options that interceptors read with req.context.get()?",
+      "answer": ["HttpContextToken"],
+      "explanation": "new HttpContextToken<boolean>(() => false) defines an option with a default. Callers set it with new HttpContext().set(TOKEN, true)."
+    },
+    {
+      "id": "q5",
+      "type": "multiple-choice",
+      "prompt": "Which are good rules for a retry interceptor? (Select all that apply)",
+      "options": [
+        { "id": "a", "text": "Retry GET requests on network errors (status 0) or 5xx responses" },
+        { "id": "b", "text": "Retry every POST up to three times" },
+        { "id": "c", "text": "Give up immediately on 4xx errors like 400 or 404" },
+        { "id": "d", "text": "Wait a little longer before each new attempt" }
+      ],
+      "answer": ["a", "c", "d"],
+      "explanation": "Retry only idempotent requests and only transient failures, with backoff. Retrying POST can create duplicates, and 4xx errors won't fix themselves."
+    },
+    {
+      "id": "q6",
+      "type": "single-choice",
+      "prompt": "Why should an auth interceptor check the request's host before attaching the token?",
+      "options": [
+        { "id": "a", "text": "Angular rejects headers on absolute URLs" },
+        { "id": "b", "text": "To avoid leaking the user's token to third-party APIs and CDNs" },
+        { "id": "c", "text": "Because tokens only work on GET requests" },
+        { "id": "d", "text": "To make requests faster" }
+      ],
+      "answer": "b",
+      "explanation": "Interceptors see every HttpClient call, including ones to other hosts. Only your own API should receive the token."
+    }
+  ]
+}

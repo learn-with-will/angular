@@ -3,7 +3,7 @@ id: lesson-20
 slug: performance-optimization-onpush
 title: "Performance Optimization with OnPush Change Detection"
 level: advanced
-order: 18
+order: 21
 duration: 55
 tags:
   - performance

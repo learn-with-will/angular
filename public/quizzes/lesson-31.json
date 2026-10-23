@@ -1,0 +1,79 @@
+{
+  "id": "quiz-31",
+  "lessonId": "lesson-31",
+  "title": "Smart & Presentational Components",
+  "passingScore": 70,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "match-pair",
+      "prompt": "Match each API to its job in a presentational component.",
+      "pairs": [
+        { "left": "input.required<T>()", "right": "Data the component can't work without" },
+        { "left": "output<T>()", "right": "Reports a user action to the parent" },
+        { "left": "computed()", "right": "Derives display values from inputs" },
+        { "left": "ChangeDetectionStrategy.OnPush", "right": "Re-checks only when inputs, events, or read signals change" }
+      ],
+      "explanation": "Presentational components take essential data through required inputs, report intents through outputs, derive display values with computed(), and use OnPush for cheap change detection."
+    },
+    {
+      "id": "q2",
+      "type": "single-choice",
+      "prompt": "An EntryItem has a '+1 rep' button. What should its click handler do?",
+      "options": [
+        { "id": "a", "text": "this.entry().reps++" },
+        { "id": "b", "text": "Inject the diary service and save the new value" },
+        { "id": "c", "text": "Emit a new object like { ...entry, reps: entry.reps + 1 } and let the parent apply it" },
+        { "id": "d", "text": "Call the parent component directly through viewChild()" }
+      ],
+      "answer": "c",
+      "explanation": "The entry belongs to the parent. The child describes the change with an output, and the owner updates its state immutably."
+    },
+    {
+      "id": "q3",
+      "type": "single-choice",
+      "prompt": "Why might this fail to update the view: entries.update(list => { list.push(x); return list; })?",
+      "options": [
+        { "id": "a", "text": "update() only works with primitive values" },
+        { "id": "b", "text": "It returns the same array reference, so the signal sees no change" },
+        { "id": "c", "text": "push() is not allowed in TypeScript strict mode" },
+        { "id": "d", "text": "Signals can't hold arrays" }
+      ],
+      "answer": "b",
+      "explanation": "Signals compare values with Object.is. Returning the same reference looks like 'no change'. Return a new array such as [...list, x]."
+    },
+    {
+      "id": "q4",
+      "type": "ordering",
+      "prompt": "Put the steps of unidirectional data flow in order, starting from a user clicking Delete.",
+      "items": [
+        { "id": "s1", "text": "The presentational item emits remove with the entry id" },
+        { "id": "s2", "text": "The presentational list re-emits the event" },
+        { "id": "s3", "text": "The smart page calls the service and filters its entries signal into a new array" },
+        { "id": "s4", "text": "The new array flows back down through inputs and the view updates" }
+      ],
+      "answer": ["s1", "s2", "s3", "s4"],
+      "explanation": "Events travel up to the single owner of the state, which updates it, and the new state flows back down."
+    },
+    {
+      "id": "q5",
+      "type": "multiple-choice",
+      "prompt": "Which are signs you should move state into a shared service instead of bubbling events? (Select all that apply)",
+      "options": [
+        { "id": "a", "text": "Inputs pass through several components that don't use them" },
+        { "id": "b", "text": "Unrelated parts of the page need the same state" },
+        { "id": "c", "text": "A parent and its direct child share one value" },
+        { "id": "d", "text": "You re-emit the same output through four or five layers" }
+      ],
+      "answer": ["a", "b", "d"],
+      "explanation": "Prop drilling and state shared by unrelated components call for a service. A direct parent-child relationship is exactly what inputs and outputs are for."
+    },
+    {
+      "id": "q6",
+      "type": "fill-blank",
+      "prompt": "In a unit test, which method on fixture.componentRef sets a signal input?",
+      "answer": ["setInput", "setInput()"],
+      "explanation": "fixture.componentRef.setInput('entries', value) sets the input, then fixture.detectChanges() renders it."
+    }
+  ]
+}

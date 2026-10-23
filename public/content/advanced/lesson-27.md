@@ -3,7 +3,7 @@ id: lesson-27
 slug: state-management-ngrx-component-store
 title: "State Management with NgRx & Component Store"
 level: advanced
-order: 25
+order: 28
 duration: 90
 tags:
   - ngrx
