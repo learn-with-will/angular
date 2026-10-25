@@ -146,13 +146,12 @@ numbers$
 ```typescript
 @Component({
   selector: 'app-user-badge',
-  standalone: true,
   imports: [AsyncPipe],
   template: `<span>{{ userName$ | async }}</span>`,
 })
 export class UserBadgeComponent {
+  private readonly userService = inject(UserService);
   userName$ = this.userService.getCurrentUserName();
-  constructor(private userService: UserService) {}
 }
 ```
 
@@ -174,17 +173,17 @@ Think of an Observable like a **YouTube live stream** rather than a **video down
 This example demonstrates the fundamental Observable lifecycle: creation, emission, transformation, and cleanup.
 
 ```typescript
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { interval, Subscription } from 'rxjs';
 import { map, take } from 'rxjs';
 
 @Component({
   selector: 'app-counter',
-  standalone: true,
-  template: `<p>Current count: {{ count }}</p>`,
+  template: `<p>Current count: {{ count() }}</p>`,
 })
 export class CounterComponent implements OnInit, OnDestroy {
-  count = 0;
+  // A signal, so each emission updates the view in zoneless apps too.
+  protected readonly count = signal(0);
   private subscription?: Subscription;
 
   ngOnInit(): void {
@@ -195,7 +194,7 @@ export class CounterComponent implements OnInit, OnDestroy {
         map((tick) => tick + 1)
       )
       .subscribe({
-        next: (value) => (this.count = value),
+        next: (value) => this.count.set(value),
         complete: () => console.log('Counter finished'),
       });
   }
@@ -236,7 +235,6 @@ interface SearchResult {
 
 @Component({
   selector: 'app-product-search',
-  standalone: true,
   imports: [ReactiveFormsModule, AsyncPipe],
   template: `
     <input [formControl]="searchControl" placeholder="Search products..." />
@@ -278,10 +276,10 @@ export class ProductSearchComponent {
 Sometimes you can't use the `async` pipe (e.g., you need the value in component logic, not just the template). In modern Angular (16+), the recommended way to manage cleanup in these cases is `takeUntilDestroyed()`, which ties the subscription's lifetime to the component's `DestroyRef` automatically.
 
 ```typescript
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpClient } from '@angular/common/http';
-import { tap, catchError, of } from 'rxjs';
+import { catchError, of } from 'rxjs';
 
 interface Order {
   id: number;
@@ -290,40 +288,85 @@ interface Order {
 
 @Component({
   selector: 'app-order-tracker',
-  standalone: true,
   template: `
-    @if (order) {
-      <p>Order #{{ order.id }}: {{ order.status }}</p>
+    @if (order(); as current) {
+      <p>Order #{{ current.id }}: {{ current.status }}</p>
     } @else {
       <p>Loading order...</p>
     }
   `,
 })
 export class OrderTrackerComponent implements OnInit {
-  private http = inject(HttpClient);
-  order: Order | null = null;
+  private readonly http = inject(HttpClient);
+  private readonly destroyRef = inject(DestroyRef); // captured in an injection context
+  protected readonly order = signal<Order | null>(null);
 
   ngOnInit(): void {
     this.http
       .get<Order>('/api/orders/current')
       .pipe(
-        tap((order) => (this.order = order)),
         catchError((err) => {
           console.error('Failed to load order', err);
           return of(null);
         }),
-        takeUntilDestroyed() // automatically unsubscribes when the component is destroyed
+        // ngOnInit is NOT an injection context, so pass the DestroyRef explicitly.
+        takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe();
+      .subscribe((order) => this.order.set(order));
   }
 }
 ```
 
 **Explanation:**
 - `takeUntilDestroyed()` (from `@angular/core/rxjs-interop`) automatically completes the Observable when the component is destroyed, so you don't need `ngOnDestroy()` or a manually tracked `Subscription` object.
-- By default it must be called within an **injection context** (e.g., a constructor or field initializer, or `ngOnInit` when the component uses `inject()` — as shown, it correctly picks up the `DestroyRef` from the enclosing class).
-- `catchError` combined with `of(null)` ensures the stream still completes gracefully on error, instead of silently dying without ever calling `.subscribe()`'s next handler.
-- This pattern (`tap` + `catchError` + `takeUntilDestroyed`) is the modern, boilerplate-free replacement for the older "store a `Subscription`, unsubscribe in `ngOnDestroy`" pattern — use it whenever the `async` pipe isn't a good fit.
+- By default `takeUntilDestroyed()` must be called in an **injection context**, such as the constructor or a field initializer. `ngOnInit` is *not* one, so calling it there without an argument throws an error. Here we inject `DestroyRef` as a field and pass it in: `takeUntilDestroyed(this.destroyRef)`.
+- `catchError` combined with `of(null)` turns a failed request into a `null` value, so the stream completes normally and the component can show a fallback instead of breaking.
+- Storing the result in a signal (`this.order.set(order)`) keeps the view up to date in zoneless apps, where assigning a plain field from a subscription would not trigger a refresh.
+- This pattern (`catchError` + `takeUntilDestroyed` + a signal) is the modern, boilerplate-free replacement for the older "store a `Subscription`, unsubscribe in `ngOnDestroy`" pattern — use it whenever the `async` pipe isn't a good fit.
+
+### Bridging Observables and signals
+
+`@angular/core/rxjs-interop` converts between the two models:
+
+- `toSignal(obs$, { initialValue })` subscribes to an Observable and exposes its latest value as a signal. Without `initialValue`, the signal starts as `undefined`. Use `{ requireSync: true }` only for sources that emit synchronously when subscribed, such as a `BehaviorSubject`.
+- `toObservable(sig)` turns a signal into an Observable, so you can apply operators like `debounceTime` and `switchMap` to it.
+- `toSignal()` must be called in an injection context, and it unsubscribes when that context (component, directive, or service) is destroyed. In a root service, that means it never unsubscribes.
+
+```typescript
+import { Component, inject, signal } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { HttpClient } from '@angular/common/http';
+import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
+
+interface Product {
+  id: number;
+  name: string;
+}
+
+@Component({
+  selector: 'app-product-search',
+  template: `
+    <input [value]="term()" (input)="term.set($any($event.target).value)" placeholder="Search…" />
+    @for (product of results(); track product.id) {
+      <p>{{ product.name }}</p>
+    }
+  `,
+})
+export class ProductSearch {
+  private readonly http = inject(HttpClient);
+  protected readonly term = signal('');
+
+  // signal -> Observable (to use RxJS operators) -> signal (to read in the template)
+  protected readonly results = toSignal(
+    toObservable(this.term).pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      switchMap((term) => this.http.get<Product[]>('/api/products', { params: { q: term } })),
+    ),
+    { initialValue: [] },
+  );
+}
+```
 
 ## Common Mistakes
 

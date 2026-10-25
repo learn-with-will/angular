@@ -3,7 +3,7 @@ id: lesson-11
 slug: basic-pipes
 title: "Basic Pipes in Angular"
 level: beginner
-order: 8
+order: 7
 duration: 25
 tags:
   - pipes
@@ -182,7 +182,7 @@ export class ProductCardComponent {
 ```
 
 **What happens:**
-- `currency:'USD':'symbol':'1.2-2'` shows `$129.99`. The arguments mean: currency code `USD`, show the `symbol` (`$`), and use the digit format `1.2-2` — at least 1 integer digit, and between 2 and 4… actually exactly 2 fraction digits (`min`-`max` both 2).
+- `currency:'USD':'symbol':'1.2-2'` shows `$129.99`. The arguments are the currency code (`USD`), the display (`symbol`, so `$`), and the digit format `1.2-2`: at least **1** integer digit and between **2** and **2** fraction digits (`minIntegerDigits.minFractionDigits-maxFractionDigits`).
 - `percent` converts the decimal `0.15` into `15%`. (Storing percentages as decimals lets the pipe do the conversion for you.)
 - `date:'mediumDate'` produces something like `Sep 1, 2025`.
 - Each pipe is imported individually so the bundle stays lean.

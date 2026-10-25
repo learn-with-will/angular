@@ -29,9 +29,9 @@ Every UI framework needs an answer to one question: *when a piece of state chang
 
 For most of Angular's history, the answer was **Zone.js**. Zone.js patched browser APIs (timers, events, HTTP) and, after almost any async event, told Angular to re-check the entire component tree to see what might have changed. This worked, but it was coarse: Angular often re-evaluated parts of the page that had not actually changed, and it could be hard to reason about *why* something updated.
 
-Signals provide **fine-grained reactivity**. A signal knows exactly which parts of your template and which computations read its value. When the value changes, Angular updates *only* those consumers, no full-tree checking required. This is faster, more predictable, and it is the foundation for **zoneless** Angular (running without Zone.js), which is the default for new projects in Angular 20+ together with `OnPush` change detection.
+Signals provide **fine-grained reactivity**. A signal knows exactly which parts of your template and which computations read its value. When the value changes, Angular updates *only* those consumers, no full-tree checking required. This is faster, more predictable, and it is the foundation for **zoneless** Angular (running without Zone.js), which is the default for new projects since Angular 21.
 
-The Signals API has been stable since Angular 20 and is the recommended way to manage reactive state in modern Angular (the current stable release is Angular 22).
+`signal()` and `computed()` have been stable since Angular 17, and `effect()` and the RxJS interop helpers (`toSignal`, `toObservable`) became stable in Angular 20. Signals are the recommended way to manage reactive state in modern Angular.
 
 # Concept Explanation
 
@@ -91,10 +91,13 @@ import { signal, effect } from '@angular/core';
 
 const count = signal(0);
 
+// Inside a constructor or a field initializer (an injection context):
 effect(() => {
   console.log(`Count changed to: ${count()}`);
 });
-// Logs "Count changed to: 0" immediately, then again on every change.
+// Logs "Count changed to: 0" shortly after the effect is created
+// (during Angular's next change detection), then again after each change.
+// Several changes in a row are batched into a single run.
 ```
 
 Effects must be created in an **injection context** (typically a component/service constructor or a class field initializer) so Angular can clean them up automatically when the component is destroyed.
@@ -131,7 +134,7 @@ export class Greeting {
 }
 ```
 
-You will explore signal inputs, `model()` for two-way binding, and async data with `resource()`/`httpResource()` in later lessons. This lesson focuses on the core trio: `signal`, `computed`, and `effect`.
+You will explore signal inputs, `model()` for two-way binding, and loading data with `httpResource()` (in the *HttpClient Fundamentals* lesson) later in the course. This lesson focuses on the core trio: `signal`, `computed`, and `effect`.
 
 # Key Terminology
 
@@ -142,7 +145,7 @@ You will explore signal inputs, `model()` for two-way binding, and async data wi
 - **`effect()`**: registers code that runs on creation and re-runs when its tracked signals change; used for side effects.
 - **Dependency tracking**: Angular automatically records which signals were read during a `computed`/`effect`/template expression, and re-runs only when those signals change.
 - **Fine-grained reactivity**: updating only the exact consumers of changed state, instead of re-checking everything.
-- **Zoneless**: running Angular without Zone.js, relying on signals (and explicit triggers) for change detection. The default for new projects in recent Angular versions.
+- **Zoneless**: running Angular without Zone.js, relying on signals (and explicit triggers) for change detection. The default for new projects since Angular 21.
 
 # Syntax Overview
 
@@ -164,7 +167,7 @@ const status = computed(() =>
   temperature() > 25 ? 'warm' : 'cool'
 );
 
-// 5. React to changes (side effects only)
+// 5. React to changes (side effects only; call effect() in a constructor or field initializer)
 effect(() => {
   console.log(`It is ${status()} (${temperature()}°C)`);
 });
@@ -211,7 +214,7 @@ export class Counter {
   protected readonly doubled = computed(() => this.count() * 2);
 
   constructor() {
-    // Effect runs once now, then again whenever `count` changes.
+    // The effect runs once soon after creation, then again whenever `count` changes.
     effect(() => {
       console.log(`The count is now ${this.count()}`);
     });
@@ -346,7 +349,7 @@ export class CounterPage {
 
 # Common Mistakes
 
-- **Forgetting the parentheses when reading.** `{{ count }}` renders the signal *function*, not its value. Always read with `count()`. The same applies in TypeScript: `if (count > 0)` is a bug; use `if (count() > 0)`.
+- **Forgetting the parentheses when reading.** `{{ count }}` renders the signal itself (text like `[Signal: 0]`), not its value. Always read with `count()`. The same applies in TypeScript: `if (count > 0)` is a bug; use `if (count() > 0)`.
 - **Mutating objects/arrays in place.** Signals compare values with `Object.is` by default. If you do `items().push(item)` and then `items.set(items())`, the array reference is unchanged, so Angular sees no change and does not update. Always produce a **new** value: `items.update(curr => [...curr, item])`.
 - **Using `effect()` to derive state.** Writing an effect that reads signal A and sets signal B to keep them in sync is fragile and can cause confusing update loops. Use `computed()` for derived values instead.
 - **Looking for `.mutate()`.** It does not exist. Use `.set()` (replace) or `.update()` (transform). For objects, return a new object/array.
@@ -360,7 +363,9 @@ export class CounterPage {
 - **Treat signal values as immutable.** Replace objects and arrays with new copies (`{ ...obj }`, `[...arr]`) instead of mutating them in place.
 - **Use `effect()` sparingly and only for true side effects** (logging, persistence, third-party integrations), never for application state.
 - **Prefer signal inputs (`input()`) over `@Input()`** in new components, they integrate cleanly with `computed()` and `effect()`.
-- **Lean into `OnPush` and zoneless.** Signals are designed for fine-grained updates; in Angular 20+ new components use `OnPush` and new apps are zoneless by default, which signals support naturally.
+- **Lean into `OnPush` and zoneless.** Signals are designed for fine-grained updates. New apps are zoneless by default since Angular 21, and components use `OnPush` by default since Angular 22. Signals support both naturally.
+
+> **Zoneless rule of thumb.** In a zoneless app (the default for new projects since Angular 21), Angular refreshes the view when a signal read by the template changes, when a template event handler runs, when the `async` pipe emits, or when you call `markForCheck()`. Assigning a plain field inside `setTimeout`, `setInterval`, or a `subscribe()` callback does none of these, so the screen doesn't update. Keep that state in a signal.
 - **Bridge RxJS at the edges.** When you have an Observable, convert it with `toSignal()` (from `@angular/core/rxjs-interop`) so the rest of your component logic stays signal-based.
 
 # Summary

@@ -82,7 +82,7 @@ Whatever you write inside a binding (the part between the quotes or curly braces
 ### Attribute binding (for attributes without a DOM property)
 
 ```html
-<!-- ARIA, SVG, colspan, etc. have no matching DOM property -->
+<!-- colspan and most SVG attributes have no matching DOM property -->
 <button [attr.aria-label]="label()">X</button>
 <td [attr.colspan]="span()">Cell</td>
 ```
@@ -288,10 +288,10 @@ export class CartComponent {
 # Common Mistakes
 
 - **Mixing interpolation with binding brackets.** Writing `[disabled]="{{ isSaving }}"` is invalid. Use one or the other: `[disabled]="isSaving()"`. The `[ ]` *already* takes an expression.
-- **Using string interpolation for boolean properties.** `<button disabled="{{ isSaving() }}">` sets the attribute to the *string* `"false"`, which the browser still treats as "disabled present" — so the button stays disabled. Use property binding: `[disabled]="isSaving()"`.
-- **Forgetting to call signals.** `{{ count }}` renders the signal *function* (something like `() => ...`), not its value. You must call it: `{{ count() }}`.
+- **Using string interpolation for boolean properties.** `<button disabled="{{ isSaving() }}">` is turned into a **property** binding with a *string* value. `disabled` is set to `"false"`, a non-empty string that counts as true, so the button stays disabled. Use property binding to bind a real boolean: `[disabled]="isSaving()"`.
+- **Forgetting to call signals.** `{{ count }}` renders the signal itself (text like `[Signal: 0]`) instead of its value, and the compiler warns that the signal wasn't called. You must call it: `{{ count() }}`.
 - **Forgetting the parentheses on event handlers.** `(click)="save"` references the method without calling it; nothing happens. Use `(click)="save()"`.
-- **Confusing attributes and properties.** `[colspan]`, `[aria-label]`, and most SVG attributes have no DOM property, so plain property binding silently fails. Use attribute binding: `[attr.colspan]`, `[attr.aria-label]`.
+- **Binding to an attribute that has no DOM property.** `<td [colspan]="2">` doesn't fail silently. It's a compile error: *Can't bind to 'colspan' since it isn't a known property of 'td'* (the DOM property is called `colSpan`). Use attribute binding instead: `[attr.colspan]="2"`. ARIA attributes are a special case: since Angular 20 you can write `[aria-label]="label()"` directly, but `[attr.aria-label]` works in every version and is what you'll see in most code.
 - **Forgetting `FormsModule` for `[(ngModel)]`.** Without importing it in the component's `imports`, Angular throws a "can't bind to 'ngModel'" error.
 - **Putting heavy logic in templates.** Calling an expensive method inside `{{ }}` runs it on every change detection cycle. Compute the value in the class (ideally with a `computed()` signal) instead.
 
@@ -299,7 +299,7 @@ export class CartComponent {
 
 - **Store changing values in signals** and read them in templates. This gives you reliable, fine-grained reactivity and works with modern zoneless and OnPush change detection.
 - **Prefer property binding over attribute interpolation** for anything that isn't plain static text — it's clearer and handles non-string values (booleans, numbers, objects) correctly.
-- **Use `[attr.*]` only when there is no DOM property** (ARIA, SVG, `colspan`, `role` on some elements). Otherwise use normal property binding.
+- **Use `[attr.*]` only when there is no DOM property** (`colspan`, most SVG attributes, `role` on some elements), and for ARIA attributes when your code must also work before Angular 20. Otherwise use normal property binding.
 - **Keep template expressions short and side-effect free.** They should read data, not change it. Move calculations into `computed()` signals or methods.
 - **Use object or array syntax for class and style binding** (`[class]="{ active: isActive() }"`) instead of building strings by concatenation — it's easier to read and less error-prone.
 - **Reach for `[(ngModel)]` for native form fields** and **`model()` for custom reusable components.** Don't hand-roll two-way binding with separate `[value]` + `(input)` unless you need custom behavior.
@@ -311,7 +311,7 @@ export class CartComponent {
 - Angular templating lets you **declaratively connect** component data to the DOM instead of updating elements by hand.
 - **Interpolation** (`{{ value }}`) renders data as text.
 - **Property binding** (`[prop]="expr"`) sets a DOM property; it's the right tool for booleans, numbers, and dynamic values.
-- **Attribute binding** (`[attr.name]="expr"`) is for attributes that have no DOM property, like ARIA and SVG.
+- **Attribute binding** (`[attr.name]="expr"`) is for attributes that have no DOM property, like `colspan` and most SVG attributes. It also works for ARIA attributes in every version.
 - **Class and style binding** (`[class.x]`, `[style.x]`, and their object forms) reactively control appearance.
 - **Event binding** (`(event)="handler($event)"`) responds to user actions; `$event` carries the payload.
 - **Two-way binding** (`[(target)]="value"`) combines a one-way binding in with an event out — use `[(ngModel)]` for native inputs and `model()` for custom components.
@@ -325,10 +325,10 @@ Q: What does interpolation (`{{ }}`) do, and what does it render the value as?
 A: It embeds a component value into the template, rendering it as **text** (a string).
 
 Q: Why should you use `[disabled]="isSaving()"` instead of `disabled="{{ isSaving() }}"`?
-A: Property binding sets the real boolean DOM property. Interpolation produces the string `"false"`, which the browser still treats as disabled — so the button never re-enables.
+A: Property binding sets the real boolean DOM property. Interpolation sets the property to the string `"false"`, and any non-empty string counts as true, so the button never re-enables.
 
 Q: When must you use attribute binding (`[attr.name]`) instead of property binding?
-A: When the attribute has **no corresponding DOM property**, such as ARIA attributes, SVG attributes, or `colspan`.
+A: When the attribute has **no corresponding DOM property**, such as `colspan` or most SVG attributes. Binding to them directly is a compile error. (ARIA attributes can be bound directly since Angular 20, but `[attr.aria-*]` works everywhere.)
 
 Q: What is the `$event` variable in an event binding?
 A: A special variable holding the event's payload — the native DOM event for built-in events, or the emitted value for custom outputs.

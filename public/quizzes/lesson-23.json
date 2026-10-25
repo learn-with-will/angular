@@ -80,8 +80,8 @@
         { "id": "s4", "text": "resolve (fetch data)" },
         { "id": "s5", "text": "Activation (component renders)" }
       ],
-      "answer": ["s1", "s2", "s3", "s4", "s5"],
-      "explanation": "The router runs canMatch, then activation guards, then deactivation guards, then resolvers, and finally activates the component."
+      "answer": ["s1", "s3", "s2", "s4", "s5"],
+      "explanation": "The router runs canMatch while matching, then canDeactivate for the route being left, then canActivateChild/canActivate for the new route, then resolvers, and finally activates the component."
     }
   ]
 }

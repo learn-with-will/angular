@@ -102,7 +102,7 @@ Create `public/quizzes/<lessonId>.json` (e.g. `public/quizzes/lesson-07.json`):
 ```
 
 Supported question `type` values: `single-choice`, `multiple-choice`,
-`fill-blank`, `ordering`, `match-pair`. See `public/quizzes/lesson-03.json` for an
+`fill-blank`, `ordering`, `match-pair`. See `public/quizzes/lesson-31.json` for an
 example using all of them.
 
 ## Tech stack

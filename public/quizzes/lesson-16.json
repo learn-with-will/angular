@@ -23,12 +23,12 @@
       "prompt": "How many times does an effect() run when it is first created?",
       "options": [
         { "id": "a", "text": "Zero — only on later changes" },
-        { "id": "b", "text": "At least once, immediately" },
+        { "id": "b", "text": "At least once, shortly after creation (asynchronously)" },
         { "id": "c", "text": "Only when read in a template" },
         { "id": "d", "text": "Exactly twice" }
       ],
       "answer": "b",
-      "explanation": "Effects always execute once immediately on creation, then again whenever a tracked dependency changes."
+      "explanation": "Effects are scheduled, not run synchronously: the first run happens during the next change detection, and several changes in a row are batched into one run."
     },
     {
       "id": "q3",

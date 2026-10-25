@@ -3,7 +3,7 @@ id: lesson-12
 slug: template-driven-forms
 title: "Template-Driven Forms"
 level: beginner
-order: 9
+order: 8
 duration: 40
 tags:
   - forms
@@ -35,7 +35,7 @@ Angular offers **two** ways to build forms:
 
 Template-driven forms exist to make **simple forms fast and familiar**. If you already know HTML forms, the jump is small: you add a few Angular directives, and Angular quietly handles value tracking, validation status, and two-way binding behind the scenes. They are the most beginner-friendly entry point into Angular forms and require very little TypeScript code.
 
-> **When to use them:** Template-driven forms are a great choice for small or simple forms (login, contact, search, basic settings). For large, dynamic, or heavily validated forms, reactive forms are more scalable and easier to test. Angular is also introducing a newer **Signal Forms** API for signal-based applications — see *Further Reading* — but template-driven forms remain a stable, widely used approach.
+> **When to use them:** Template-driven forms are a great choice for small or simple forms (login, contact, search, basic settings). For large, dynamic, or heavily validated forms, reactive forms are more scalable and easier to test. Angular also has **Signal Forms** (`@angular/forms/signals`), a signal-based forms API that was experimental in Angular 21 and is stable since Angular 22 (see *Further Reading*). Template-driven forms remain a stable, widely used approach.
 
 # Concept Explanation
 
@@ -223,7 +223,7 @@ export class RegisterComponent {
 
 **What's happening and why:**
 
-- `required`, `email`, and `minlength` are native validation attributes. Angular maps them to built-in validators automatically — no extra code needed.
+- `required`, `email`, and `minlength` are Angular's built-in validation attributes. Angular reads them and applies the matching built-in validators automatically, with no extra code. (Most look like HTML5 attributes, but `email` exists only in Angular.)
 - `#emailCtrl="ngModel"` exports the control so we can read `emailCtrl.invalid`, `emailCtrl.touched`, and `emailCtrl.errors`.
 - Errors are shown **only after the user has touched the field** (`&& emailCtrl.touched`), so the form does not scream at the user before they have typed anything — a key UX detail.
 - `errors?.['required']` uses optional chaining and bracket notation, which is required under TypeScript strict mode.
@@ -330,7 +330,7 @@ export class ContactComponent {
 - `[(ngModel)]` provides two-way binding between an input and a component property.
 - Inside a `<form>`, every `ngModel` needs a `name` attribute so Angular can register the control.
 - Angular automatically attaches `NgForm` to `<form>` elements and tracks value and validity.
-- Validation uses native HTML attributes (`required`, `email`, `minlength`, `pattern`, etc.) mapped to built-in validators.
+- Validation uses Angular's built-in validation attributes (`required`, `email`, `minlength`, `maxlength`, `pattern`), which map to built-in validators.
 - Export controls and the form with template variables (`#x="ngModel"`, `#f="ngForm"`) to read state like `invalid`, `touched`, and `errors`.
 - Show error messages only after a field is `touched` or `dirty`, and disable submit while the form is invalid.
 - `ngModelGroup` creates nested structures that mirror your data model.

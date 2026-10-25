@@ -1,0 +1,84 @@
+{
+  "id": "quiz-38",
+  "lessonId": "lesson-38",
+  "title": "Server-Side Rendering, Hydration & Prerendering",
+  "passingScore": 70,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "match-pair",
+      "prompt": "Match each page to the render mode that suits it best.",
+      "pairs": [
+        { "left": "A blog post that is the same for everyone", "right": "RenderMode.Prerender" },
+        { "left": "A product page with live prices", "right": "RenderMode.Server" },
+        { "left": "The signed-in user's account settings", "right": "RenderMode.Client" }
+      ],
+      "explanation": "Prerender what is identical for everyone, server-render public dynamic pages, and client-render private pages."
+    },
+    {
+      "id": "q2",
+      "type": "single-choice",
+      "prompt": "What is hydration?",
+      "options": [
+        { "id": "a", "text": "Downloading data before the app starts" },
+        { "id": "b", "text": "The browser-side app reusing the server-rendered DOM instead of rebuilding it" },
+        { "id": "c", "text": "Compressing the HTML on the server" },
+        { "id": "d", "text": "Rendering pages at build time" }
+      ],
+      "answer": "b",
+      "explanation": "With provideClientHydration(), Angular adopts the existing DOM and attaches listeners, avoiding a flash and extra work."
+    },
+    {
+      "id": "q3",
+      "type": "single-choice",
+      "prompt": "Where should code that reads localStorage go in an SSR app?",
+      "options": [
+        { "id": "a", "text": "In a field initializer" },
+        { "id": "b", "text": "In ngOnInit" },
+        { "id": "c", "text": "In afterNextRender(), which runs only in the browser" },
+        { "id": "d", "text": "In the constructor, before anything else" }
+      ],
+      "answer": "c",
+      "explanation": "Constructors, field initializers, and ngOnInit also run on the server, where localStorage does not exist."
+    },
+    {
+      "id": "q4",
+      "type": "single-choice",
+      "prompt": "How does Angular avoid calling the same API on the server and again in the browser?",
+      "options": [
+        { "id": "a", "text": "It does not; every request runs twice" },
+        { "id": "b", "text": "The HTTP transfer cache embeds GET/HEAD responses in the HTML for HttpClient to reuse" },
+        { "id": "c", "text": "The browser blocks the second request" },
+        { "id": "d", "text": "Prerendering removes all HTTP requests" }
+      ],
+      "answer": "b",
+      "explanation": "provideClientHydration() enables the transfer cache. Requests with an Authorization header are not cached by default."
+    },
+    {
+      "id": "q5",
+      "type": "single-choice",
+      "prompt": "With incremental hydration enabled, what does @defer (hydrate on viewport) { <app-reviews /> } do?",
+      "options": [
+        { "id": "a", "text": "Skips server rendering of the reviews entirely" },
+        { "id": "b", "text": "Renders the reviews on the server and loads/hydrates their JavaScript when they scroll into view" },
+        { "id": "c", "text": "Hydrates the reviews immediately" },
+        { "id": "d", "text": "Prerenders the reviews at build time" }
+      ],
+      "answer": "b",
+      "explanation": "The HTML is shown immediately; hydration (downloading and running the code) waits for the trigger."
+    },
+    {
+      "id": "q6",
+      "type": "single-choice",
+      "prompt": "Which of these breaks hydration?",
+      "options": [
+        { "id": "a", "text": "Using @if and @for in templates" },
+        { "id": "b", "text": "Setting element.innerHTML directly in ngOnInit" },
+        { "id": "c", "text": "Binding [class.active]=\"isActive()\"" },
+        { "id": "d", "text": "Using signals for component state" }
+      ],
+      "answer": "b",
+      "explanation": "Changing the DOM behind Angular's back makes the browser DOM differ from the server's, which causes hydration mismatch errors."
+    }
+  ]
+}

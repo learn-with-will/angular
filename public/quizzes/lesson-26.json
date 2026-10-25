@@ -74,6 +74,19 @@
       "prompt": "For fixed-size virtual scrolling, which viewport attribute must match the real pixel height of one row?",
       "answer": ["itemSize"],
       "explanation": "A mismatched itemSize is the #1 cause of janky/jumpy virtual scrolling."
+    },
+    {
+      "id": "q7",
+      "type": "single-choice",
+      "prompt": "How should keyboard users reorder items in a list built with CDK drag and drop?",
+      "options": [
+        { "id": "a", "text": "Focus the drag handle and press Space and the arrow keys; the CDK handles it" },
+        { "id": "b", "text": "Provide another control, such as Move up / Move down buttons, that calls the same reorder logic" },
+        { "id": "c", "text": "They cannot, and nothing needs to be done" },
+        { "id": "d", "text": "Add tabindex=\"0\" to every cdkDrag element" }
+      ],
+      "answer": "b",
+      "explanation": "CDK drag and drop is pointer- and touch-based. Give keyboard users buttons or a menu that call moveItemInArray(), and announce the change with LiveAnnouncer."
     }
   ]
 }

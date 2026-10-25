@@ -98,7 +98,7 @@ effect(() => {
 
 Key behavioral rules:
 
-- Effects **always run at least once**, immediately after being created.
+- Effects **always run at least once**. The first run is scheduled shortly after the effect is created (during Angular's next change detection), not on the line that creates it.
 - Like `computed()`, effects track dependencies **dynamically**, based on the signals read during the most recent run.
 - Effects run **asynchronously**, as part of Angular's change-detection process — not synchronously the instant a signal changes.
 - By default, `effect()` must be called within an **injection context** (typically a component, directive, or service constructor), because Angular needs to tie the effect's lifecycle to something.
@@ -224,7 +224,6 @@ import { Component, signal, computed } from '@angular/core';
 
 @Component({
   selector: 'app-counter',
-  standalone: true,
   template: `
     <section>
       <p>Count: {{ count() }}</p>
@@ -276,7 +275,6 @@ interface CartItem {
 
 @Component({
   selector: 'app-cart-summary',
-  standalone: true,
   imports: [CurrencyPipe],
   template: `
     <ul>
@@ -329,7 +327,6 @@ type Theme = 'light' | 'dark';
 
 @Component({
   selector: 'app-theme-toggle',
-  standalone: true,
   template: `
     <button (click)="toggleTheme()">Switch to {{ nextThemeLabel() }} mode</button>
     <p>Current theme: {{ theme() }}</p>
@@ -388,6 +385,8 @@ constructor() {
 readonly fullName = computed(() => `${this.firstName()} ${this.lastName()}`);
 ```
 
+> **Version note:** on Angular 17–18 the anti-pattern above doesn't just misbehave. Writing a signal inside `effect()` throws error NG0600 unless you pass `{ allowSignalWrites: true }`. Since Angular 19 the write is allowed, but it is still an anti-pattern.
+
 **Why this is good practice:** `effect()` is reserved for the one thing `computed()` can't do — reaching outside the reactive graph into `localStorage` and the DOM. Everything that stays *inside* the graph (`fullName`) uses `computed()`.
 
 ---
@@ -433,7 +432,7 @@ readonly fullName = computed(() => `${this.firstName()} ${this.lastName()}`);
 - A **computed signal** (`computed()`) is a read-only signal that derives its value from other signals.
 - Computed signals are **lazy** (they don't run until read) and **memoized** (cached until a dependency changes).
 - Computed signal dependencies are tracked **dynamically** — only the signals actually read in the last execution count.
-- An **effect** (`effect()`) re-runs whenever its signal dependencies change, runs **at least once**, and executes **asynchronously** during change detection.
+- An **effect** (`effect()`) runs at least once, shortly after it's created, and again whenever its signal dependencies change. It always runs **asynchronously**, during change detection.
 - `effect()` requires an **injection context** by default, or an explicit `Injector` passed via options.
 - **Prefer `computed()` over `effect()`** for anything that's just derived data; using effects to propagate state is an anti-pattern.
 - Use `effect()` only to bridge signals to **non-reactive APIs** like `localStorage`, DOM attributes, or third-party libraries.
@@ -448,7 +447,7 @@ readonly fullName = computed(() => `${this.firstName()} ${this.lastName()}`);
 A: It's lazy (doesn't run until read) and memoized (caches its result until a dependency changes), so repeated reads and unrelated change-detection cycles don't trigger recalculation.
 
 **Q: How many times does an `effect()` run when it is first created?**
-A: At least once — effects always execute immediately upon creation, then again whenever a tracked dependency changes.
+A: At least once. The first run is scheduled shortly after creation, during change detection; after that it re-runs whenever a tracked signal changes.
 
 **Q: Why shouldn't you use `effect()` to copy a value from one signal to another?**
 A: It's a state-derivation anti-pattern that can cause `ExpressionChangedAfterItHasBeenChecked` errors, extra change-detection cycles, or circular updates — `computed()` is the correct tool for derived state.

@@ -20,7 +20,7 @@ After completing this lesson you will be able to:
 4. Turn components into navigable **pages** by configuring the Angular Router with `provideRouter` and `<router-outlet>`.
 5. **Lazy-load** page components and read **route parameters** with component input binding.
 
-> This lesson targets **Angular 20+** (the current stable release is Angular 22). All examples use **standalone components**, which have been the default since Angular 19, so you will not see `standalone: true` written anywhere — it is implied.
+> This lesson targets **Angular 20+**. All examples use **standalone components**. Since Angular 19, `standalone: true` is implied, so you will not see it written anywhere.
 
 ---
 
@@ -371,15 +371,16 @@ export class ProductsPage {
 ```ts
 // product-detail-page.ts — a detail page that reads the :id from the URL
 import { Component, input } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-product-detail-page',
+  imports: [RouterLink], // needed for the routerLink below; without it the link does nothing
   template: `
     <h1>Product detail</h1>
     <p>Showing product with id: <strong>{{ id() }}</strong></p>
     <a routerLink="/products">Back to list</a>
   `,
-  imports: [], // RouterLink omitted here for brevity; add it to use routerLink
 })
 export class ProductDetailPage {
   // The route's :id segment is bound to this input automatically.
@@ -456,7 +457,7 @@ bootstrapApplication(App, appConfig);
 - **Reading a signal input without calling it.** `user().name` is correct; `user.name` is not — `user` is a signal *function*, so you must call it. Likewise use `id()`, not `id`, in templates and code.
 - **Leaving out `track` in `@for`.** Angular requires a `track` expression. Use a stable unique value such as `track item.id`. Using `track $index` is allowed but only appropriate for static lists that never reorder.
 - **Forgetting `<router-outlet />`.** If navigation "does nothing," check that the root template actually contains an outlet — pages have nowhere to render without it.
-- **Expecting route params as inputs without enabling binding.** Reading `:id` via `input()` only works if you registered `provideRouter(routes, withComponentInputBinding())`. Without it, the input stays `undefined`.
+- **Expecting route params as inputs without enabling binding.** Reading `:id` via `input()` only works if you registered `provideRouter(routes, withComponentInputBinding())`. Without it, nothing is bound: an optional `input()` stays `undefined`, and reading an `input.required()` throws error NG0950 (*input is required but no value is available yet*).
 - **Using `href` for in-app links.** `<a href="/products">` triggers a full page reload. Use `<a routerLink="/products">` for SPA navigation.
 - **Building one giant page component.** Putting all logic and markup in a single component makes it unreusable and hard to test. Split it into smaller components.
 - **Trying to mutate an input.** Inputs are read-only signals. To change shared data, emit an event with `output()` and let the owner update it.
@@ -475,7 +476,7 @@ bootstrapApplication(App, appConfig);
 - **Prefix your selectors** (e.g. `app-`) to avoid clashing with native elements or third-party components.
 - **Inject dependencies with `inject()`** (e.g. `private http = inject(HttpClient)`) for concise, readable services inside components.
 
-> **Looking ahead:** Angular 22 introduces *selectorless components* (an evolving, experimental feature) that let you reference a component by its imported class name in a template instead of a selector string. It is promising but still stabilizing — the selector-based approach in this lesson remains the mainstream, fully supported way to author components today.
+> **A note on "selectorless" components:** you may read about using a component in a template by its class name (`<UserCard />`) instead of its selector (`<app-user-card />`). The Angular team prototyped this idea in 2025, but it isn't part of any released Angular version and is currently on hold; it no longer appears on the official Angular roadmap. Selectors, as used in this lesson, are how you use components.
 
 ---
 

@@ -59,15 +59,15 @@
     {
       "id": "q5",
       "type": "multiple-choice",
-      "prompt": "Which techniques keep an async validator tied to live typing efficient and race-condition-free? (Select all that apply.)",
+      "prompt": "Which techniques keep an async validator that checks the server while the user types efficient and resilient? (Select all that apply.)",
       "options": [
-        { "id": "a", "text": "debounceTime" },
-        { "id": "b", "text": "switchMap" },
-        { "id": "c", "text": "catchError" },
-        { "id": "d", "text": "distinctUntilChanged" }
+        { "id": "a", "text": "Start the request from timer(400) so quick typing never reaches the server" },
+        { "id": "b", "text": "switchMap from the timer to the HTTP request" },
+        { "id": "c", "text": "catchError so a failed check does not block the form" },
+        { "id": "d", "text": "distinctUntilChanged inside the validator" }
       ],
-      "answer": ["a", "b", "c", "d"],
-      "explanation": "debounce and distinctUntilChanged cut requests, switchMap cancels stale ones, and catchError degrades gracefully on failure."
+      "answer": ["a", "b", "c"],
+      "explanation": "Angular unsubscribes from the previous validation on every value change, so a short timer acts as a debounce and switchMap starts the request. distinctUntilChanged has no effect inside a validator, because each call creates a stream with a single value."
     },
     {
       "id": "q6",

@@ -21,7 +21,7 @@ By the end of this lesson, you will be able to:
 
 - Build forms programmatically using `FormControl`, `FormGroup`, and `FormArray`
 - Use `FormBuilder` to construct forms with less boilerplate
-- Apply built-in validators and write your own synchronous and asynchronous custom validators
+- Apply built-in validators and write your own synchronous custom validators (async validators are introduced here and covered in depth in a later lesson)
 - Implement cross-field validation (e.g., "confirm password" checks)
 - Use **typed reactive forms** for compile-time safety
 - Display validation errors correctly and manage dynamic, list-based form controls
@@ -284,37 +284,16 @@ export class RegistrationComponent {
 
 **What's happening:** `passwordsMatchValidator` has the exact same shape as a built-in validator — it takes a control (here, the group) and returns `ValidationErrors | null`. It's passed via the second argument of `fb.group()` as `{ validators: passwordsMatchValidator }`, so it runs whenever *either* password field changes. Nesting `address` and `passwordGroup` as sub-groups keeps the template organized and mirrors the logical sections of the form.
 
-### Example 3 — Best Practice: Typed Form with `FormArray` and an Async Validator
+### Example 3 — Best Practice: Typed Form with `FormArray` and Safe Subscriptions
 
-This example puts several best practices together: **strictly typed controls**, a **dynamic `FormArray`** for a repeatable field, an **async validator** for a server-side check, and **`takeUntilDestroyed`** to safely subscribe to `valueChanges` without a memory leak.
+This example puts several best practices together: **strictly typed controls**, a **dynamic `FormArray`** for a repeatable field, and **`takeUntilDestroyed`** to safely subscribe to `valueChanges` without a memory leak. (Async validators, such as a server check for "is this username taken?", get their own lesson: *Custom & Asynchronous Validators*.)
 
 ```typescript
 // profile-editor.component.ts
 import { Component, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import {
-  AbstractControl,
-  AsyncValidatorFn,
-  FormBuilder,
-  ReactiveFormsModule,
-  ValidationErrors,
-  Validators,
-} from '@angular/forms';
-import { Observable, of } from 'rxjs';
-import { debounceTime, delay, map, switchMap } from 'rxjs/operators';
-
-// Simulates a backend call to check if a username is already taken.
-// updateOn: 'blur' (used below) means this only runs when the field loses focus.
-function usernameTakenValidator(takenUsernames: string[]): AsyncValidatorFn {
-  return (control: AbstractControl): Observable<ValidationErrors | null> => {
-    return of(control.value).pipe(
-      delay(400), // simulated network latency
-      map((username: string) =>
-        takenUsernames.includes(username.toLowerCase()) ? { usernameTaken: true } : null,
-      ),
-    );
-  };
-}
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { debounceTime } from 'rxjs';
 
 @Component({
   selector: 'app-profile-editor',
@@ -323,17 +302,9 @@ function usernameTakenValidator(takenUsernames: string[]): AsyncValidatorFn {
 })
 export class ProfileEditorComponent {
   private fb = inject(FormBuilder);
-  private takenUsernames = ['admin', 'root', 'angular'];
 
   profileForm = this.fb.nonNullable.group({
-    username: this.fb.nonNullable.control(
-      '',
-      {
-        validators: [Validators.required, Validators.minLength(3)],
-        asyncValidators: [usernameTakenValidator(this.takenUsernames)],
-        updateOn: 'blur', // avoid firing the async validator on every keystroke
-      },
-    ),
+    username: this.fb.nonNullable.control('', [Validators.required, Validators.minLength(3)]),
     // FormArray of FormControl<string> — a dynamic list of skills.
     skills: this.fb.nonNullable.array<string>([], Validators.minLength(1)),
   });
@@ -375,10 +346,8 @@ export class ProfileEditorComponent {
   <label for="username">Username</label>
   <input id="username" formControlName="username" />
 
-  @if (profileForm.controls.username.pending) {
-    <p>Checking availability…</p>
-  } @else if (profileForm.controls.username.hasError('usernameTaken')) {
-    <p class="error">That username is already taken.</p>
+  @if (profileForm.controls.username.touched && profileForm.controls.username.hasError('minlength')) {
+    <p class="error">Usernames need at least 3 characters.</p>
   }
 
   <!-- formArrayName binds to the dynamic list -->
@@ -392,7 +361,7 @@ export class ProfileEditorComponent {
     }
   </div>
 
-  <button type="submit" [disabled]="profileForm.invalid || profileForm.pending">
+  <button type="submit" [disabled]="profileForm.invalid">
     Save Profile
   </button>
 </form>
@@ -400,10 +369,25 @@ export class ProfileEditorComponent {
 
 **What's happening:**
 
-- `fb.nonNullable.control(...)` with an options object lets us pass `validators`, `asyncValidators`, and `updateOn` together. `updateOn: 'blur'` means the async check (and its "pending" state) only kicks in once the user leaves the field — this avoids firing a network request on every keystroke.
-- The async validator returns an `Observable<ValidationErrors | null>`, exactly like a sync validator but wrapped in an observable. While it's running, `control.pending` is `true`, which we use to show a "Checking availability…" message.
 - `skills` is a `FormArray<FormControl<string>>` — fully typed, so `skill.value` is known to be a `string`, not `any`.
-- `takeUntilDestroyed()` (from `@angular/core/rxjs-interop`) automatically completes the subscription when the component is destroyed, so you don't need a manual `ngOnDestroy` / `Subject` teardown.
+- `Validators.minLength(1)` on the array checks its *length*, so the form stays invalid until at least one skill is added.
+- `takeUntilDestroyed()` (from `@angular/core/rxjs-interop`) automatically completes the subscription when the component is destroyed, so you don't need a manual `ngOnDestroy` / `Subject` teardown. It's called in the constructor, which is an injection context.
+- A control can also take an **async validator** (for checks that need the server) and an `updateOn` option (`'change'`, `'blur'`, or `'submit'`) that controls how often validators run. Both are covered in depth in the *Custom & Asynchronous Validators* lesson.
+
+### One stream for every form change
+
+Since Angular 18, every control also has an `events` Observable that reports value, status, touched, pristine, submit, and reset changes in one place:
+
+```typescript
+import { StatusChangeEvent, TouchedChangeEvent, ValueChangeEvent } from '@angular/forms';
+
+// in the constructor (an injection context):
+this.profileForm.events.pipe(takeUntilDestroyed()).subscribe((event) => {
+  if (event instanceof ValueChangeEvent) console.log('value', event.value);
+  if (event instanceof StatusChangeEvent) console.log('status', event.status); // VALID, INVALID, PENDING…
+  if (event instanceof TouchedChangeEvent) console.log('touched', event.touched);
+});
+```
 
 ## Common Mistakes
 
@@ -420,11 +404,11 @@ export class ProfileEditorComponent {
 
 - **Prefer `FormBuilder` (and `fb.nonNullable`) over manually `new`-ing controls** — it's shorter and, with `nonNullable`, keeps your types clean (no unwanted `null` in the value type after `reset()`).
 - **Use typed reactive forms.** Let TypeScript infer control types from `fb.group({...})`, or declare an explicit interface for complex forms. This catches typos like `form.value.emial` at compile time.
-- **Inject dependencies with `inject()`** inside standalone components rather than constructor parameter injection — it's more flexible or you can still use constructor injection; both are valid, but `inject()` is the modern idiom for services like `FormBuilder`.
+- **Inject dependencies with `inject()`**, for example `private fb = inject(FormBuilder)`. Constructor injection still works, but `inject()` is the modern idiom.
 - **Group related fields into nested `FormGroup`s** that mirror your UI sections (e.g., `address`, `billingInfo`) — it keeps both the model and the template organized.
 - **Put cross-field logic on the group, not a field.** A validator that needs two sibling values belongs on the `FormGroup` that contains both, not bolted onto one of the individual controls.
 - **Debounce or defer expensive validators.** Use `updateOn: 'blur'`/`'submit'` for async validators, and `debounceTime` on any `valueChanges` subscription that triggers real work.
-- **Disable the submit button using `form.invalid`, but also handle blocked submits.** Some users submit via Enter key even when a button is disabled, so still guard your `onSubmit()` method with an `if (form.invalid) { form.markAllAsTouched(); return; }` check.
+- **Disable the submit button using `form.invalid`, but also guard `onSubmit()`.** Keep an `if (form.invalid) { form.markAllAsTouched(); return; }` check anyway: other code can call the handler, the button state can lag behind async validators, and `[disabled]` is a UX hint, not a guarantee.
 - **Use `getRawValue()` when you need the value of disabled controls too**; use `value` when you intentionally want disabled fields excluded (e.g., a read-only field mirrored elsewhere).
 - **Reset forms deliberately.** After a successful submission, call `form.reset()` (or `form.reset(initialValue)`) to return the form to a clean, pristine state rather than leaving stale "touched"/"dirty" flags around.
 

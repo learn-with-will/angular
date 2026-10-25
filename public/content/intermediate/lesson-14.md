@@ -3,7 +3,7 @@ id: lesson-14
 slug: component-lifecycle-hooks
 title: "Angular Component Lifecycle Hooks"
 level: intermediate
-order: 11
+order: 10
 duration: 45
 tags:
   - lifecycle-hooks
@@ -22,6 +22,7 @@ By the end of this lesson, you will be able to:
 - Choose the right hook for a given task: initialization, reacting to input changes, DOM/view access, or cleanup.
 - Identify and avoid common mistakes such as premature DOM access and memory leaks from unmanaged subscriptions.
 - Apply the modern, recommended cleanup pattern using `DestroyRef` and `takeUntilDestroyed`.
+- Run DOM work after rendering with `afterNextRender()` and `afterEveryRender()`.
 
 ## Why This Concept Exists
 
@@ -58,7 +59,7 @@ Here is the order in which Angular calls the hooks for a component that has at l
 Two important patterns to notice:
 
 1. **"Init" hooks run once.** `ngOnInit`, `ngAfterContentInit`, and `ngAfterViewInit` each fire exactly one time during the component's life.
-2. **"Check" hooks run repeatedly.** `ngOnChanges`, `ngDoCheck`, `ngAfterContentChecked`, and `ngAfterViewChecked` run on every change detection cycle — so any expensive logic placed inside them can hurt performance if you're not careful.
+2. **"Check" hooks run repeatedly.** `ngDoCheck`, `ngAfterContentChecked`, and `ngAfterViewChecked` run on every change detection cycle. `ngOnChanges` can also run many times, but only when a bound input receives a new value. Keep all four lightweight, because expensive logic inside them can hurt performance.
 
 ### The most commonly used hooks
 
@@ -66,7 +67,7 @@ In everyday Angular development, you will reach for these four far more often th
 
 - **`ngOnInit`** — the standard place for initialization logic: fetching initial data, setting up subscriptions, initializing local state that depends on `@Input()` values.
 - **`ngOnChanges`** — react whenever a parent component passes a new value into an `@Input()`.
-- **`ngAfterViewInit`** — the only safe place to read `@ViewChild` / `@ViewChildren` references, because the view isn't guaranteed to exist before this point.
+- **`ngAfterViewInit`** — the safe place to read `@ViewChild` / `@ViewChildren` references, because the view isn't guaranteed to exist before this point. (Exception: a query marked `{ static: true }` that isn't inside `@if`/`@for` is already available in `ngOnInit`. The signal-based `viewChild()` simply returns `undefined` until the element exists.)
 - **`ngOnDestroy`** — clean up anything you started: unsubscribe from Observables, clear timers/intervals, remove manually attached event listeners.
 
 The remaining hooks (`ngDoCheck`, `ngAfterContentInit`, `ngAfterContentChecked`, `ngAfterViewChecked`) are used less frequently — mostly for advanced content-projection scenarios or custom change-detection logic — and are covered briefly later in this lesson.
@@ -95,7 +96,6 @@ import { Component, OnInit, OnDestroy, OnChanges, SimpleChanges } from '@angular
 
 @Component({
   selector: 'app-example',
-  standalone: true,
   template: `<p>Example works</p>`
 })
 export class ExampleComponent implements OnInit, OnChanges, OnDestroy {
@@ -140,22 +140,22 @@ Think of a component's lifecycle like a **hotel room during a guest's stay**:
 This is the classic "start something in `ngOnInit`, clean it up in `ngOnDestroy`" pattern.
 
 ```typescript
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 
 @Component({
   selector: 'app-clock',
-  standalone: true,
-  template: `<p>Current time: {{ currentTime }}</p>`
+  template: `<p>Current time: {{ currentTime() }}</p>`
 })
 export class ClockComponent implements OnInit, OnDestroy {
-  currentTime = new Date().toLocaleTimeString();
+  // A signal, so the view updates in zoneless apps too (see the zoneless rule in the Signals lesson).
+  protected readonly currentTime = signal(new Date().toLocaleTimeString());
   private intervalId?: ReturnType<typeof setInterval>;
 
   ngOnInit(): void {
     // ngOnInit runs once, after Angular has set this component's @Input properties
     // (there are none here). This is the right place to start ongoing work like timers.
     this.intervalId = setInterval(() => {
-      this.currentTime = new Date().toLocaleTimeString();
+      this.currentTime.set(new Date().toLocaleTimeString());
     }, 1000);
   }
 
@@ -177,7 +177,7 @@ export class ClockComponent implements OnInit, OnDestroy {
 Imagine a card component that displays a user's profile and needs to re-fetch data whenever the parent passes a different `userId`.
 
 ```typescript
-import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, SimpleChanges, inject, signal } from '@angular/core';
 import { Subject, Subscription, switchMap } from 'rxjs';
 import { UserService } from './user.service';
 
@@ -188,11 +188,10 @@ interface UserSummary {
 
 @Component({
   selector: 'app-user-profile-card',
-  standalone: true,
   template: `
-    @if (user) {
-      <h3>{{ user.name }}</h3>
-      <p>{{ user.email }}</p>
+    @if (user(); as u) {
+      <h3>{{ u.name }}</h3>
+      <p>{{ u.email }}</p>
     } @else {
       <p>Loading user…</p>
     }
@@ -201,25 +200,24 @@ interface UserSummary {
 export class UserProfileCardComponent implements OnChanges, OnDestroy {
   @Input({ required: true }) userId!: string;
 
-  user: UserSummary | null = null;
+  // A signal, so the view updates when the HTTP response arrives, with or without zone.js.
+  protected readonly user = signal<UserSummary | null>(null);
+
+  private readonly userService = inject(UserService);
 
   // A Subject we push new userId values into, so we can cancel an in-flight
   // request if the userId changes again before it completes.
   private userIdChanges = new Subject<string>();
-  private subscription: Subscription;
-
-  constructor(private userService: UserService) {
-    this.subscription = this.userIdChanges
-      .pipe(switchMap(id => this.userService.getUser(id)))
-      .subscribe(user => (this.user = user));
-  }
+  private subscription: Subscription = this.userIdChanges
+    .pipe(switchMap(id => this.userService.getUser(id)))
+    .subscribe(user => this.user.set(user));
 
   ngOnChanges(changes: SimpleChanges): void {
     // ngOnChanges fires before ngOnInit, and again every time a bound @Input
     // reference changes. We check `changes['userId']` in case this component
     // ever gains more inputs in the future.
     if (changes['userId']) {
-      this.user = null; // Show the loading state while the new user loads.
+      this.user.set(null); // Show the loading state while the new user loads.
       this.userIdChanges.next(this.userId);
     }
   }
@@ -253,7 +251,6 @@ import { interval } from 'rxjs';
 
 @Component({
   selector: 'app-tick-canvas',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `<canvas #tickCanvas width="400" height="120"></canvas>`
 })
@@ -290,9 +287,34 @@ export class TickCanvasComponent implements AfterViewInit {
 - `DestroyRef` + `takeUntilDestroyed()` removes an entire category of bugs — the "forgot to unsubscribe" memory leak — by letting Angular manage cleanup declaratively instead of manually.
 - `@ViewChild` is read only inside `ngAfterViewInit`, respecting Angular's rendering guarantees.
 
+### Running code after the view renders
+
+Some work must wait until Angular has rendered: measuring an element, focusing it, or starting a third-party widget. Modern Angular has two functions for this, called from an injection context such as the constructor:
+
+```typescript
+import { Component, ElementRef, afterNextRender, viewChild } from '@angular/core';
+
+@Component({
+  selector: 'app-search-field',
+  template: `<input #box placeholder="Search" />`,
+})
+export class SearchField {
+  private readonly box = viewChild.required<ElementRef<HTMLInputElement>>('box');
+
+  constructor() {
+    // Runs once, after the next render, and only in the browser.
+    afterNextRender(() => this.box().nativeElement.focus());
+  }
+}
+```
+
+- `afterNextRender()` runs once after the next render.
+- `afterEveryRender()` runs after every render (it was called `afterRender()` before Angular 20).
+- Both run only in the browser, never during server-side rendering, so they're the safe place for DOM APIs.
+
 ## Common Mistakes
 
-- **Reading `@ViewChild` inside `ngOnInit`.** The view hasn't been created yet at that point, so the reference will be `undefined`. Always read view references inside `ngAfterViewInit` (or later).
+- **Reading `@ViewChild` inside `ngOnInit`.** The view hasn't been created yet at that point, so the reference will be `undefined`. Read view references inside `ngAfterViewInit` (or later). The only exception is a `{ static: true }` query for an element that isn't inside `@if`/`@for`.
 - **Forgetting to unsubscribe in `ngOnDestroy`.** Subscriptions to long-lived Observables (`interval`, `Router.events`, WebSocket streams, `Subject`s) keep running after the component is gone unless explicitly stopped. This is one of the most common sources of memory leaks in Angular apps.
 - **Assuming `ngOnChanges` fires on object mutation.** `ngOnChanges` only triggers on a **new reference**. Mutating a nested property (`this.config.title = 'New'`) without reassigning `this.config` will not trigger it.
 - **Putting expensive work in `ngDoCheck` or `ngAfterViewChecked`.** These hooks run on *every* change detection cycle — potentially many times per user interaction. Heavy logic here can noticeably slow down the app.
@@ -314,7 +336,8 @@ export class TickCanvasComponent implements AfterViewInit {
 - A component's lifecycle runs from `constructor()` through `ngOnDestroy()`, with well-defined checkpoints in between.
 - Lifecycle hooks are plain methods (`ngOnInit`, `ngOnChanges`, etc.) that Angular calls automatically — implement the matching interface for type safety.
 - `ngOnInit` is for one-time initialization; `ngOnChanges` is for reacting to new `@Input()` values; `ngAfterViewInit` is the earliest safe place to access `@ViewChild`; `ngOnDestroy` is for cleanup.
-- "Init" hooks (`ngOnInit`, `ngAfterContentInit`, `ngAfterViewInit`) run once; "Check" hooks (`ngDoCheck`, `ngAfterContentChecked`, `ngAfterViewChecked`, and `ngOnChanges`) can run many times — keep them lightweight.
+- "Init" hooks (`ngOnInit`, `ngAfterContentInit`, `ngAfterViewInit`) run once. "Check" hooks (`ngDoCheck`, `ngAfterContentChecked`, `ngAfterViewChecked`) run on every change detection cycle, and `ngOnChanges` runs whenever an input changes, so keep them all lightweight.
+- For DOM work that must wait until the view has rendered, use `afterNextRender()` (once) or `afterEveryRender()` (every render). Both run only in the browser.
 - `ngOnChanges` only fires on new input **references**, not on in-place mutation.
 - Forgetting `ngOnDestroy` cleanup for timers and subscriptions is one of the most common Angular memory leaks.
 - The modern, recommended way to manage subscription cleanup is `DestroyRef` combined with `takeUntilDestroyed()` from `@angular/core/rxjs-interop`.
@@ -326,7 +349,7 @@ export class TickCanvasComponent implements AfterViewInit {
 **A:** `ngOnInit`.
 
 **Q:** Why should `@ViewChild` references only be read inside `ngAfterViewInit` (or later), not `ngOnInit`?
-**A:** Because Angular hasn't finished creating the component's view when `ngOnInit` runs, so the reference would be `undefined`.
+**A:** Because Angular hasn't finished creating the component's view when `ngOnInit` runs, so the reference would be `undefined` (unless the query uses `{ static: true }` and the element isn't inside `@if`/`@for`).
 
 **Q:** What condition must be true for `ngOnChanges` to fire on a given input?
 **A:** The bound value's **reference** must change (a new object/array/primitive value) — mutating an existing object's properties in place does not trigger it.

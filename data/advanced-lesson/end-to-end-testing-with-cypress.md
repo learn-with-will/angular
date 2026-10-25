@@ -26,7 +26,7 @@ By the end of this lesson, you will be able to:
 
 ## Why This Concept Exists
 
-Angular's unit and component tests (built on `TestBed`, Jasmine/Karma, or Jest) are fast and precise because they run in a **simulated** environment. `TestBed` creates an isolated fixture for a single component, lets you mock its dependencies, and inspects the rendered output without ever touching a real browser tab, a real router, or a real network stack. This isolation is exactly what makes unit tests fast and deterministic — but it's also their biggest limitation. A component can pass every unit test in isolation and still fail in production because:
+Angular's unit and component tests (built on `TestBed`, with Vitest, Jasmine/Karma, or Jest as the runner) are fast and precise because they run in a **simulated** environment. `TestBed` creates an isolated fixture for a single component, lets you mock its dependencies, and inspects the rendered output without ever touching a real browser tab, a real router, or a real network stack. This isolation is exactly what makes unit tests fast and deterministic — but it's also their biggest limitation. A component can pass every unit test in isolation and still fail in production because:
 
 - A route guard blocks navigation in a way no unit test exercised.
 - Two lazy-loaded feature modules interact badly when navigated between in sequence.
@@ -187,7 +187,6 @@ import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-root',
-  standalone: true,
   template: `
     <h1 data-cy="app-title">Welcome to Acme Store</h1>
   `,
@@ -232,14 +231,13 @@ Login flows are a perfect Cypress candidate: they combine form input, an HTTP ca
 
 ```typescript
 // src/app/auth/login.component.ts
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-login',
-  standalone: true,
   imports: [ReactiveFormsModule],
   template: `
     <form [formGroup]="form" (ngSubmit)="submit()">
@@ -257,8 +255,8 @@ export class LoginComponent {
   private http = inject(HttpClient);
   private router = inject(Router);
 
-  errorMessage = () => this._errorMessage;
-  private _errorMessage = '';
+  // A signal, so the message appears even in a zoneless app when the HTTP error arrives.
+  protected readonly errorMessage = signal('');
 
   form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -270,7 +268,7 @@ export class LoginComponent {
 
     this.http.post('/api/login', this.form.getRawValue()).subscribe({
       next: () => this.router.navigateByUrl('/dashboard'),
-      error: () => (this._errorMessage = 'Invalid credentials'),
+      error: () => this.errorMessage.set('Invalid credentials'),
     });
   }
 }

@@ -3,7 +3,7 @@ id: lesson-34
 slug: interceptor-pattern-http-interceptors
 title: "The Interceptor Pattern: HTTP Interceptors"
 level: advanced
-order: 32
+order: 34
 duration: 55
 tags:
   - http
@@ -240,6 +240,8 @@ export const appConfig: ApplicationConfig = {
   ],
 };
 ```
+
+> **About `withFetch()`:** it switches `HttpClient` to the browser's Fetch API. On Angular 20 and 21 you add it yourself. Since Angular 22, Fetch is the default backend and `withFetch()` is deprecated, so you can leave it out (use `withXhr()` if you need upload progress events).
 
 ```typescript
 // diary.api.ts: no host, no headers, no auth code
@@ -488,7 +490,7 @@ describe('baseUrlInterceptor + authInterceptor', () => {
     http.get('content/course-manifest.json').subscribe();
 
     const request = controller.expectOne('content/course-manifest.json');
-    expect(request.request.headers.has('Authorization')).toBeFalse();
+    expect(request.request.headers.has('Authorization')).toBe(false);
     request.flush([]);
   });
 });

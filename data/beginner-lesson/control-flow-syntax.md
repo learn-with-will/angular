@@ -32,7 +32,7 @@ For years, Angular handled this with **structural directives**: `*ngIf`, `*ngFor
 - `*ngFor` performance depended on remembering to add a separate `trackBy` function — and forgetting it caused slow, buggy list updates.
 - Type-checking and tooling support were limited.
 
-Starting in Angular 17 (developer preview) and becoming **stable in Angular 18**, Angular introduced a **built-in block control flow** using an `@` syntax. It is now the recommended approach for all new code and is the default through the current stable release (Angular 22, June 2026). It solves the problems above: cleaner syntax that reads like normal code, no imports required, mandatory and ergonomic list tracking, better performance, and stronger type-checking that integrates naturally with Signals.
+Starting in Angular 17 (developer preview) and becoming **stable in Angular 18**, Angular introduced a **built-in block control flow** using an `@` syntax. It is now the recommended approach for all new code. It solves the problems above: cleaner syntax that reads like normal code, no imports required, mandatory and ergonomic list tracking, better performance, and stronger type-checking that integrates naturally with Signals.
 
 # Concept Explanation
 
@@ -277,7 +277,7 @@ export class TodoBoardComponent {
 
 **Why this is good practice:** the "how many are left" logic lives in a `computed` signal, not inline in the template; the loop tracks by the stable `id`; `$index` and `$last` are aliased with clear names; and `@empty` gives the user a friendly empty state. The `@switch` cleanly separates the three top-level UI states without nesting multiple `@if` blocks.
 
-> **Advanced tip — exhaustive `@switch`:** When the switched value is a TypeScript union type, you can add `@default never;` to ask the compiler to verify that *every* possible case is handled. If someone later adds a new value to the union and forgets a matching `@case`, you get a compile-time error instead of a silent bug. This is optional and best reserved for state machines where completeness matters.
+> **Advanced tip — exhaustive `@switch`:** When the switched value is a TypeScript union type, you can add `@default never;` to ask the compiler to verify that *every* possible case is handled. If someone later adds a new value to the union and forgets a matching `@case`, you get a compile-time error instead of a silent bug. This is optional and best reserved for state machines where completeness matters. (It needs a recent Angular version: Angular 20's compiler doesn't accept `@default never;`, so check your version before using it.)
 
 # Common Mistakes
 
@@ -285,7 +285,8 @@ export class TodoBoardComponent {
 - **Tracking by `$index` for dynamic lists.** `track $index` is only safe for static lists that never reorder or change. For lists that can change, track by a stable unique property like `id`; otherwise Angular may reuse the wrong DOM nodes and you'll see stale data or lost input focus.
 - **Still importing `CommonModule` "just in case."** The control flow blocks are built in. Importing `CommonModule` only to use `@if`/`@for`/`@switch` is unnecessary (you only need imports for things like pipes or other directives you actually use).
 - **Putting heavy logic inside the block condition.** Calling expensive functions in `@if (computeThing())` runs on every change detection. Move the work into a `computed` signal or a component property.
-- **Expecting `@switch` fallthrough.** There is none. Each `@case` is independent, and matching uses strict `===`. To share content across values, use consecutive `@case` blocks.
+- **Expecting `@switch` fallthrough.** There is none, and matching uses strict `===`. Each `@case` has its own block, and an empty `@case` simply renders nothing. If several values need the same content, move that content into a small component or an `<ng-template>` and render it from each case.
+- **Assuming the control-flow migration changes nothing.** `ng generate @angular/core:control-flow` turns `NgSwitch` (loose `==`) into `@switch` (strict `===`), so a case like `@case ('1')` no longer matches the number `1`. The schematic only rewrites templates (HTML files and inline templates), and where an `*ngFor` had no `trackBy` it picks a fallback `track` expression. Review every `@switch` and `track` after migrating.
 - **Forgetting the empty state.** Without `@empty`, an empty list renders nothing and can look like a bug. Add `@empty` to show a clear message.
 
 # Best Practices

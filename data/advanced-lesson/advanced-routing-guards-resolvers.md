@@ -42,8 +42,8 @@ The Angular Router's basic job is simple: match a URL to a component. But real a
 When the router processes a navigation, it works through the route tree from parent to child, roughly in this order:
 
 1. **Route matching** — the router looks for a route config whose `path` matches the URL. If the route (or its ancestors) defines `canMatch` guards, they run here. If a `canMatch` guard rejects a route, the router doesn't block navigation — it simply tries the *next* route definition with the same path, if one exists.
-2. **Activation guards** — for the matched route hierarchy, `canActivateChild` guards (inherited from parent routes) and `canActivate` guards (on the route itself) run, parent to child. Guards inside a single route's array run in the order they're listed; if one guard blocks or redirects, the remaining guards for that navigation don't need to run.
-3. **Deactivation guards** — if the navigation is leaving a currently-active route, that route's `canDeactivate` guards run to confirm it's safe to leave.
+2. **Deactivation guards** — if the navigation is leaving a currently-active route, that route's `canDeactivate` guards run **first**, to confirm it's safe to leave. If one returns `false`, nothing else runs.
+3. **Activation guards** — for the new route hierarchy, `canActivateChild` guards (inherited from parent routes) and `canActivate` guards (on the route itself) run, parent to child. All guards in one array start together; the router uses the first result, in the order they're listed, that isn't `true`.
 4. **Resolvers** — once every relevant guard has succeeded, `resolve` functions run, parent to child. A child resolver can read data already produced by a parent resolver.
 5. **Activation** — the component is created (or reused) and rendered, with resolved data already available.
 
@@ -153,7 +153,12 @@ import { Injectable, signal } from '@angular/core';
 export class AuthService {
   // In a real app this would reflect a stored/refreshed auth token.
   private readonly _isAuthenticated = signal(false);
+  private readonly roles = signal<string[]>([]);
   readonly isAuthenticated = this._isAuthenticated.asReadonly();
+
+  hasRole(role: string): boolean {
+    return this.roles().includes(role);
+  }
 
   login(): void {
     this._isAuthenticated.set(true);
@@ -496,7 +501,7 @@ bootstrapApplication(App, {
 ## Summary
 
 - Guards decide whether a navigation step is allowed; resolvers pre-fetch data before a route finishes activating.
-- The router evaluates `canMatch`, then `canActivateChild`/`canActivate`, then `canDeactivate` for the outgoing route, and only then runs resolvers, parent to child.
+- The router evaluates `canMatch` while matching, then `canDeactivate` for the route being left, then `canActivateChild`/`canActivate`, and only then runs resolvers, parent to child.
 - Modern Angular favors functional guards/resolvers built with `inject()` over class-based ones implementing router interfaces.
 - All guards share the same return types: `boolean`, `UrlTree`, `RedirectCommand`, or a `Promise`/`Observable` of those.
 - `CanMatch` is unique: returning `false` doesn't block navigation, it lets the router try the next matching route — ideal for feature flags and A/B tests.

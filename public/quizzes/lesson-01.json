@@ -27,7 +27,7 @@
         { "id": "c", "text": "Web Components only" }
       ],
       "answer": "b",
-      "explanation": "Since v17, the CLI scaffolds standalone components with no NgModule boilerplate."
+      "explanation": "New CLI projects have been standalone since Angular 17, and since Angular 19 standalone: true is implied, so there is no NgModule boilerplate."
     },
     {
       "id": "q3",
@@ -35,6 +35,39 @@
       "prompt": "What language is Angular primarily written in?",
       "answer": ["typescript", "ts"],
       "explanation": "Angular is built with TypeScript, which adds static typing on top of JavaScript."
+    },
+    {
+      "id": "q4",
+      "type": "single-choice",
+      "prompt": "What is the difference between ng serve and ng build?",
+      "options": [
+        { "id": "a", "text": "ng serve runs an in-memory dev server with live reload; ng build writes optimized files to dist/ for deployment" },
+        { "id": "b", "text": "Both produce files you can deploy to production" },
+        { "id": "c", "text": "ng build starts a dev server; ng serve only type-checks" },
+        { "id": "d", "text": "ng serve minifies the app for production; ng build does not" }
+      ],
+      "answer": "a",
+      "explanation": "ng serve is for development only. Deploy the optimized output that ng build writes to dist/."
+    },
+    {
+      "id": "q5",
+      "type": "single-choice",
+      "prompt": "Which unit-test runner does a new project created with Angular 21 or later use by default?",
+      "options": [
+        { "id": "a", "text": "Karma" },
+        { "id": "b", "text": "Protractor" },
+        { "id": "c", "text": "Vitest" },
+        { "id": "d", "text": "Cypress" }
+      ],
+      "answer": "c",
+      "explanation": "Since Angular 21, new projects run unit tests with Vitest. Existing Karma/Jasmine projects keep working."
+    },
+    {
+      "id": "q6",
+      "type": "fill-blank",
+      "prompt": "Which CLI command upgrades Angular and runs migrations for breaking changes (ng ____)?",
+      "answer": ["update", "ng update"],
+      "explanation": "ng update upgrades packages and runs migration schematics, which is safer than editing package.json by hand."
     }
   ]
 }

@@ -3,7 +3,7 @@ id: lesson-35
 slug: micro-frontends-angular-elements
 title: "Micro Frontends with Angular Elements"
 level: advanced
-order: 33
+order: 35
 duration: 60
 tags:
   - architecture

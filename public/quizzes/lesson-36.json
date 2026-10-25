@@ -1,0 +1,79 @@
+{
+  "id": "quiz-36",
+  "lessonId": "lesson-36",
+  "title": "Custom Directives",
+  "passingScore": 70,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single-choice",
+      "prompt": "What is the difference between an attribute directive and a structural directive?",
+      "options": [
+        { "id": "a", "text": "Attribute directives have templates; structural directives do not" },
+        { "id": "b", "text": "An attribute directive changes its host element; a structural directive adds or removes views from a template" },
+        { "id": "c", "text": "Structural directives can only be used on <div> elements" },
+        { "id": "d", "text": "There is no difference; the names are interchangeable" }
+      ],
+      "answer": "b",
+      "explanation": "Attribute directives change the look or behavior of their host element. Structural directives (used with *) create and remove views from an <ng-template>."
+    },
+    {
+      "id": "q2",
+      "type": "single-choice",
+      "prompt": "Which selector makes a directive apply to any element with an appHighlight attribute?",
+      "options": [
+        { "id": "a", "text": "selector: 'appHighlight'" },
+        { "id": "b", "text": "selector: '[appHighlight]'" },
+        { "id": "c", "text": "selector: '.appHighlight'" },
+        { "id": "d", "text": "selector: '#appHighlight'" }
+      ],
+      "answer": "b",
+      "explanation": "Square brackets make it an attribute selector. 'appHighlight' without brackets would match an <appHighlight> element."
+    },
+    {
+      "id": "q3",
+      "type": "fill-blank",
+      "prompt": "Which @Directive property declares bindings and event listeners on the host element, e.g. { \"(mouseenter)\": \"active.set(true)\" }?",
+      "answer": ["host"],
+      "explanation": "The host property is the recommended replacement for the @HostBinding and @HostListener decorators."
+    },
+    {
+      "id": "q4",
+      "type": "match-pair",
+      "prompt": "Match each API to its role in a structural directive.",
+      "pairs": [
+        { "left": "TemplateRef", "right": "The template the directive sits on" },
+        { "left": "ViewContainerRef", "right": "Where created views are inserted" },
+        { "left": "createEmbeddedView()", "right": "Renders the template" },
+        { "left": "clear()", "right": "Removes the rendered views" }
+      ],
+      "explanation": "A structural directive renders its TemplateRef into its ViewContainerRef, and clears it when the content should disappear."
+    },
+    {
+      "id": "q5",
+      "type": "single-choice",
+      "prompt": "A component lists { directive: ClickOutside } in hostDirectives. Can its users write (appClickOutside)=\"close()\"?",
+      "options": [
+        { "id": "a", "text": "Yes, all host directive inputs and outputs are public" },
+        { "id": "b", "text": "No, unless the output is listed in the entry's outputs array (optionally with an alias)" },
+        { "id": "c", "text": "Only if the component also imports ClickOutside" },
+        { "id": "d", "text": "No, host directives cannot have outputs" }
+      ],
+      "answer": "b",
+      "explanation": "A host directive's inputs and outputs are private unless you expose them, e.g. outputs: ['appClickOutside: dismissed']."
+    },
+    {
+      "id": "q6",
+      "type": "single-choice",
+      "prompt": "Why should a structural directive avoid calling clear() and createEmbeddedView() on every change?",
+      "options": [
+        { "id": "a", "text": "It is not allowed inside effect()" },
+        { "id": "b", "text": "Rebuilding destroys and recreates the content, losing focus and component state" },
+        { "id": "c", "text": "createEmbeddedView() can only be called once per app" },
+        { "id": "d", "text": "It causes a compile error" }
+      ],
+      "answer": "b",
+      "explanation": "Track whether the view exists, create it once when needed, and clear it once when it should go away."
+    }
+  ]
+}

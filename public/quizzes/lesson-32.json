@@ -73,6 +73,19 @@
       ],
       "answer": "b",
       "explanation": "Both anti-patterns remove boundaries: everything depends on everything, so nothing can be found, split, or owned separately."
+    },
+    {
+      "id": "q7",
+      "type": "single-choice",
+      "prompt": "What does @defer (on viewport; prefetch on idle) { <app-chart /> } @placeholder { … } do?",
+      "options": [
+        { "id": "a", "text": "Renders the chart immediately and hides it until scrolled into view" },
+        { "id": "b", "text": "Downloads the chart's code when the browser is idle, and renders it when the placeholder scrolls into view" },
+        { "id": "c", "text": "Loads the chart on the server only" },
+        { "id": "d", "text": "Lazy-loads the whole route" }
+      ],
+      "answer": "b",
+      "explanation": "prefetch on idle fetches the code early without rendering it; on viewport renders it once the placeholder becomes visible."
     }
   ]
 }

@@ -22,12 +22,14 @@ By the end of this lesson, you will be able to:
 - Diagnose and fix the most common OnPush bug: silent UI staleness caused by mutating data instead of replacing it.
 - Combine OnPush with Signals (`signal()`, `computed()`, `input()`) to get fine-grained, mostly-automatic change detection.
 - Use `ChangeDetectorRef.markForCheck()` correctly when integrating non-Angular data sources, and understand how this pattern prepares an app for **zoneless** change detection.
+- Explain the `Eager` and `OnPush` strategies, and which one is the default in your Angular version.
+- Load images efficiently with `NgOptimizedImage`.
 
 ## Why This Concept Exists
 
 Every Angular application keeps its template in sync with its component state through **change detection**: a pass over the component tree that checks bindings and updates the DOM where values changed.
 
-By default, every component uses `ChangeDetectionStrategy.Default`. With this strategy, whenever *any* asynchronous event happens anywhere in the app (a click, an HTTP response, a timer, a promise resolving), Angular's scheduler walks the **entire component tree** and checks every component's bindings, even ones that couldn't possibly have changed.
+Before Angular 22, every component used `ChangeDetectionStrategy.Default` unless it opted out. With that strategy, whenever *any* asynchronous event happens anywhere in the app (a click, an HTTP response, a timer, a promise resolving), Angular's scheduler walks the **entire component tree** and checks every component's bindings, even ones that couldn't possibly have changed. Since Angular 22, `OnPush` is the default for components, and the old behavior is called `ChangeDetectionStrategy.Eager` (`Default` still works but is deprecated). `ng update` adds `Eager` to existing components that don't set a strategy, so upgrading doesn't change how they behave.
 
 For small apps this is invisible. For large apps — dashboards with hundreds of widgets, data grids with thousands of rows, deeply nested component trees — re-checking everything on every interaction becomes measurably slow, especially on mid-range mobile devices. A single keystroke in a search box can trigger thousands of unnecessary binding checks in parts of the UI that have nothing to do with that search box.
 
@@ -39,8 +41,10 @@ For small apps this is invisible. For large apps — dashboards with hundreds of
 
 Angular components have a `changeDetection` property that accepts one of two values from the `ChangeDetectionStrategy` enum:
 
-- **`Default`** (sometimes described in Angular's docs as the "Eager" strategy) — the component is always checked whenever change detection runs, regardless of whether anything relevant to it changed.
-- **`OnPush`** — the component is checked only when Angular has a specific, trackable reason to believe something changed.
+- **`Eager`** (called `Default` before Angular 22) — the component is always checked whenever change detection runs, regardless of whether anything relevant to it changed.
+- **`OnPush`** (the default for components since Angular 22) — the component is checked only when Angular has a specific, trackable reason to believe something changed.
+
+On Angular 20 and 21 you opt in to `OnPush` per component; from Angular 22 you get it unless you choose `Eager`. Everything below about *how* OnPush decides to check a component is the same in every version.
 
 ### What counts as "a reason" under OnPush
 
@@ -69,7 +73,7 @@ Zoneless Angular relies entirely on the same explicit signals OnPush already dep
 | Term | Meaning |
 |---|---|
 | **Change detection** | Angular's process of checking component bindings and updating the DOM to match component state. |
-| **`ChangeDetectionStrategy.Default`** | The strategy where a component is always checked on every change detection run ("Eager"). |
+| **`ChangeDetectionStrategy.Eager`** | The strategy where a component is always checked on every change detection run. Called `Default` before Angular 22 (that name is now deprecated). |
 | **`ChangeDetectionStrategy.OnPush`** | The strategy where a component is only checked when it receives new inputs, an event fires within it, an `async` pipe emits, `markForCheck()` is called, or a signal it reads changes. |
 | **Reference equality** | Comparing two values by identity (`===` / `Object.is`), not by deep structural comparison. Angular uses this for `@Input()` change detection. |
 | **Immutability** | The practice of never mutating existing objects/arrays in place; always producing a new reference when data changes. |
@@ -88,7 +92,6 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 @Component({
   selector: 'app-widget',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush, // <-- opt in here
   template: `<p>{{ value }}</p>`,
 })
@@ -119,7 +122,8 @@ export class LiveTickerComponent {
 Enabling zoneless change detection at bootstrap (Angular v20.2+, default in v21+):
 
 ```typescript
-import { bootstrapApplication, provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection } from '@angular/core';
+import { bootstrapApplication } from '@angular/platform-browser';
 import { AppComponent } from './app/app.component';
 
 bootstrapApplication(AppComponent, {
@@ -131,7 +135,7 @@ bootstrapApplication(AppComponent, {
 
 Think of Angular's change detector as a **building inspector** doing rounds.
 
-With the **Default** strategy, the inspector walks into every single room on every floor, every time *any* alarm goes off anywhere in the building — even a doorbell three floors away. Exhausting, and mostly wasted effort.
+With the **Eager** strategy (called `Default` before Angular 22), the inspector walks into every single room on every floor, every time *any* alarm goes off anywhere in the building — even a doorbell three floors away. Exhausting, and mostly wasted effort.
 
 With **OnPush**, each room has a sign on the door: *"Only enter if (a) someone hands you a new file through the mail slot, (b) an alarm goes off inside this room, or (c) I personally radio you and tell you to check."* The inspector skips every room without one of those triggers — and doesn't even bother opening the door to peek at what's behind it. If you only ever slide *the same file back through the same slot with a page changed* (mutation), the inspector never notices — from the outside, nothing new arrived.
 
@@ -154,7 +158,6 @@ interface User {
 
 @Component({
   selector: 'app-user-card',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="card">
@@ -175,7 +178,6 @@ import { UserCardComponent } from './user-card.component';
 
 @Component({
   selector: 'app-root',
-  standalone: true,
   imports: [UserCardComponent],
   template: `
     <app-user-card [user]="user" />
@@ -236,7 +238,6 @@ import { ProductService } from './product.service';
 
 @Component({
   selector: 'app-product-list',
-  standalone: true,
   imports: [AsyncPipe, CurrencyPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -278,7 +279,6 @@ interface CartItem {
 
 @Component({
   selector: 'app-shopping-cart',
-  standalone: true,
   imports: [CurrencyPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -330,6 +330,32 @@ export class ShoppingCartComponent {
 
 **Why it matters:** every mutation goes through `signal.update()` with an immutable transformation, so the "mutation bug" from Example 1 becomes structurally impossible. If this same app later adopts `provideZonelessChangeDetection()`, this component needs **zero changes** — it was already written the zoneless way.
 
+### Beyond change detection: images with `NgOptimizedImage`
+
+Large images are often the slowest part of a page, and no change detection strategy fixes that. `NgOptimizedImage` (the `ngSrc` attribute) applies the usual image fixes for you:
+
+```typescript
+import { Component } from '@angular/core';
+import { NgOptimizedImage } from '@angular/common';
+
+@Component({
+  selector: 'app-product-hero',
+  imports: [NgOptimizedImage],
+  template: `
+    <!-- The main image above the fold: load it first -->
+    <img ngSrc="/images/hero.jpg" width="1200" height="600" priority alt="Kettlebells on a rack" />
+
+    <!-- Images further down are lazy-loaded automatically -->
+    <img ngSrc="/images/detail.jpg" width="400" height="300" alt="Close-up of the handle" />
+  `,
+})
+export class ProductHero {}
+```
+
+- Images are **lazy-loaded** by default; `priority` loads the most important one eagerly.
+- `width` and `height` (or `fill`) are required, so the page doesn't jump while images load.
+- With an image loader for your CDN, Angular generates `srcset`s so each device downloads a suitable size.
+
 ## Common Mistakes
 
 1. **Mutating objects/arrays instead of replacing them.** `this.items.push(x)` or `this.user.age++` leaves the reference unchanged, so OnPush components never see the update. Always produce a new reference (spread, `map`/`filter`, or `signal.update()`).
@@ -341,7 +367,7 @@ export class ShoppingCartComponent {
 
 ## Best Practices
 
-- **Default new components to OnPush.** Treat `ChangeDetectionStrategy.Default` as the exception you reach for only when you have a specific reason (e.g. quick prototyping), not the baseline.
+- **Use `OnPush` everywhere.** It's the default since Angular 22. On Angular 20 and 21, add `changeDetection: ChangeDetectionStrategy.OnPush` to every new component, and treat `Eager`/`Default` as the exception you reach for only when you have a specific reason.
 - **Prefer Signals (`signal()`, `computed()`, `input()`) over manual `@Input()` + `ChangeDetectorRef` wiring.** Signals give you the fine-grained update behavior OnPush was designed to enable, with far less boilerplate and no risk of a forgotten `markForCheck()`.
 - **Make immutability a project-wide rule, not a per-component decision.** Use `readonly` types, spread syntax, and array methods that return new arrays (`map`, `filter`, `concat`) instead of in-place mutators (`push`, `splice`, `sort`).
 - **Use the `async` pipe instead of manual `.subscribe()`** wherever practical — it handles both the `markForCheck()` call and the unsubscription for you.
@@ -352,7 +378,7 @@ export class ShoppingCartComponent {
 
 ## Summary
 
-- Angular's `Default` strategy checks every component on every change detection run; `OnPush` checks a component only when there's a specific, trackable reason to.
+- The `Eager` strategy (called `Default` before Angular 22) checks every component on every change detection run; `OnPush` checks a component only when there's a specific, trackable reason to. `OnPush` is the default for components since Angular 22.
 - OnPush triggers: a new `@Input()`/`input()` reference, an event inside the component's subtree, an `async` pipe emission, a manual `markForCheck()` call, or a signal read in the template changing.
 - OnPush prunes subtrees, it doesn't disable change detection app-wide — the path from root to any component that fired an event is always checked.
 - OnPush requires immutable data updates; mutating an object in place is invisible to Angular's reference-based input comparison.
@@ -382,7 +408,7 @@ A: A stable Angular scheduling mode (since v20.2, default since v21) that remove
 ## Exercises
 
 **Easy**
-You're given an `AppComponent` using `ChangeDetectionStrategy.Default` with a `TodoListComponent` child. The parent adds items with `this.todos.push(newTodo)`. Convert `TodoListComponent` to `OnPush`, then fix the resulting stale-UI bug by changing the parent's add logic to produce a new array reference instead of mutating the existing one.
+You're given an `AppComponent` using the eager strategy (`ChangeDetectionStrategy.Eager`, or `Default` before Angular 22) with a `TodoListComponent` child. The parent adds items with `this.todos.push(newTodo)`. Convert `TodoListComponent` to `OnPush`, then fix the resulting stale-UI bug by changing the parent's add logic to produce a new array reference instead of mutating the existing one.
 
 **Medium**
 Build a `NotificationBadgeComponent` (OnPush) that displays an unread count. Wire it to a mock service that simulates a raw WebSocket: `socket.onMessage(count => { ... })`, called *outside* Angular's normal reactivity. First implement it correctly using `ChangeDetectorRef.markForCheck()` inside the callback. Then refactor the service to expose the count as a `signal<number>()` instead, update the component to read the signal directly, and remove the manual `markForCheck()` call entirely — confirm the UI still updates correctly.

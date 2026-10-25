@@ -81,6 +81,19 @@
       ],
       "answer": "b",
       "explanation": "Conditionally wrapping <ng-content> doesn't lazily create content; prefer a CSS toggle like [hidden] or fallback content."
+    },
+    {
+      "id": "q7",
+      "type": "single-choice",
+      "prompt": "A parent projects @if (canDelete()) { <div modal-footer>…</div> } into a modal whose footer slot has fallback content. What shows when canDelete() is false?",
+      "options": [
+        { "id": "a", "text": "The modal's fallback footer content" },
+        { "id": "b", "text": "Nothing: the footer slot is empty" },
+        { "id": "c", "text": "Both the fallback and the projected content" },
+        { "id": "d", "text": "A compile error" }
+      ],
+      "answer": "b",
+      "explanation": "Fallback is decided once, when the slot is created, and only appears if nothing at all is projected. The @if block counts as projected content even when false. Put the @if inside an always-projected element instead."
     }
   ]
 }

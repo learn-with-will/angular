@@ -75,6 +75,19 @@
       ],
       "answer": "b",
       "explanation": "Because comparison uses Object.is, you must produce a new array, e.g. items.update(curr => [...curr, item])."
+    },
+    {
+      "id": "q7",
+      "type": "ordering",
+      "prompt": "Order these steps to update a counter signal by one.",
+      "items": [
+        { "id": "s1", "text": "Declare const count = signal(0)" },
+        { "id": "s2", "text": "Read the current value with count()" },
+        { "id": "s3", "text": "Call count.update(n => n + 1)" },
+        { "id": "s4", "text": "The template re-renders with the new value" }
+      ],
+      "answer": ["s1", "s2", "s3", "s4"],
+      "explanation": "Create the signal, read it, update it, and the view reacts automatically."
     }
   ]
 }

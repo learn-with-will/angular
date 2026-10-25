@@ -23,12 +23,12 @@
       "prompt": "Why should you write [disabled]=\"isSaving()\" instead of disabled=\"{{ isSaving() }}\"?",
       "options": [
         { "id": "a", "text": "Interpolation is slower than property binding" },
-        { "id": "b", "text": "Property binding sets the real boolean DOM property; interpolation produces the string \"false\", which the browser still treats as disabled" },
+        { "id": "b", "text": "Property binding sets the real boolean DOM property; interpolation sets the property to the string \"false\", which still counts as true" },
         { "id": "c", "text": "The disabled attribute does not exist on buttons" },
         { "id": "d", "text": "There is no difference; both work identically" }
       ],
       "answer": "b",
-      "explanation": "The string \"false\" is truthy for the attribute's presence, so the button never re-enables. Property binding binds a genuine boolean."
+      "explanation": "Interpolation sets disabled to the string \"false\", and any non-empty string counts as true, so the button never re-enables. Property binding binds a real boolean."
     },
     {
       "id": "q3",
@@ -36,12 +36,12 @@
       "prompt": "When must you use attribute binding ([attr.name]) instead of property binding?",
       "options": [
         { "id": "a", "text": "Whenever the value is a string" },
-        { "id": "b", "text": "When the attribute has no matching DOM property, such as ARIA, SVG, or colspan" },
+        { "id": "b", "text": "When the attribute has no matching DOM property, such as colspan or most SVG attributes" },
         { "id": "c", "text": "Only inside form controls" },
         { "id": "d", "text": "Never — property binding always works" }
       ],
       "answer": "b",
-      "explanation": "ARIA attributes, SVG attributes, and colspan have no DOM property, so plain property binding silently fails; use [attr.*]."
+      "explanation": "colspan and most SVG attributes have no DOM property, and binding to them directly is a compile error, so use [attr.*]. ARIA attributes can be bound directly since Angular 20, but [attr.aria-*] works in every version."
     },
     {
       "id": "q4",

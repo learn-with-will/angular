@@ -3,7 +3,7 @@ id: lesson-21
 slug: heavy-computation-web-workers-pure-pipes
 title: "Heavy Computation: Web Workers & Pure Pipes"
 level: advanced
-order: 22
+order: 24
 duration: 55
 tags:
   - web-workers
@@ -13,7 +13,7 @@ tags:
   - memoization
 ---
 
-> **A note on naming:** As of the current Angular style guide, generated files and classes drop the `.component`/`.pipe`/`.service` suffixes (e.g. `user-profile.ts` / `class UserProfile` instead of `user-profile.component.ts` / `class UserProfileComponent`). This lesson follows that convention. If you're working in an older codebase or tutorial, you'll still see the suffixed style — both work identically at runtime.
+> **A note on naming:** As of the current Angular style guide (Angular 20+), generated files and classes drop the `.component` and `.service` suffixes (e.g. `user-profile.ts` / `class UserProfile` instead of `user-profile.component.ts` / `class UserProfileComponent`). Pipes, guards, and interceptors use a hyphen instead of a dot, e.g. `expensive-format-pipe.ts` with `class ExpensiveFormatPipe`. This lesson follows that convention. If you're working in an older codebase or tutorial, you'll still see the suffixed style — both work identically at runtime.
 
 ## Learning Objectives
 

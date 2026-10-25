@@ -3,7 +3,7 @@ id: lesson-24
 slug: custom-and-async-validators
 title: "Custom & Asynchronous Validators"
 level: advanced
-order: 25
+order: 27
 duration: 55
 tags:
   - reactive-forms
@@ -19,7 +19,8 @@ By the end of this lesson, you will be able to:
 
 - Write reusable **custom synchronous validators** using the `ValidatorFn` API, including parameterized validator factories.
 - Build **asynchronous validators** (`AsyncValidatorFn`) that check a value against a server, using RxJS to avoid race conditions and excessive requests.
-- Attach single and multiple sync/async validators to `FormControl`, `FormGroup`, and cross-field scenarios.
+- Attach single and multiple sync/async validators to `FormControl`, `FormGroup`, and `FormArray`, including rules that compare several values.
+- Package a validator as a directive so template-driven forms (`ngModel`) can use it.
 - Correctly read and display a control's `PENDING`, `VALID`, and `INVALID` states while async validation is running.
 - Apply Angular best practices (debouncing, cancellation, error handling, testability) when combining custom and async validation in real forms.
 
@@ -140,7 +141,7 @@ Notice the difference between passing `noSpacesValidator` (no parentheses — it
 Think of form validation as a **security checkpoint**:
 
 - **Synchronous validators** are like a guard checking your ID against a printed list of rules right there at the door — "Is the photo present? Is the name filled in?" It takes a fraction of a second and never leaves the guard's desk.
-- **Asynchronous validators** are like the guard calling **head office** to confirm your badge is still active. The guard can't finish checking you in until head office replies — so a "please wait" light turns on (that's your `PENDING` status). If the guard called head office on every tiny movement you make while waiting in line, the phone lines would jam — so a good guard waits until you've *stopped moving* for a moment before dialing (that's `debounceTime`), and hangs up on the previous call the instant a new one starts (that's `switchMap`/cancellation).
+- **Asynchronous validators** are like the guard calling **head office** to confirm your badge is still active. The guard can't finish checking you in until head office replies — so a "please wait" light turns on (that's your `PENDING` status). If the guard called head office on every tiny movement you make while waiting in line, the phone lines would jam — so a good guard waits until you've *stopped moving* for a moment before dialing (that's the `timer`), and hangs up on the previous call the instant you move again (that's Angular cancelling the previous validation).
 
 ## Examples
 
@@ -175,7 +176,6 @@ function noWhitespaceValidator(): ValidatorFn {
 
 @Component({
   selector: 'app-username-form',
-  standalone: true,
   imports: [ReactiveFormsModule],
   template: `
     <form [formGroup]="form">
@@ -223,8 +223,7 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
-import { Observable, of } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged, first, map, switchMap } from 'rxjs/operators';
+import { Observable, catchError, map, of, switchMap, timer } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class UsernameService {
@@ -238,9 +237,9 @@ export class UsernameService {
 }
 
 /**
- * Async validator factory. Debounces rapid input, cancels stale requests
- * with switchMap, guarantees completion with first(), and treats network
- * failures as "cannot confirm right now" instead of blocking the form.
+ * Async validator factory. Waits for a pause in typing before calling the
+ * server, and treats network failures as "cannot confirm right now" instead
+ * of blocking the form.
  */
 function uniqueUsernameValidator(usernameService: UsernameService): AsyncValidatorFn {
   return (control: AbstractControl): Observable<ValidationErrors | null> => {
@@ -248,20 +247,19 @@ function uniqueUsernameValidator(usernameService: UsernameService): AsyncValidat
       return of(null); // let Validators.required handle empty values
     }
 
-    return of(control.value).pipe(
-      debounceTime(400),
-      distinctUntilChanged(),
-      switchMap(value => usernameService.checkAvailability(value)),
+    // Wait 400 ms before calling the server. If the value changes before then,
+    // Angular unsubscribes from this observable and calls the validator again,
+    // so the timer (and any request it started) is cancelled automatically.
+    return timer(400).pipe(
+      switchMap(() => usernameService.checkAvailability(control.value)),
       map(isAvailable => (isAvailable ? null : { usernameTaken: true })),
-      first(), // ensures the observable completes so the control leaves PENDING
-      catchError(() => of(null)) // a failed check should not permanently block the user
+      catchError(() => of(null)) // a failed check should not block the user
     );
   };
 }
 
 @Component({
   selector: 'app-signup-form',
-  standalone: true,
   imports: [ReactiveFormsModule],
   template: `
     <form [formGroup]="form">
@@ -291,20 +289,23 @@ export class SignupFormComponent {
 
 **Explanation:**
 - The async validator is a **factory that accepts a service**, so the HTTP dependency is injected once at the component level (via `inject()`) rather than the validator reaching into Angular's injector itself.
-- `debounceTime(400)` waits for a pause in typing before calling the server; `switchMap` guarantees that only the response for the *latest* value is used, discarding any in-flight request for an outdated value.
-- `first()` is a safety net: it guarantees the returned observable completes even if the underlying HTTP call were replaced with something that could otherwise stay open.
+- **Each validation is a new, short-lived observable.** Angular calls the validator again on every value change and unsubscribes from the previous result first. That built-in cancellation is what discards stale requests.
+- `timer(400)` turns that cancellation into a debounce: while the user keeps typing, the timer never fires, so no request is sent. `switchMap` then starts the request once the timer emits.
+- Operators such as `distinctUntilChanged()` don't help *inside* a validator, because each call creates a stream with a single value.
+- `HttpClient` completes after one response, so the control always leaves `PENDING`. Add `take(1)` only for sources that don't complete on their own.
 - `catchError` prevents a network failure from permanently trapping the control in an invalid state — it degrades gracefully instead of blocking the user.
 - The template checks `pending` before displaying the error, avoiding a flash of a stale error message while a new check is in flight.
 
-### 3. Best-Practice Example — Composable, Testable Validators with Cross-Field Validation
+### 3. Best-Practice Example — Composable, Testable Validators for a Dynamic List
 
-This example shows the recommended structure for larger forms: validators exported as **pure, standalone functions** (easy to unit test in isolation), a **cross-field validator** on the `FormGroup`, and a component that only wires them together.
+The *Reactive Forms & Validation* lesson showed a cross-field validator on a `FormGroup` (password and confirm password). The same idea works on a `FormArray`, where a validator can look at *all* items at once. This example shows the recommended structure for larger forms: validators exported as **pure, standalone functions** (easy to unit test in isolation), list-level rules on the `FormArray`, and a component that only wires them together.
 
 ```ts
 import { Component, inject } from '@angular/core';
 import {
   AbstractControl,
-  FormBuilder,
+  FormArray,
+  NonNullableFormBuilder,
   ReactiveFormsModule,
   ValidationErrors,
   ValidatorFn,
@@ -314,72 +315,110 @@ import {
 // --- Pure, dependency-free validators. Exported so they can be
 // --- unit tested without instantiating any component. ---
 
-/** Requires at least one uppercase letter, one digit, and 8+ characters. */
-export function passwordStrengthValidator(): ValidatorFn {
+/** Requires the list to hold between `min` and `max` items. */
+export function arrayLengthValidator(min: number, max: number): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
-    const value: string = control.value ?? '';
-    const hasUpperCase = /[A-Z]/.test(value);
-    const hasDigit = /\d/.test(value);
-    const hasMinLength = value.length >= 8;
-
-    return hasUpperCase && hasDigit && hasMinLength ? null : { weakPassword: true };
+    const length = (control as FormArray).length;
+    return length < min || length > max ? { arrayLength: { min, max, actual: length } } : null;
   };
 }
 
-/** Cross-field validator: compares two sibling controls on a FormGroup. */
-export function fieldsMatchValidator(controlKey: string, matchingKey: string): ValidatorFn {
-  return (group: AbstractControl): ValidationErrors | null => {
-    const control = group.get(controlKey);
-    const matchingControl = group.get(matchingKey);
-
-    if (!control || !matchingControl || !control.value || !matchingControl.value) {
-      return null; // let required validators handle empty fields
-    }
-
-    return control.value === matchingControl.value ? null : { fieldsMismatch: true };
+/** Rejects duplicate values (compared case-insensitively, ignoring blanks). */
+export function uniqueValuesValidator(): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const values: string[] = (control.value ?? [])
+      .map((value: string) => value.trim().toLowerCase())
+      .filter(Boolean);
+    const duplicates = values.filter((value, index) => values.indexOf(value) !== index);
+    return duplicates.length ? { duplicates: { values: [...new Set(duplicates)] } } : null;
   };
 }
 
 @Component({
-  selector: 'app-register-form',
-  standalone: true,
+  selector: 'app-invite-form',
   imports: [ReactiveFormsModule],
   template: `
     <form [formGroup]="form">
-      <label for="password">Password</label>
-      <input id="password" type="password" formControlName="password" />
-      @if (form.controls.password.touched && form.controls.password.hasError('weakPassword')) {
-        <p class="error">Use 8+ characters with at least one uppercase letter and one number.</p>
+      <div formArrayName="emails">
+        @for (email of emails.controls; track $index) {
+          <input type="email" [formControlName]="$index" placeholder="teammate@example.com" />
+          @if (email.touched && email.hasError('email')) {
+            <p class="error">That doesn't look like an email address.</p>
+          }
+        }
+      </div>
+      <button type="button" (click)="addEmail()">Add another</button>
+
+      @if (emails.hasError('duplicates')) {
+        <p class="error">Each teammate can only be invited once.</p>
+      }
+      @if (emails.hasError('arrayLength')) {
+        <p class="error">Invite between 1 and 5 teammates.</p>
       }
 
-      <label for="confirmPassword">Confirm Password</label>
-      <input id="confirmPassword" type="password" formControlName="confirmPassword" />
-      @if (form.controls.confirmPassword.touched && form.hasError('fieldsMismatch')) {
-        <p class="error">Passwords do not match.</p>
-      }
-
-      <button type="submit" [disabled]="form.invalid || form.pending">Create account</button>
+      <button type="submit" [disabled]="form.invalid || form.pending">Send invites</button>
     </form>
   `,
 })
-export class RegisterFormComponent {
-  private fb = inject(FormBuilder);
+export class InviteFormComponent {
+  private fb = inject(NonNullableFormBuilder);
 
-  form = this.fb.group(
-    {
-      password: ['', [Validators.required, passwordStrengthValidator()]],
-      confirmPassword: ['', Validators.required],
-    },
-    { validators: fieldsMatchValidator('password', 'confirmPassword') }
-  );
+  form = this.fb.group({
+    emails: this.fb.array([this.fb.control('', Validators.email)], {
+      validators: [arrayLengthValidator(1, 5), uniqueValuesValidator()],
+    }),
+  });
+
+  get emails() {
+    return this.form.controls.emails;
+  }
+
+  addEmail(): void {
+    this.emails.push(this.fb.control('', Validators.email));
+  }
 }
 ```
 
 **Explanation:**
-- `passwordStrengthValidator` and `fieldsMatchValidator` are **exported top-level functions**, not private component methods. This is the recommended pattern because it lets you write focused unit tests (e.g. `expect(passwordStrengthValidator()(new FormControl('abc'))).toEqual({ weakPassword: true })`) without rendering a component.
-- `fieldsMatchValidator` is attached as the **second argument to `fb.group()`**, which places it on the `FormGroup` itself — this is required because it needs to read two sibling controls via `group.get(...)`.
-- The submit button is disabled on `form.invalid || form.pending`, which correctly also blocks submission while any async validator elsewhere in the form is still resolving (not shown here, but this pattern extends directly to Example 2's async validator).
+- `arrayLengthValidator` and `uniqueValuesValidator` are **exported top-level functions**, not private component methods. This is the recommended pattern because it lets you write focused unit tests (e.g. `expect(uniqueValuesValidator()(new FormArray([new FormControl('a'), new FormControl('A')]))).toEqual({ duplicates: { values: ['a'] } })`) without rendering a component.
+- The list-level validators are passed in the **options of `fb.array()`**, which places them on the `FormArray` itself. That's required because they need every item at once. Per-item rules (`Validators.email`) stay on each `FormControl`.
+- The error objects carry details (`{ min, max, actual }`, the duplicate values), so the template or a shared error component can build a precise message.
+- The submit button is disabled on `form.invalid || form.pending`, which also blocks submission while any async validator elsewhere in the form is still resolving (Example 2's pattern).
 - Each validator checks exactly one rule — small, composable functions are easier to reuse, test, and reason about than one large validator.
+
+### Using a custom validator with template-driven forms
+
+Template-driven forms (`ngModel`) find validators through the `NG_VALIDATORS` token, so to use a custom rule there you wrap it in a directive:
+
+```ts
+import { Directive, forwardRef, input } from '@angular/core';
+import { AbstractControl, NG_VALIDATORS, ValidationErrors, Validator } from '@angular/forms';
+
+@Directive({
+  selector: '[appForbiddenWord]',
+  providers: [
+    { provide: NG_VALIDATORS, useExisting: forwardRef(() => ForbiddenWordDirective), multi: true },
+  ],
+})
+export class ForbiddenWordDirective implements Validator {
+  readonly appForbiddenWord = input.required<string>();
+
+  validate(control: AbstractControl): ValidationErrors | null {
+    const word = this.appForbiddenWord().toLowerCase();
+    const value = String(control.value ?? '').toLowerCase();
+    return word && value.includes(word) ? { forbiddenWord: { word } } : null;
+  }
+}
+```
+
+```html
+<input name="bio" ngModel appForbiddenWord="spam" #bio="ngModel" />
+@if (bio.hasError('forbiddenWord')) {
+  <p class="error">Please don't use "spam".</p>
+}
+```
+
+Add the directive to the component's `imports`. The same directive also works on reactive-form inputs that use `formControlName`.
 
 ## Common Mistakes
 
@@ -387,7 +426,7 @@ export class RegisterFormComponent {
 - **Returning a value instead of an Observable/Promise from an async validator.** `AsyncValidatorFn` must always return `Observable<ValidationErrors | null>` or `Promise<ValidationErrors | null>` — never a raw `ValidationErrors | null`.
 - **Subscribing inside the validator instead of returning the observable.** If you call `.subscribe(...)` inside the validator and return nothing, Angular never receives a result and the control stays `PENDING` forever.
 - **An async validator observable that never completes.** Long-lived streams (e.g., a live WebSocket or Firestore listener) will leave the control permanently `PENDING` unless you apply `first()` or `take(1)`.
-- **No debouncing on async validators tied to `updateOn: 'change'`** (the default). Without `debounceTime`, every keystroke triggers a network request.
+- **No debouncing on async validators tied to `updateOn: 'change'`** (the default). Without a short `timer` before the request (or `updateOn: 'blur'`), every keystroke triggers a network request.
 - **Ignoring errors from the async source.** If the HTTP call fails and you don't `catchError`, the observable errors out, and the control can end up stuck rather than showing a clear, recoverable message.
 - **Mixing up the third argument.** The `FormControl` constructor signature is `(value, validators?, asyncValidators?)` — putting an async validator in the sync validators array (or vice versa) means it will never run correctly.
 - **Placing a cross-field validator on a `FormControl`.** A single control has no way to read its siblings; cross-field checks belong on the parent `FormGroup`/`FormArray`.
@@ -398,7 +437,7 @@ export class RegisterFormComponent {
 - Keep validators **pure functions** with no side effects, so they're trivial to unit test in isolation from any component or template.
 - Prefer **validator factories** even for validators that currently need no parameters — it keeps a consistent, easily extendable API across your codebase.
 - For async validators that call a service, use a **factory that accepts the dependency as a parameter** (as in Example 2/3) rather than reaching into Angular's injector from inside the validator, which keeps the function easy to test with a mock.
-- Always pipe async validators through `debounceTime` + `distinctUntilChanged` + `switchMap` when they're tied to live user typing, and add `catchError` so network failures degrade gracefully instead of trapping the form.
+- Start server checks from `timer(ms)` + `switchMap` when they're tied to live user typing (Angular cancels the previous validation on each change), and add `catchError` so network failures degrade gracefully instead of trapping the form.
 - Consider `updateOn: 'blur'` or `updateOn: 'submit'` on controls with expensive async validators, so the check runs once the user is done typing rather than on every change.
 - Ensure every async validator's observable **completes** (via `first()`/`take(1)`, or because the source, like `HttpClient`, already completes by design).
 - Disable submit controls (or otherwise block submission) while `form.pending` is `true`, in addition to checking `form.invalid`.
@@ -412,7 +451,7 @@ export class RegisterFormComponent {
 - An asynchronous validator matches `AsyncValidatorFn`: it returns an `Observable`/`Promise` and must eventually **complete**.
 - **Validator factories** (functions that return a validator) let you parameterize and reuse validation logic.
 - While an async validator is resolving, the control's status is `'PENDING'` — neither valid nor invalid.
-- Use `debounceTime`, `distinctUntilChanged`, `switchMap`, and `catchError` to keep async validators efficient, race-condition-free, and resilient to failures.
+- Use `timer` + `switchMap` and `catchError` to keep async validators efficient and resilient; Angular itself cancels the previous validation whenever the value changes.
 - **Cross-field validators** belong on the `FormGroup`/`FormArray`, since they need access to sibling controls.
 - Export validators as standalone functions to keep them reusable and easily unit-testable.
 - Always guard submission against both `form.invalid` and `form.pending`.
@@ -429,7 +468,7 @@ A: Angular waits for completion to move the control out of the `PENDING` status.
 A: A function that returns a `ValidatorFn`/`AsyncValidatorFn`. It lets you parameterize a rule (e.g. a minimum length or an injected service) and reuse the same validator with different configuration across your app.
 
 **Q: How do you prevent an async validator from firing an HTTP request on every keystroke?**
-A: Pipe the value through `debounceTime` (and typically `distinctUntilChanged` and `switchMap`) inside the validator, and/or set the control's `updateOn` to `'blur'` or `'submit'`.
+A: Start the check from `timer(ms)` inside the validator (Angular cancels the previous validation when the value changes), and/or set the control's `updateOn` to `'blur'` or `'submit'`.
 
 **Q: Where should you attach a validator that needs to compare two sibling fields, like password and confirm-password?**
 A: On the parent `FormGroup` (or `FormArray`), not on an individual `FormControl` — only the group can access its child controls via `group.get(...)`.
@@ -446,7 +485,7 @@ Build an async validator factory `validCouponValidator(couponService)` for a che
 Build a registration form combining everything from this lesson:
 - A `password` field using a strength validator (uppercase, digit, 8+ characters).
 - A `confirmPassword` field validated against `password` with a cross-field `FormGroup` validator.
-- An `email` field with an async uniqueness check against a mocked service, using `debounceTime`, `distinctUntilChanged`, `switchMap`, and `catchError`.
+- An `email` field with an async uniqueness check against a mocked service, using `timer`, `switchMap`, and `catchError`.
 - A submit button disabled while `form.invalid` or `form.pending` is `true`.
 Structure your validators as exported, independently testable functions rather than component methods.
 
@@ -458,5 +497,5 @@ Structure your validators as exported, independently testable functions rather t
 - [Angular API — `AsyncValidatorFn`](https://angular.dev/api/forms/AsyncValidatorFn)
 - [Angular API — `AbstractControl`](https://angular.dev/api/forms/AbstractControl)
 - [Angular API — `Validators`](https://angular.dev/api/forms/Validators)
-- [RxJS — `debounceTime`, `switchMap`, `distinctUntilChanged` operators](https://rxjs.dev/guide/operators)
-- Looking ahead: Angular's newer, experimental **Signal Forms** API introduces a different, signals-based approach to validation (including async validation) alongside the Reactive Forms API described here — worth exploring once it stabilizes, via [angular.dev/guide/forms/signals/validation](https://angular.dev/guide/forms/signals/validation).
+- [RxJS — `timer`, `switchMap`, `catchError` operators](https://rxjs.dev/guide/operators)
+- Looking ahead: Angular's newer **Signal Forms** API (experimental in Angular 21, stable since Angular 22) takes a different, signals-based approach to validation, including async validation, alongside the Reactive Forms API described here: [angular.dev/guide/forms/signals/validation](https://angular.dev/guide/forms/signals/validation).

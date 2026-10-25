@@ -3,7 +3,7 @@ id: lesson-31
 slug: smart-and-presentational-components
 title: "Smart & Presentational Components"
 level: intermediate
-order: 19
+order: 20
 duration: 45
 tags:
   - components

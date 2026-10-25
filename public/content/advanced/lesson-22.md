@@ -3,7 +3,7 @@ id: lesson-22
 slug: advanced-rxjs-operators
 title: "Advanced RxJS Operators in Angular"
 level: advanced
-order: 23
+order: 25
 duration: 70
 tags:
   - rxjs
@@ -55,7 +55,7 @@ When you `map` an Observable to a new Observable (e.g., "search term" → "HTTP 
 | Operator | Behavior when a new source value arrives while a previous inner Observable is still running |
 |---|---|
 | `switchMap` | **Cancels** the previous inner Observable and switches to the new one. |
-| `mergeMap` (`flatMap`) | Runs **all** inner Observables **concurrently**; emits values as they arrive, in any order. |
+| `mergeMap` | Runs **all** inner Observables **concurrently**; emits values as they arrive, in any order. |
 | `concatMap` | **Queues** inner Observables and runs them **one at a time, in order**. |
 | `exhaustMap` | **Ignores** new source values while an inner Observable is still active. |
 
@@ -180,7 +180,7 @@ Think of a **restaurant kitchen** receiving orders (source emissions) that each 
 
 ### 1. Basic Example — Typeahead Search with `switchMap`
 
-This example shows the canonical "search-as-you-type" pattern: debounce keystrokes, ignore duplicate terms, and cancel stale HTTP requests automatically.
+This example shows the canonical "search-as-you-type" pattern: debounce keystrokes, ignore duplicate terms, and cancel stale HTTP requests automatically. You met it in *Observables & RxJS Basics*; here the focus is on why each operator sits where it does.
 
 ```typescript
 import { Component, inject } from '@angular/core';
@@ -202,7 +202,6 @@ interface Book {
 
 @Component({
   selector: 'app-book-search',
-  standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   template: `
     <input
@@ -274,7 +273,6 @@ interface Product {
 
 @Component({
   selector: 'app-product-list',
-  standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   template: `
     <label>
@@ -331,8 +329,7 @@ export class ProductListComponent {
 This example shows a "Save" button that must **never** send two overlapping requests, gracefully retries on transient network failure, and cleans itself up using the modern `takeUntilDestroyed()` API instead of a manual `Subject`.
 
 ```typescript
-import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, of } from 'rxjs';
@@ -349,23 +346,22 @@ interface SaveResult {
 
 @Component({
   selector: 'app-save-button',
-  standalone: true,
-  imports: [CommonModule],
   template: `
-    <button (click)="save$.next()" [disabled]="isSaving">
-      {{ isSaving ? 'Saving...' : 'Save' }}
+    <button (click)="save$.next()" [disabled]="isSaving()">
+      {{ isSaving() ? 'Saving...' : 'Save' }}
     </button>
 
-    @if (errorMessage) {
-      <p role="alert">{{ errorMessage }}</p>
+    @if (errorMessage(); as message) {
+      <p role="alert">{{ message }}</p>
     }
   `,
 })
 export class SaveButtonComponent {
   private http = inject(HttpClient);
 
-  isSaving = false;
-  errorMessage: string | null = null;
+  // Signals, so the view updates when the HTTP response arrives, with or without zone.js.
+  protected readonly isSaving = signal(false);
+  protected readonly errorMessage = signal<string | null>(null);
 
   // A Subject acts as the "click trigger" source.
   save$ = new Subject<void>();
@@ -374,17 +370,17 @@ export class SaveButtonComponent {
     this.save$
       .pipe(
         tap(() => {
-          this.isSaving = true;
-          this.errorMessage = null;
+          this.isSaving.set(true);
+          this.errorMessage.set(null);
         }),
         exhaustMap(() =>
           this.http.post<SaveResult>('/api/save', {}).pipe(
             retry({ count: 2, delay: 1000 }), // retry transient failures twice, 1s apart
-            catchError((err) => {
-              this.errorMessage = 'Save failed. Please try again.';
+            catchError(() => {
+              this.errorMessage.set('Save failed. Please try again.');
               return of<SaveResult>({ success: false });
             }),
-            tap(() => (this.isSaving = false)),
+            tap(() => this.isSaving.set(false)),
           ),
         ),
         // Automatically unsubscribes when this component is destroyed.
@@ -413,6 +409,35 @@ ngOnDestroy() {
 
 // ... source$.pipe(takeUntil(this.destroy$)).subscribe();
 ```
+
+**Why signals for `isSaving` and `errorMessage`:** they change inside HTTP callbacks. In a zoneless app (the default for new projects since Angular 21), assigning a plain field there wouldn't refresh the view; writing a signal does.
+
+### Bonus: writing your own operator
+
+An operator is just a function that takes an Observable and returns a new one. When the same chain of operators appears in several places, give it a name:
+
+```typescript
+import { MonoTypeOperatorFunction, Observable, debounceTime, distinctUntilChanged, filter, map } from 'rxjs';
+
+/** Drops null and undefined values, and narrows the type accordingly. */
+export function filterNil<T>() {
+  return (source: Observable<T>) => source.pipe(filter((value): value is NonNullable<T> => value != null));
+}
+
+/** The "clean up a search term" steps used by every typeahead in the app. */
+export function searchTerm(ms = 300): MonoTypeOperatorFunction<string> {
+  return (source) =>
+    source.pipe(
+      map((term) => term.trim()),
+      debounceTime(ms),
+      distinctUntilChanged(),
+    );
+}
+
+// Usage: this.searchControl.valueChanges.pipe(searchTerm(), switchMap(...))
+```
+
+Because these are plain functions built from existing operators, they keep all the usual behavior (laziness, cancellation, error propagation) and are easy to unit-test on their own.
 
 ---
 

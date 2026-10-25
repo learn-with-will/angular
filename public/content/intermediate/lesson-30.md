@@ -3,7 +3,7 @@ id: lesson-30
 slug: typescript-patterns-for-angular
 title: "TypeScript Patterns for Angular"
 level: intermediate
-order: 18
+order: 19
 duration: 40
 tags:
   - typescript

@@ -1,7 +1,7 @@
 {
   "id": "quiz-02",
   "lessonId": "lesson-02",
-  "title": "Components & Templates",
+  "title": "Components & Pages",
   "passingScore": 70,
   "questions": [
     {
@@ -19,23 +19,62 @@
     },
     {
       "id": "q2",
-      "type": "multiple-choice",
-      "prompt": "Which are valid built-in control flow blocks? (Select all that apply.)",
+      "type": "single-choice",
+      "prompt": "How do you read the value of a signal input declared as name = input<string>()?",
       "options": [
-        { "id": "a", "text": "@if" },
-        { "id": "b", "text": "@for" },
-        { "id": "c", "text": "@while" },
-        { "id": "d", "text": "@switch" }
+        { "id": "a", "text": "name" },
+        { "id": "b", "text": "name()" },
+        { "id": "c", "text": "name.value" },
+        { "id": "d", "text": "this.name.get()" }
       ],
-      "answer": ["a", "b", "d"],
-      "explanation": "Angular provides @if, @for, and @switch. There is no @while block."
+      "answer": "b",
+      "explanation": "Signal inputs are read-only signals, so you call them to read the current value, in templates and in code."
     },
     {
       "id": "q3",
+      "type": "single-choice",
+      "prompt": "How does a child component tell its parent that something happened?",
+      "options": [
+        { "id": "a", "text": "It changes the value of its input" },
+        { "id": "b", "text": "It declares an output() and calls .emit(value); the parent listens with (eventName)=\"handler($event)\"" },
+        { "id": "c", "text": "It injects the parent component and calls its methods" },
+        { "id": "d", "text": "It writes to a global variable" }
+      ],
+      "answer": "b",
+      "explanation": "Data flows down through inputs and events flow up through outputs, which keeps the data flow predictable."
+    },
+    {
+      "id": "q4",
+      "type": "single-choice",
+      "prompt": "Why use routerLink instead of href for links inside the app?",
+      "options": [
+        { "id": "a", "text": "href does not work in Angular templates" },
+        { "id": "b", "text": "routerLink navigates on the client without reloading the page" },
+        { "id": "c", "text": "routerLink makes links open in a new tab" },
+        { "id": "d", "text": "routerLink is required for SEO" }
+      ],
+      "answer": "b",
+      "explanation": "A plain href triggers a full page reload. routerLink lets the Router swap the page component inside <router-outlet />."
+    },
+    {
+      "id": "q5",
       "type": "fill-blank",
-      "prompt": "Every @for block must include a ____ expression for performance.",
-      "answer": ["track"],
-      "explanation": "The track expression gives Angular a stable identity for each item."
+      "prompt": "Which provideRouter feature binds a route parameter like :id to a matching component input? provideRouter(routes, ____())",
+      "answer": ["withComponentInputBinding", "withComponentInputBinding()"],
+      "explanation": "withComponentInputBinding() passes route params (and query params and resolved data) into inputs with the same name."
+    },
+    {
+      "id": "q6",
+      "type": "multiple-choice",
+      "prompt": "Which statements about loadComponent in a route are true? (Select all that apply.)",
+      "options": [
+        { "id": "a", "text": "It downloads the page's code the first time the route is visited" },
+        { "id": "b", "text": "It requires the page to be declared in an NgModule" },
+        { "id": "c", "text": "It keeps the initial bundle smaller" },
+        { "id": "d", "text": "It renders the page twice" }
+      ],
+      "answer": ["a", "c"],
+      "explanation": "loadComponent lazy-loads a standalone component, so its code is only downloaded when the user first navigates there."
     }
   ]
 }

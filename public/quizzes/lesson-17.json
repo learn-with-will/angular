@@ -74,6 +74,19 @@
       "prompt": "By convention, variable names holding Observables are suffixed with which single character (e.g. user__)?",
       "answer": ["$", "dollar"],
       "explanation": "The $ suffix (user$, results$) is a widely adopted convention that makes Observables easy to spot."
+    },
+    {
+      "id": "q7",
+      "type": "single-choice",
+      "prompt": "You call takeUntilDestroyed() with no argument inside ngOnInit(). What happens?",
+      "options": [
+        { "id": "a", "text": "It works, because the component uses inject()" },
+        { "id": "b", "text": "It throws: ngOnInit is not an injection context, so pass a DestroyRef injected in a field" },
+        { "id": "c", "text": "It silently never unsubscribes" },
+        { "id": "d", "text": "It unsubscribes immediately" }
+      ],
+      "answer": "b",
+      "explanation": "Without an argument, takeUntilDestroyed() injects DestroyRef itself, which only works in a constructor or field initializer. In ngOnInit, use takeUntilDestroyed(this.destroyRef)."
     }
   ]
 }

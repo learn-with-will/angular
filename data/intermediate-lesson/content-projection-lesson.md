@@ -129,7 +129,6 @@ Content queries only see elements/components that were **projected in** (light D
 ```typescript
 @Component({
   selector: 'custom-card',
-  standalone: true,
   template: `<div class="card-shadow"><ng-content /></div>`,
 })
 export class CustomCard {}
@@ -140,7 +139,6 @@ export class CustomCard {}
 ```typescript
 @Component({
   selector: 'custom-card',
-  standalone: true,
   template: `
     <div class="card-shadow">
       <ng-content select="card-title"></ng-content>
@@ -211,7 +209,6 @@ import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-card',
-  standalone: true,
   template: `
     <div class="card">
       <ng-content>
@@ -243,7 +240,6 @@ import { CardComponent } from './card.component';
 
 @Component({
   selector: 'app-root',
-  standalone: true,
   imports: [CardComponent],
   template: `
     <app-card>
@@ -272,7 +268,6 @@ import { Component, output } from '@angular/core';
 
 @Component({
   selector: 'app-modal',
-  standalone: true,
   template: `
     <div class="modal-backdrop" (click)="closed.emit()">
       <div class="modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
@@ -342,27 +337,28 @@ import { ModalComponent } from './modal.component';
 
 @Component({
   selector: 'app-delete-confirmation',
-  standalone: true,
   imports: [ModalComponent],
   template: `
     <app-modal (closed)="cancel.emit()">
-      <!-- Matches select="[modal-title]" via the native attribute -->
-      <h2 modal-title>Delete "{{ itemName() }}"?</h2>
+      <!-- ngProjectAs aliases this <ng-container> so it matches
+           select="[modal-title]" even though <ng-container> itself
+           renders no element and carries no such attribute in the DOM. -->
+      <ng-container ngProjectAs="[modal-title]">
+        <h2>Delete "{{ itemName() }}"?</h2>
+      </ng-container>
 
       <!-- Falls into the catch-all <ng-content> (modal body) -->
       <p>This action cannot be undone.</p>
 
-      @if (canDelete()) {
-        <!-- ngProjectAs aliases this <ng-container> so it matches
-             select="[modal-footer]" even though <ng-container> itself
-             carries no such attribute in the rendered DOM. -->
-        <ng-container ngProjectAs="[modal-footer]">
+      <!-- Always project the footer; decide what goes inside it here. -->
+      <div modal-footer>
+        @if (canDelete()) {
           <button type="button" (click)="cancel.emit()">Cancel</button>
           <button type="button" class="danger" (click)="confirmDelete.emit()">Delete</button>
-        </ng-container>
-      }
-      <!-- If canDelete() is false, nothing is projected into [modal-footer],
-           so the modal's fallback "Close" button is shown automatically. -->
+        } @else {
+          <button type="button" (click)="cancel.emit()">Close</button>
+        }
+      </div>
     </app-modal>
   `,
 })
@@ -374,7 +370,9 @@ export class DeleteConfirmationComponent {
 }
 ```
 
-**Why this works:** `ModalComponent` knows nothing about "deleting items" — it only knows about a title slot, a body slot, and a footer slot. `DeleteConfirmationComponent` reuses it fully. The `select="[modal-title]"` and `select="[modal-footer]"` attribute selectors keep the projected markup semantic (no extra wrapper divs needed for the title). `ngProjectAs` lets a renderless `<ng-container>` — needed here to group two buttons under one slot without adding an extra DOM element — still be routed to the `[modal-footer]` slot. When `canDelete()` is `false`, no element matches `[modal-footer]` at all, so the modal's own fallback "Close" button appears automatically, with zero extra logic in `ModalComponent`.
+**Why this works:** `ModalComponent` knows nothing about "deleting items" — it only knows about a title slot, a body slot, and a footer slot. `DeleteConfirmationComponent` reuses it fully. The `select="[modal-title]"` and `select="[modal-footer]"` attribute selectors keep the projected markup semantic. `ngProjectAs` lets a renderless `<ng-container>` be routed to the `[modal-title]` slot without adding an extra DOM element.
+
+Notice that the footer is *always* projected, and the `@if` lives inside it. Fallback content is decided once, when the slot is created: it appears only if *nothing at all* is projected into that slot. An `@if` block counts as projected content even while its condition is false, so wrapping the footer content itself in `@if` would leave the footer empty instead of showing the modal's fallback "Close" button. Use fallback content for "the caller didn't pass anything" (as in a plain `<app-modal>` with no footer), and put conditions inside the projected element.
 
 ---
 
@@ -388,7 +386,6 @@ import { Component, input, signal } from '@angular/core';
 
 @Component({
   selector: 'app-tab',
-  standalone: true,
   template: `
     <!-- Always present in the DOM; visibility is toggled with [hidden]
          rather than wrapping <ng-content> in @if. -->
@@ -413,7 +410,6 @@ import { TabComponent } from './tab.component';
 
 @Component({
   selector: 'app-tabs',
-  standalone: true,
   imports: [TabComponent],
   template: `
     <div class="tab-header" role="tablist">
@@ -468,7 +464,6 @@ import { TabComponent } from './tab.component';
 
 @Component({
   selector: 'app-settings-page',
-  standalone: true,
   imports: [TabsComponent, TabComponent],
   template: `
     <app-tabs>
@@ -506,7 +501,7 @@ export class SettingsPageComponent {}
    Interpolations and event handlers inside projected content still reference the *parent's* class members, even though the markup renders inside the child. Forgetting this leads to confusing "property does not exist" errors.
 
 3. **Wrapping `<ng-content>` in `@if` / `*ngIf` inside the child's template.**
-   This doesn't lazily create the projected content — Angular still instantiates the DOM nodes for what would be projected there. Use `[hidden]`, a CSS class, or simply don't project into a slot at all (letting fallback content take over) instead.
+   This doesn't lazily create the projected content — Angular still instantiates the DOM nodes for what would be projected there. Use `[hidden]`, a CSS class, or simply don't project into a slot at all (letting fallback content take over) instead. Older material, such as *Pro Angular 16*, shows `<ng-content *ngIf="show">`. That hides the content, but the projected components are still created and keep running.
 
 4. **Forgetting the catch-all `<ng-content>` when using `select`.**
    If every `<ng-content>` in a component has a `select` attribute and none is left "plain," any projected element that doesn't match a selector is silently **not rendered** — no error, it just disappears.
@@ -519,6 +514,12 @@ export class SettingsPageComponent {}
 
 7. **Trying to bind `ngProjectAs` dynamically.**
    `ngProjectAs="[someClass]"` only accepts a static string. If you need conditional slot routing, decide which slot to project into from the parent's template logic (e.g., with `@if`) instead of trying to compute the selector at runtime.
+
+8. **Expecting fallback content to appear when an `@if` inside the slot is false.**
+   Fallback content shows only when nothing at all was projected into the slot. A projected `@if` block counts as content even when its condition is false. Put the condition *inside* an always-projected element, with an `@else` for the default.
+
+9. **Expecting content queries to search nested elements.**
+   `contentChildren(TabComponent)` only finds *direct* children of the projected content. Use `contentChildren(TabComponent, { descendants: true })` if tabs can be wrapped in other elements.
 
 ---
 

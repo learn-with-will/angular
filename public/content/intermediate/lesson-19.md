@@ -129,6 +129,33 @@ A path can contain more than one dynamic segment:
 
 Both `userId` and `postId` are extracted independently and can both be bound as separate inputs.
 
+### 6. Nested routes and child outlets
+
+A route can have `children`. The parent's component renders a `<router-outlet />` of its own, and the matching child renders inside it:
+
+```typescript
+export const routes: Routes = [
+  {
+    path: 'orders/:orderId',
+    component: OrderShell, // template: <h2>Order {{ orderId() }}</h2> <router-outlet />
+    children: [
+      { path: '', component: OrderSummary },
+      { path: 'items/:itemId', component: OrderItem },
+    ],
+  },
+];
+```
+
+By default, a child's inputs only receive its **own** route's params (`itemId`). To let `OrderItem` also receive the parent's `orderId`, enable inheritance once:
+
+```typescript
+provideRouter(
+  routes,
+  withComponentInputBinding(),
+  withRouterConfig({ paramsInheritanceStrategy: 'always' }),
+);
+```
+
 ---
 
 ## Key Terminology
@@ -226,7 +253,6 @@ interface Product {
 
 @Component({
   selector: 'app-product-list',
-  standalone: true,
   imports: [RouterLink],
   template: `
     <h2>Products</h2>
@@ -255,7 +281,6 @@ import { Component, input } from '@angular/core';
 
 @Component({
   selector: 'app-product-detail',
-  standalone: true,
   template: `
     <h2>Product Detail</h2>
     <p>You are viewing product with id: <strong>{{ id() }}</strong></p>
@@ -307,7 +332,6 @@ import { UserService } from './user.service';
 
 @Component({
   selector: 'app-user-profile',
-  standalone: true,
   template: `
     @if (user(); as u) {
       <h2>{{ u.name }}</h2>
@@ -354,12 +378,11 @@ export const routes: Routes = [
 
 ```typescript
 // catalog-product.component.ts
-import { Component, input, numberAttribute, effect, signal, inject } from '@angular/core';
+import { Component, computed, effect, inject, input, numberAttribute } from '@angular/core';
 import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-catalog-product',
-  standalone: true,
   template: `
     @if (!invalid()) {
       <h2>Category {{ categoryId() }} — Product #{{ productId() }}</h2>
@@ -372,14 +395,15 @@ export class CatalogProductComponent {
   categoryId = input.required<string>();
   productId = input(0, { transform: numberAttribute });
 
-  invalid = signal(false);
-  private router = inject(Router);
+  // Derived state belongs in computed(), not in an effect.
+  protected readonly invalid = computed(() => Number.isNaN(this.productId()));
+  private readonly router = inject(Router);
 
   constructor() {
-    // Reacts every time productId() changes (e.g. navigating between sibling products)
+    // The effect only performs the side effect: navigating away.
+    // It re-runs every time productId() changes (e.g. navigating between sibling products).
     effect(() => {
-      if (Number.isNaN(this.productId())) {
-        this.invalid.set(true);
+      if (this.invalid()) {
         this.router.navigate(['/not-found']);
       }
     });
@@ -387,7 +411,7 @@ export class CatalogProductComponent {
 }
 ```
 
-**Explanation:** `numberAttribute` is a built-in Angular transform that converts the incoming string route parameter into a `number`, so `productId()` is genuinely typed as `number` rather than `string` — eliminating a whole class of `"3" !== 3` bugs. The `effect()` reacts every time the transformed value changes and redirects to a friendly fallback route if the URL contained something non-numeric (e.g. `/catalog/5/product/abc`). This is the recommended pattern for production routes: **never assume a URL segment is valid — validate and provide a fallback.**
+**Explanation:** `numberAttribute` is a built-in Angular transform that converts the incoming string route parameter into a `number`, so `productId()` is genuinely typed as `number` rather than `string` — eliminating a whole class of `"3" !== 3` bugs. `invalid` is derived from `productId()` with `computed()`, and the `effect()` only does the one thing a computed can't: redirect to a friendly fallback route if the URL contained something non-numeric (e.g. `/catalog/5/product/abc`). This is the recommended pattern for production routes: **never assume a URL segment is valid — validate and provide a fallback.**
 
 ---
 
@@ -395,7 +419,7 @@ export class CatalogProductComponent {
 
 1. **Assuming route params are already the right type.** Route parameters are *always strings*, even if the URL looks numeric (`"42"`, not `42`). Comparing `id === 42` will silently fail. Use a transform (`numberAttribute`) or explicit `Number(id)` conversion.
 2. **Reading params only in `ngOnInit()` via `snapshot`.** If the component is reused across navigations (e.g. `/products/1` → `/products/2`), `ngOnInit()` won't fire again and the snapshot value goes stale. Use `paramMap` (observable), `toSignal`, or component input binding instead.
-3. **Forgetting to enable `withComponentInputBinding()`.** Without it in `provideRouter(...)`, `input()`/`@Input()` properties matching a param name simply stay `undefined` — a very common source of confusion for developers following newer tutorials on an older setup.
+3. **Forgetting to enable `withComponentInputBinding()`.** Without it in `provideRouter(...)`, nothing is bound: an optional `input()`/`@Input()` matching a param name stays `undefined`, and reading an `input.required()` throws error NG0950. This is a very common source of confusion for developers following newer tutorials on an older setup.
 4. **Mixing up route params and query params.** Putting filter/sort/pagination state into the path (`/products/sort-price`) breaks the ability to have one canonical "product" URL and complicates matching. Keep identity in the path, context in the query string.
 5. **Not handling invalid or missing parameters.** A URL is just text a user (or a bad link) can type freely — always guard against unexpected values (`NaN`, empty strings) rather than assuming the app's own links are the only way in.
 6. **Manually subscribing without cleanup.** `this.route.paramMap.subscribe(...)` without unsubscribing can create duplicate work over a long-lived component's life. Prefer the `async` pipe, `toSignal()`, or input binding, which handle cleanup for you.
@@ -456,7 +480,7 @@ Create a route `employees/:id` and an `EmployeeDetailComponent` that displays th
 Build a `CategoryProductsComponent` mapped to `catalog/:categoryId`, that also reads an optional `?sort=` query parameter. Whenever either the category id *or* the sort query param changes, re-fetch the product list from a mock service using `switchMap` so previous in-flight requests are cancelled. Display a loading state while the fetch is in progress.
 
 **3. Challenging — Nested master-detail with validation**
-Build a nested routing structure: `orders` (list) and `orders/:orderId/items/:itemId` (a specific line item within an order). The child component should be able to read the parent's `orderId` as well as its own `itemId`. Validate that `itemId` is numeric using a transform; if it isn't, redirect to a `not-found` route. Bonus: add a wildcard route so any unmatched URL also lands on `not-found`.
+Build a nested routing structure: `orders` (list) and an `orders/:orderId` parent route whose component has its own `<router-outlet />`, with a child route `items/:itemId` (a specific line item within an order). The child component should be able to read the parent's `orderId` as well as its own `itemId` (hint: section 6 above). Validate that `itemId` is numeric using a transform; if it isn't, redirect to a `not-found` route. Bonus: add a wildcard route so any unmatched URL also lands on `not-found`.
 
 ---
 

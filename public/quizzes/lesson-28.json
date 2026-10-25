@@ -28,7 +28,7 @@
         { "id": "d", "text": "whenStable() disables change detection" }
       ],
       "answer": "b",
-      "explanation": "whenStable() reflects how zoneless Angular actually schedules updates and avoids ExpressionChangedAfterItHasBeenChecked from repeated manual passes."
+      "explanation": "whenStable() waits for Angular's own scheduling to settle, the way production does; detectChanges() forces a synchronous pass that can hide scheduling problems."
     },
     {
       "id": "q3",
@@ -59,15 +59,15 @@
     {
       "id": "q5",
       "type": "single-choice",
-      "prompt": "In a Jest project, which API do you use to wrap an existing service method and assert on its calls?",
+      "prompt": "In a Vitest project (the default since Angular 21), which API wraps an existing service method so you can assert on its calls?",
       "options": [
         { "id": "a", "text": "jasmine.createSpy()" },
-        { "id": "b", "text": "jest.spyOn(obj, 'method')" },
+        { "id": "b", "text": "vi.spyOn(obj, 'method')" },
         { "id": "c", "text": "TestBed.spy()" },
         { "id": "d", "text": "cy.intercept()" }
       ],
       "answer": "b",
-      "explanation": "jest.spyOn wraps the real method so you can assert calls and optionally replace the implementation; mixing in jasmine APIs throws."
+      "explanation": "vi.spyOn wraps the real method so you can assert calls and optionally replace the implementation. Jasmine and Jest spy APIs do not exist in a Vitest project."
     },
     {
       "id": "q6",

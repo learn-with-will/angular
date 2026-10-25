@@ -18,6 +18,7 @@ After completing this lesson, you will be able to:
 - Bind native DOM events (like `click`, `input`, and `keyup`) to component methods using Angular's `(event)` syntax.
 - Access event data through the `$event` variable and read values from the DOM safely.
 - Use keyboard event modifiers such as `(keyup.enter)` to respond to specific keys.
+- Reference an element directly in the template with a template reference variable (`#name`).
 - Define and emit your own custom events from a component using the modern `output()` function.
 - Apply best practices for handling user interactions with signals, and recognize the legacy patterns you'll still encounter in older code.
 
@@ -182,6 +183,17 @@ export class Search {
 
 **Explanation:** The `(input)` binding fires on every keystroke and passes `$event`. We cast `event.target` to `HTMLInputElement` so TypeScript knows it has a `value`. The `(keyup.enter)` modifier means `search()` only runs when Enter is released — Angular handles the key-matching for you, so you don't have to inspect `event.key` manually. The `@if` block (Angular's built-in control flow) shows the result only once a search has run.
 
+## Reading an element directly: template reference variables
+
+A **template reference variable** (`#name`) gives the template a name for an element, so other bindings in the same template can use it, with no component code needed:
+
+```html
+<input #query placeholder="Search…" (keyup.enter)="search(query.value)" />
+<button (click)="search(query.value)">Search</button>
+```
+
+`query` is the `<input>` element itself, so `query.value` is whatever the user typed. Template variables are only visible inside the template that declares them. On a directive, `#name="exportName"` gives you the directive instead of the element, as in `#f="ngForm"` in the forms lesson.
+
 ## Example 3 — Best-practice example: a child component with a custom output
 
 Components should communicate through clearly defined events rather than reaching into each other. Here a reusable `RatingComponent` emits a custom event with the chosen value, and the parent reacts to it. This uses the modern `output()` function.
@@ -248,7 +260,7 @@ export class App {
 
 # Common Mistakes
 
-- **Forgetting the parentheses on the method call.** Writing `(click)="save"` binds the *reference* to the method instead of calling it — nothing useful happens. You almost always want `(click)="save()"`. (Passing a bare reference is only correct in rare cases like `(click)="someSignal.set(true)"` patterns, where you're writing a full statement.)
+- **Forgetting the parentheses on the method call.** `(click)="save"` only *names* the method; it never calls it, so nothing happens. Write the call, `(click)="save()"`, or a full statement such as `(click)="isOpen.set(true)"`.
 - **Confusing `()` with `[]`.** Square brackets `[prop]="value"` are *property binding* (data flowing **into** the element). Parentheses `(event)="handler()"` are *event binding* (events flowing **out**). Mixing them up is the most common early error.
 - **Not typing `$event`.** Leaving the parameter as `any` loses type safety. Type it as `Event` (or a more specific type like `KeyboardEvent` / `MouseEvent`) and cast `event.target` when you need element-specific properties.
 - **Putting heavy logic in the template statement.** Template statements should be short — usually a single method call. Don't write multi-step logic inline; move it into a method so it's testable and readable.
@@ -287,6 +299,7 @@ export class App {
 - The `$event` variable gives you the event payload — a DOM `Event` for native events, or the emitted value for custom outputs.
 - Bind to any native DOM event: `click`, `input`, `keyup`, `mouseover`, `submit`, and more.
 - Keyboard modifiers like `(keyup.enter)` let Angular filter for specific keys so you don't have to.
+- Template reference variables (`#name`) let a template refer to an element directly, or to a directive with `#name="exportName"`.
 - Define custom component events with the modern `output()` function and emit them with `.emit()`.
 - The legacy `@Output()` + `EventEmitter` pattern still works but is no longer the recommended approach for new code.
 - Handlers in modern Angular usually update **signals**, which keeps the view in sync automatically.

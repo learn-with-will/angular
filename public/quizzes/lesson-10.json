@@ -75,6 +75,19 @@
       "prompt": "After emitting from an output, which method actually sends the value to listeners (e.g. this.rated.____(value))?",
       "answer": ["emit", "emit()"],
       "explanation": "Call .emit(value) on the output to notify whoever is listening in the parent."
+    },
+    {
+      "id": "q7",
+      "type": "single-choice",
+      "prompt": "In <input #query (keyup.enter)=\"search(query.value)\" />, what is query?",
+      "options": [
+        { "id": "a", "text": "A component property declared in the class" },
+        { "id": "b", "text": "A template reference variable that refers to the <input> element" },
+        { "id": "c", "text": "A signal created automatically by Angular" },
+        { "id": "d", "text": "The keyboard event object" }
+      ],
+      "answer": "b",
+      "explanation": "#query names the element inside the template, so query.value reads what the user typed without any component code."
     }
   ]
 }

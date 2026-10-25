@@ -3,7 +3,7 @@ id: lesson-25
 slug: custom-form-controls-control-value-accessor
 title: "Custom Form Controls with ControlValueAccessor"
 level: advanced
-order: 26
+order: 28
 duration: 75
 tags:
   - forms
@@ -79,7 +79,7 @@ Implementing the interface isn't enough — Angular's forms directives find acce
    ]
    ```
 
-   `forwardRef` is required because this object is evaluated as part of the `@Component` decorator's metadata — at that point in the file, the class `MyComponent` hasn't finished being defined yet. `forwardRef(() => MyComponent)` defers resolving the reference until Angular actually needs it. `multi: true` is equally important: `NG_VALUE_ACCESSOR` is a *multi-provider* token, meaning several accessors can coexist on one injector; without `multi: true` you'd replace the list instead of adding to it.
+   `forwardRef` is required because this object is evaluated as part of the `@Component` decorator's metadata — at that point in the file, the class `MyComponent` hasn't finished being defined yet. `forwardRef(() => MyComponent)` defers resolving the reference until Angular actually needs it. `multi: true` is equally important: `NG_VALUE_ACCESSOR` is a *multi-provider* token, meaning the forms directive expects a *list* of accessors. Without `multi: true` it doesn't get a list, and you get an error at runtime instead of a working control.
 
 2. **`NgControl` self-injection** (no provider array, no `forwardRef` needed for the value accessor — used internally by many component libraries such as Angular Material):
 
@@ -95,6 +95,8 @@ Implementing the interface isn't enough — Angular's forms directives find acce
 
    `NgControl` is the abstract base class shared by `NgModel`, `FormControlName`, and `FormControlDirective`. By injecting it with `{ optional: true, self: true }` and assigning `this` to its `valueAccessor` property in the constructor, you sidestep the whole provider/`forwardRef` dance. The trade-off: this only works when the component is *always* used alongside `formControlName`, `[formControl]`, or `ngModel` — if someone drops your component onto a page without one of those directives, `ngControl` will simply be `null`, and you should handle that gracefully.
 
+   > **Don't combine `NgControl` self-injection with `NG_VALIDATORS` or `NG_VALUE_ACCESSOR` providers on the same component.** `formControlName` asks the same element for `NG_VALIDATORS`. If that points back at your component while your component is waiting for `NgControl`, Angular reports a circular dependency (error NG0200). Use `NgControl` self-injection for value accessors that don't validate themselves. When the control must also validate, register both tokens as providers, as in Example 3.
+
 ### What CVA does *not* do
 
 `ControlValueAccessor` only synchronizes **value**, **touched**, and **disabled** state. It does **not** perform validation. Validation is a separate concern, handled either by `Validators` passed into the `FormControl` by the consumer, or by your component implementing the parallel `Validator` interface and registering itself with the `NG_VALIDATORS` token (shown in the best-practice example below). Keeping these concerns separate is intentional — it lets the same control be validated differently in different forms.
@@ -103,7 +105,7 @@ Implementing the interface isn't enough — Angular's forms directives find acce
 
 Angular's Reactive Forms and Template-driven Forms — the systems `ControlValueAccessor` powers — remain fully supported and are what the vast majority of production Angular applications and component libraries (Angular Material, Angular CDK, and most third-party UI kits) are built on. `ControlValueAccessor` is essential knowledge if you work with either of them, or if you build components meant to be reused across many codebases.
 
-Angular has, more recently, introduced an additional, separately-imported forms system called **Signal Forms** (`@angular/forms/signals`). In Signal Forms, custom controls implement a different, signal-based contract — `FormValueControl` (a `value` model signal) or `FormCheckboxControl` (a `checked` model signal) — instead of `ControlValueAccessor`, which removes the need for `forwardRef` and manual `registerOnChange`/`registerOnTouched` wiring entirely. If your project has adopted Signal Forms, that's the API you'd reach for when building new custom controls. Because this lesson is specifically about `ControlValueAccessor`, we focus on that — but it's worth knowing the newer alternative exists so you can choose deliberately. See **Further Reading** for the official comparison guide.
+Angular has, more recently, introduced an additional, separately-imported forms system called **Signal Forms** (`@angular/forms/signals`), experimental in Angular 21 and stable since Angular 22. In Signal Forms, custom controls implement a different, signal-based contract — `FormValueControl` (a `value` model signal) or `FormCheckboxControl` (a `checked` model signal) — instead of `ControlValueAccessor`, which removes the need for `forwardRef` and manual `registerOnChange`/`registerOnTouched` wiring entirely. If your project has adopted Signal Forms, that's the API you'd reach for when building new custom controls. Because this lesson is specifically about `ControlValueAccessor`, we focus on that — but it's worth knowing the newer alternative exists so you can choose deliberately. See **Further Reading** for the official comparison guide.
 
 ## Key Terminology
 
@@ -131,7 +133,6 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 @Component({
   selector: 'app-my-control',
-  standalone: true,
   template: `<!-- your UI here -->`,
   providers: [
     {
@@ -189,20 +190,19 @@ A minimal, complete `ControlValueAccessor` implementation covering all four inte
 
 ```typescript
 // toggle-switch.component.ts
-import { Component, forwardRef } from '@angular/core';
+import { Component, forwardRef, signal } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 @Component({
   selector: 'app-toggle-switch',
-  standalone: true,
   template: `
     <button
       type="button"
       class="toggle"
       role="switch"
-      [attr.aria-checked]="checked"
-      [class.on]="checked"
-      [disabled]="disabled"
+      [attr.aria-checked]="checked()"
+      [class.on]="checked()"
+      [disabled]="disabled()"
       (click)="toggle()"
     >
       <span class="thumb"></span>
@@ -242,23 +242,25 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
   ],
 })
 export class ToggleSwitchComponent implements ControlValueAccessor {
-  checked = false;
-  disabled = false;
+  // Signals, so writeValue()/setDisabledState() calls from the form update the view
+  // even under OnPush (the default since Angular 22) or in a zoneless app.
+  protected readonly checked = signal(false);
+  protected readonly disabled = signal(false);
 
   // Default to no-ops so we never have to null-check before calling.
   private onChange: (value: boolean) => void = () => {};
   private onTouched: () => void = () => {};
 
   toggle(): void {
-    if (this.disabled) return;
-    this.checked = !this.checked;
-    this.onChange(this.checked); // view -> model
+    if (this.disabled()) return;
+    this.checked.update((checked) => !checked);
+    this.onChange(this.checked()); // view -> model
     this.onTouched();
   }
 
   // model -> view
   writeValue(value: boolean): void {
-    this.checked = !!value;
+    this.checked.set(!!value);
   }
 
   registerOnChange(fn: (value: boolean) => void): void {
@@ -270,7 +272,7 @@ export class ToggleSwitchComponent implements ControlValueAccessor {
   }
 
   setDisabledState(isDisabled: boolean): void {
-    this.disabled = isDisabled;
+    this.disabled.set(isDisabled);
   }
 }
 ```
@@ -285,7 +287,6 @@ import { ToggleSwitchComponent } from './toggle-switch.component';
 
 @Component({
   selector: 'app-settings',
-  standalone: true,
   imports: [ReactiveFormsModule, ToggleSwitchComponent],
   template: `
     <label>
@@ -304,16 +305,15 @@ Nothing in `SettingsComponent` knows or cares that `app-toggle-switch` isn't a n
 
 ### Example 2 — Real World: A Star Rating in a Product Review Form
 
-A more realistic control: a five-star rating widget used inside a reactive product-review form, alongside a required validator and a comment field. This example uses `ChangeDetectionStrategy.OnPush` and Angular's built-in `@for` control-flow syntax.
+A more realistic control: a five-star rating widget used inside a reactive product-review form, alongside a required validator and a comment field. This example uses `ChangeDetectionStrategy.OnPush`, Angular's built-in `@for` control-flow syntax, and **signals** for its internal state. Because `writeValue()` and `setDisabledState()` write signals, the view updates even when the parent calls `setValue()` or `disable()`, with no `markForCheck()` needed.
 
 ```typescript
 // star-rating.component.ts
-import { ChangeDetectionStrategy, Component, forwardRef, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, forwardRef, input, signal } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 @Component({
   selector: 'app-star-rating',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="stars" role="radiogroup" [attr.aria-label]="'Rating out of ' + max()">
@@ -321,10 +321,10 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
         <button
           type="button"
           class="star"
-          [class.filled]="star <= value"
-          [disabled]="disabled"
+          [class.filled]="star <= value()"
+          [disabled]="disabled()"
           role="radio"
-          [attr.aria-checked]="star === value"
+          [attr.aria-checked]="star === value()"
           (click)="select(star)"
           (blur)="onTouched()"
         >★</button>
@@ -348,8 +348,9 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 export class StarRatingComponent implements ControlValueAccessor {
   max = input(5);
 
-  value = 0;
-  disabled = false;
+  // Signals: writing them marks this OnPush view for checking automatically.
+  protected readonly value = signal(0);
+  protected readonly disabled = signal(false);
   protected onTouched: () => void = () => {};
   private onChange: (value: number) => void = () => {};
 
@@ -358,14 +359,14 @@ export class StarRatingComponent implements ControlValueAccessor {
   }
 
   select(star: number): void {
-    if (this.disabled) return;
-    this.value = star;
-    this.onChange(this.value);
+    if (this.disabled()) return;
+    this.value.set(star);
+    this.onChange(star);
     this.onTouched();
   }
 
   writeValue(value: number): void {
-    this.value = value ?? 0;
+    this.value.set(value ?? 0);
   }
 
   registerOnChange(fn: (value: number) => void): void {
@@ -377,7 +378,7 @@ export class StarRatingComponent implements ControlValueAccessor {
   }
 
   setDisabledState(isDisabled: boolean): void {
-    this.disabled = isDisabled;
+    this.disabled.set(isDisabled);
   }
 }
 ```
@@ -390,7 +391,6 @@ import { StarRatingComponent } from './star-rating.component';
 
 @Component({
   selector: 'app-product-review',
-  standalone: true,
   imports: [ReactiveFormsModule, StarRatingComponent],
   template: `
     <form [formGroup]="form" (ngSubmit)="submit()">
@@ -429,7 +429,7 @@ Notice that `StarRatingComponent` itself knows nothing about `Validators.min` �
 
 ### Example 3 — Best Practice: A Self-Validating Numeric Stepper
 
-This example demonstrates a production-grade pattern: `ControlValueAccessor` **and** `Validator` implemented together, `OnPush` change detection handled correctly, signal-based inputs, and the `NgControl` self-injection technique instead of the `NG_VALUE_ACCESSOR` provider array.
+This example demonstrates a production-grade pattern: `ControlValueAccessor` **and** `Validator` implemented together, `OnPush` change detection handled correctly, and signal-based inputs. Because the component validates itself, it registers both `NG_VALUE_ACCESSOR` and `NG_VALIDATORS` as providers (see the warning about `NgControl` above).
 
 ```typescript
 // numeric-stepper.component.ts
@@ -446,14 +446,13 @@ import {
   AbstractControl,
   ControlValueAccessor,
   NG_VALIDATORS,
-  NgControl,
+  NG_VALUE_ACCESSOR,
   ValidationErrors,
   Validator,
 } from '@angular/forms';
 
 @Component({
   selector: 'app-numeric-stepper',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="stepper" [class.disabled]="disabled">
@@ -470,9 +469,14 @@ import {
     .value { min-width: 24px; text-align: center; }
   `],
   providers: [
-    // Only NG_VALIDATORS needs a provider here; the value accessor is
-    // registered manually below via NgControl, so no NG_VALUE_ACCESSOR
-    // provider (and no forwardRef for it) is needed.
+    // The component is both the value accessor and a validator, so it
+    // registers itself for both tokens. (Don't mix this with NgControl
+    // self-injection: that combination causes a circular dependency.)
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => NumericStepperComponent),
+      multi: true,
+    },
     {
       provide: NG_VALIDATORS,
       useExisting: forwardRef(() => NumericStepperComponent),
@@ -492,16 +496,8 @@ export class NumericStepperComponent implements ControlValueAccessor, Validator 
   private onTouched: () => void = () => {};
   private onValidatorChange: () => void = () => {};
   private cdr = inject(ChangeDetectorRef);
-  private ngControl = inject(NgControl, { optional: true, self: true });
 
   constructor() {
-    // Bypass NG_VALUE_ACCESSOR entirely: assign this component directly
-    // as the accessor for whatever form directive (formControlName,
-    // [formControl], or ngModel) sits on this element.
-    if (this.ngControl) {
-      this.ngControl.valueAccessor = this;
-    }
-
     // Re-run validation whenever min/max change, so a dynamically
     // changing bound stays in sync with the FormControl's error state.
     effect(() => {
@@ -570,7 +566,6 @@ import { NumericStepperComponent } from './numeric-stepper.component';
 
 @Component({
   selector: 'app-quantity-form',
-  standalone: true,
   imports: [ReactiveFormsModule, NumericStepperComponent],
   template: `
     <form [formGroup]="form">
@@ -591,16 +586,17 @@ export class QuantityFormComponent {
 }
 ```
 
-Because `NumericStepperComponent` implements `Validator`, the `max`/`min` validation logic lives once, inside the component, instead of being re-declared with `Validators.max(20)` in every form that uses it. Combined with the `NgControl` self-injection technique, this is the pattern used by many production component libraries to keep custom-control boilerplate to a minimum.
+Because `NumericStepperComponent` implements `Validator`, the `max`/`min` validation logic lives once, inside the component, instead of being re-declared with `Validators.max(20)` in every form that uses it. This provider pair is the pattern to use whenever a custom control validates itself.
 
 ## Common Mistakes
 
-- **Forgetting `multi: true`.** Without it, your provider *replaces* the list of accessors on that injector instead of joining it, which can silently break sibling directives or cause confusing "no value accessor" errors.
-- **Omitting `forwardRef`.** Referring to the component class by name inside its own `providers` array without `forwardRef(() => MyComponent)` throws a runtime error, because the class identifier isn't fully initialized yet at the point the decorator metadata is evaluated.
+- **Forgetting `multi: true`.** `NG_VALUE_ACCESSOR` and `NG_VALIDATORS` are multi-provider tokens. Without `multi: true`, the forms directive doesn't receive a *list* of accessors (or validators), and you get an error at runtime instead of a working control.
+- **Omitting `forwardRef`.** Referring to the component class by name inside its own `providers` array can fail depending on how the code is compiled, because the decorator metadata may be evaluated before the class is fully defined. `forwardRef(() => MyComponent)` defers the reference and is the documented, always-safe form.
+- **Combining `NgControl` self-injection with `NG_VALIDATORS`/`NG_VALUE_ACCESSOR` providers.** `formControlName` asks the element for `NG_VALIDATORS`, which points back at your component while it is still waiting for `NgControl`. Angular reports a circular dependency (NG0200). Pick one approach per component.
 - **Never implementing `setDisabledState`.** It's optional in the type signature, but skipping it means your control stays interactive even after `form.disable()` — a subtle bug that's easy to miss in manual testing but obvious to real users.
 - **Not implementing `registerOnTouched`.** Without calling the stored `onTouched` callback (usually on blur), `control.touched` never becomes `true`, so error messages that are gated on `touched` never appear.
 - **Calling `onChange` inside `writeValue`.** `writeValue` is the model → view direction; calling the `onChange` callback from inside it re-triggers the view → model direction and can create infinite loops or unexpected `valueChanges` emissions.
-- **Forgetting `ChangeDetectorRef.markForCheck()` under `OnPush`.** When `writeValue` or `setDisabledState` is called from outside your component (e.g., `patchValue()` from a parent), `OnPush` components won't re-render unless you explicitly call `markForCheck()`.
+- **Forgetting `ChangeDetectorRef.markForCheck()` under `OnPush`.** When `writeValue` or `setDisabledState` is called from outside your component (e.g., `patchValue()` from a parent), `OnPush` components won't re-render unless the new state is stored in a signal (as in Examples 1 and 2) or you explicitly call `markForCheck()` (as in Example 3). Remember that `OnPush` is the default for components since Angular 22.
 - **Crashing on `null`/`undefined` in `writeValue`.** `form.reset()` typically writes `null`. Always guard: `this.value = value ?? defaultValue;`.
 - **Mixing up `NG_VALUE_ACCESSOR` and `NG_VALIDATORS`.** They're separate concerns and separate tokens — value synchronization is not validation, and a component can implement one, both, or neither.
 - **Using the `NgControl` self-injection technique without the `@Optional()`/`optional: true` flag.** If the component is ever used without `formControlName`/`[formControl]`/`ngModel`, injecting `NgControl` without marking it optional throws an error instead of simply returning `null`.
@@ -610,9 +606,9 @@ Because `NumericStepperComponent` implements `Validator`, the `max`/`min` valida
 - Always pair `NG_VALUE_ACCESSOR` (and `NG_VALIDATORS`, if used) with `multi: true`.
 - Initialize `onChange`/`onTouched` as no-op functions so you never need to null-check them before calling.
 - Implement `setDisabledState` even when it feels trivial — it's part of the contract consumers expect.
-- Call `ChangeDetectorRef.markForCheck()` inside `writeValue`/`setDisabledState` whenever the component uses `ChangeDetectionStrategy.OnPush`.
+- Keep the control's internal state in signals, so `writeValue`/`setDisabledState` refresh `OnPush` views automatically. If you use plain fields instead, call `ChangeDetectorRef.markForCheck()` in both methods.
 - Keep validation logic in `Validator`/`NG_VALIDATORS` (or let the consumer supply `Validators`), not inside the value-accessor methods — the two concerns are intentionally separate in Angular's design.
-- Prefer the `NgControl` self-injection pattern for components that will *always* be used with a form directive; prefer the classic `NG_VALUE_ACCESSOR` provider array for components that might also be used standalone (outside any form).
+- Use the `NgControl` self-injection pattern only for controls that will *always* be used with a form directive **and** don't validate themselves. Use the classic provider array (`NG_VALUE_ACCESSOR`, plus `NG_VALIDATORS` if the control validates) everywhere else.
 - Don't reinvent accessibility: delegate to native `<input>`/`<button>` elements internally where possible, and add appropriate ARIA roles/attributes when you can't.
 - Write unit tests that exercise the `ControlValueAccessor` contract directly — construct the component, call `writeValue`, `registerOnChange`, `registerOnTouched`, `setDisabledState`, and assert on both directions of data flow, not just the rendered DOM.
 - Keep your control "dumb" about its surrounding form: it should never inject a `FormGroup` or reach out to sibling controls; it should only ever speak through the `ControlValueAccessor`/`Validator` contract.
@@ -624,9 +620,9 @@ Because `NumericStepperComponent` implements `Validator`, the `max`/`min` valida
 - It defines four methods: `writeValue`, `registerOnChange`, `registerOnTouched`, and the optional-but-recommended `setDisabledState`.
 - `writeValue` handles the model → view direction; the registered `onChange`/`onTouched` callbacks handle the view → model direction.
 - Registration happens via the `NG_VALUE_ACCESSOR` multi-provider token, typically combined with `forwardRef()` to work around the class's self-reference.
-- An alternative registration technique — injecting `NgControl` with `{ optional: true, self: true }` and assigning `this.ngControl.valueAccessor = this` — avoids the provider array and `forwardRef` entirely, at the cost of requiring the component to always be used with a form directive.
+- An alternative registration technique — injecting `NgControl` with `{ optional: true, self: true }` and assigning `this.ngControl.valueAccessor = this` — avoids the provider array and `forwardRef` entirely, at the cost of requiring the component to always be used with a form directive. Don't combine it with an `NG_VALIDATORS` provider on the same component.
 - `ControlValueAccessor` handles value/touched/disabled state only; validation is a separate concern, handled by `Validators` or the parallel `Validator`/`NG_VALIDATORS` contract.
-- `OnPush` components must call `ChangeDetectorRef.markForCheck()` inside `writeValue`/`setDisabledState` to reflect externally-driven updates.
+- `OnPush` components must store their state in signals, or call `ChangeDetectorRef.markForCheck()` inside `writeValue`/`setDisabledState`, to reflect externally-driven updates.
 - Angular's newer Signal Forms system uses a different, simpler `FormValueControl`/`FormCheckboxControl` contract — but `ControlValueAccessor` remains essential for Reactive/Template-driven forms and the wider Angular component ecosystem.
 
 ## Flash Cards
@@ -635,10 +631,10 @@ Because `NumericStepperComponent` implements `Validator`, the `max`/`min` valida
 A: It's the interface that lets Angular's forms API (reactive or template-driven) read and write the value of a custom component, and track its touched/disabled state, without the forms system needing to know how the component is built internally.
 
 **Q: Why does the `NG_VALUE_ACCESSOR` provider need `forwardRef(() => MyComponent)`?**
-A: Because the provider object is evaluated as part of the class's own decorator metadata, before the class identifier is fully initialized; `forwardRef` defers resolving the reference until it's actually needed.
+A: Because the provider object is part of the class's own decorator metadata, which may be evaluated before the class is fully defined. `forwardRef` defers resolving the reference until it's actually needed, so it is the always-safe form.
 
 **Q: What happens if you forget `multi: true` on the `NG_VALUE_ACCESSOR` provider?**
-A: It replaces, rather than adds to, the list of accessors registered on that injector, which can silently break other accessors or cause "no value accessor" errors.
+A: The forms directive expects a list of accessors from this multi-provider token. Without `multi: true` it doesn't get one, and you get a runtime error instead of a working control.
 
 **Q: When should you implement `setDisabledState`, given that it's optional?**
 A: Whenever your control should visually and functionally respond to `form.disable()`/`form.enable()` — which is almost always. Skipping it leaves the control interactive even when the form is disabled.
@@ -658,7 +654,7 @@ Build a `TagInputComponent` whose value is a `string[]` (e.g., keywords for a bl
 Build a `DateRangePickerComponent` composed of two native `<input type="date">` elements that together represent a single value shaped like `{ start: string | null; end: string | null }`. Requirements:
 - Implement both `ControlValueAccessor` and `Validator`, with the validator returning an error (e.g., `{ rangeInvalid: true }`) when `start` is after `end`.
 - Use `ChangeDetectionStrategy.OnPush`, and make sure externally-driven updates (`writeValue`) still update the view correctly.
-- Use the `NgControl` self-injection technique instead of the `NG_VALUE_ACCESSOR` provider array, and handle the case where the component is used without any surrounding form directive.
+- Register the component with both `NG_VALUE_ACCESSOR` and `NG_VALIDATORS` providers (not `NgControl` self-injection, which would cause a circular dependency together with `NG_VALIDATORS`), and make sure it still renders sensibly when used without any surrounding form directive.
 - Bonus: re-run validation automatically when either date input changes, without requiring the consumer to do anything extra.
 
 ## Further Reading

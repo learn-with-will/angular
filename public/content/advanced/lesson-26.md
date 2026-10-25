@@ -3,7 +3,7 @@ id: lesson-26
 slug: angular-cdk-virtual-scroll-drag-drop
 title: "Angular CDK Deep Dive: Virtual Scroll & Drag/Drop"
 level: advanced
-order: 27
+order: 29
 duration: 75
 tags:
   - angular-cdk
@@ -22,15 +22,16 @@ By the end of this lesson, you will be able to:
 - Build reorderable single lists and multi-list (Kanban-style) interfaces with `cdkDrag` and `cdkDropList`.
 - Update your data model correctly after a drag using `moveItemInArray` and `transferArrayItem`.
 - Apply advanced CDK drag/drop features — handles, previews, placeholders, boundaries — and recognize the real limitations of combining virtual scroll with drag/drop.
+- Give keyboard and screen-reader users an accessible alternative to dragging.
 
 ## Why This Concept Exists
 
 Two performance and UX problems show up constantly in real Angular applications:
 
 1. **Huge lists kill performance.** Rendering 10,000 `<div>` elements with `*ngFor` creates 10,000 real DOM nodes. The browser has to lay them out, paint them, and keep them in memory — even though the user can only see 15–20 of them at a time. This causes janky scrolling, slow initial renders, and high memory usage.
-2. **Drag-and-drop is deceptively hard to build correctly.** A "simple" reorderable list needs to track pointer/touch events, calculate drop targets, animate sibling elements out of the way, support keyboard users, and handle edge cases like dragging between two separate lists. Hand-rolling this with raw `dragstart`/`dragover` events is fragile and inaccessible.
+2. **Drag-and-drop is deceptively hard to build correctly.** A "simple" reorderable list needs to track pointer/touch events, calculate drop targets, animate sibling elements out of the way, and handle edge cases like dragging between two separate lists. Keyboard users also need some other way to reorder. Hand-rolling this with raw `dragstart`/`dragover` events is fragile and inaccessible.
 
-The **Angular Component Dev Kit (CDK)** solves both problems as *unstyled, behavior-only* building blocks. Unlike Angular Material, the CDK ships zero visual opinions — you get the interaction logic (virtualization math, drag physics, keyboard support) and you supply the CSS. This makes it the standard, low-level toolkit for building custom, high-performance UI in Angular, and it's a dependency of Angular Material itself.
+The **Angular Component Dev Kit (CDK)** solves both problems as *unstyled, behavior-only* building blocks. Unlike Angular Material, the CDK ships zero visual opinions — you get the interaction logic (virtualization math, drag physics, sorting animations) and you supply the CSS. This makes it the standard, low-level toolkit for building custom, high-performance UI in Angular, and it's a dependency of Angular Material itself.
 
 ## Concept Explanation
 
@@ -51,7 +52,7 @@ The CDK's `@angular/cdk/scrolling` package exposes this through a **`VirtualScro
 
 The `@angular/cdk/drag-drop` package provides two cooperating directives:
 
-- **`cdkDrag`** — makes an element draggable (via mouse, touch, or keyboard).
+- **`cdkDrag`** — makes an element draggable with the mouse or by touch. (Keyboard users need a separate way to reorder; see the best-practice example.)
 - **`cdkDropList`** — marks a container as a valid drop zone. Wrapping a set of `cdkDrag` elements in a `cdkDropList` turns them into a **sortable list**: as you drag an item over its siblings, the CDK animates them out of the way in real time.
 
 Critically, **the CDK never touches your data**. Dragging an item only moves the DOM/visual representation. You are responsible for listening to the `(cdkDropListDropped)` event and updating your underlying array with the two provided helper functions:
@@ -146,7 +147,6 @@ import { ScrollingModule } from '@angular/cdk/scrolling';
 
 @Component({
   selector: 'app-basic-virtual-scroll',
-  standalone: true,
   imports: [ScrollingModule],
   template: `
     <h2>100,000 rows, rendered lazily</h2>
@@ -221,7 +221,6 @@ interface Column {
 
 @Component({
   selector: 'app-kanban-board',
-  standalone: true,
   imports: [CdkDropListGroup, CdkDropList, CdkDrag],
   template: `
     <div class="board" cdkDropListGroup>
@@ -325,7 +324,8 @@ This example demonstrates production-quality drag/drop: a dedicated drag handle 
 
 ```typescript
 // settings-list.component.ts
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { LiveAnnouncer } from '@angular/cdk/a11y';
 import {
   CdkDropList,
   CdkDrag,
@@ -343,7 +343,6 @@ interface Widget {
 
 @Component({
   selector: 'app-settings-list',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CdkDropList, CdkDrag, CdkDragHandle, CdkDragPreview],
   template: `
@@ -354,18 +353,24 @@ interface Widget {
         cdkDropList
         cdkDropListLockAxis="y"
         (cdkDropListDropped)="drop($event)">
-        @for (widget of widgets(); track widget.id) {
+        @for (widget of widgets(); track widget.id; let i = $index, first = $first, last = $last) {
           <div
             class="widget-row"
             cdkDrag
             [cdkDragDisabled]="widget.locked"
             [cdkDragBoundary]="boundary">
-            <span class="handle" cdkDragHandle aria-label="Reorder handle">⠿</span>
+            <span class="handle" cdkDragHandle aria-hidden="true">⠿</span>
 
             <span class="label">{{ widget.label }}</span>
 
             @if (widget.locked) {
               <span class="lock" title="Locked widgets cannot be reordered">🔒</span>
+            } @else {
+              <!-- Keyboard (and screen reader) alternative to dragging -->
+              <button type="button" (click)="move(i, -1)" [disabled]="first"
+                      [attr.aria-label]="'Move ' + widget.label + ' up'">↑</button>
+              <button type="button" (click)="move(i, 1)" [disabled]="last"
+                      [attr.aria-label]="'Move ' + widget.label + ' down'">↓</button>
             }
 
             <!-- Custom preview: a lightweight ghost instead of a full clone -->
@@ -415,9 +420,25 @@ export class SettingsListComponent {
     { id: 'alerts', label: 'System alerts', locked: false },
   ]);
 
+  private readonly announcer = inject(LiveAnnouncer);
+
   drop(event: CdkDragDrop<Widget[]>): void {
     moveItemInArray(this.widgets(), event.previousIndex, event.currentIndex);
     this.widgets.update((list) => [...list]);
+  }
+
+  /** Same reordering logic as drop(), driven by buttons instead of a pointer. */
+  move(index: number, delta: -1 | 1): void {
+    const list = this.widgets();
+    const target = index + delta;
+    if (target < 0 || target >= list.length || list[target].locked) return;
+
+    this.widgets.update((items) => {
+      const next = [...items];
+      moveItemInArray(next, index, target);
+      return next;
+    });
+    this.announcer.announce(`${list[index].label} moved to position ${target + 1} of ${list.length}`);
   }
 }
 ```
@@ -429,7 +450,7 @@ export class SettingsListComponent {
 - `cdkDropListLockAxis="y"` locks movement to the vertical axis, appropriate for a single-column list.
 - `*cdkDragPreview` replaces the default full-element clone with a small, purpose-built ghost — this avoids preview elements that inherit awkward width/overflow from their original container (a very common visual bug).
 - `ChangeDetectionStrategy.OnPush` combined with signals keeps this component fast even as the widget list grows, because updates only happen on explicit signal writes.
-- **Accessibility for free:** `cdkDrag` items are focusable and keyboard-operable by default — focus the handle, press <kbd>Space</kbd> to pick up, arrow keys to move, <kbd>Space</kbd> again to drop, <kbd>Escape</kbd> to cancel. You get this without writing any keyboard-handling code.
+- **A keyboard alternative:** CDK drag and drop is driven by mouse and touch. It doesn't let keyboard users pick up and move items, so each unlocked row also gets *Move up* and *Move down* buttons that call the same `moveItemInArray()` logic, and the CDK `LiveAnnouncer` tells screen-reader users the new position. The drag handle is `aria-hidden` because it only helps pointer users.
 
 ## Common Mistakes
 
@@ -452,7 +473,7 @@ export class SettingsListComponent {
 - **Customize `*cdkDragPreview`** for cards with complex layouts, images, or elements that don't look right when naively cloned (e.g. elements with `overflow: hidden` ancestors).
 - **Update state immutably after a drop.** Treat `moveItemInArray`/`transferArrayItem` as data-layer utilities that must be followed by a change-detection-friendly update (new array/signal write) when using `OnPush` or signals.
 - **Prefer signals + `ChangeDetectionStrategy.OnPush`** for any list-heavy component — both virtual scroll and drag/drop generate frequent, fine-grained updates, and `OnPush` avoids unnecessary tree-wide checks.
-- **Test with a keyboard.** CDK drag/drop is accessible by default (`Space` to pick up/drop, arrow keys to move) — verify it actually works in your styled UI, since custom previews/placeholders can sometimes visually hide the keyboard-drag state.
+- **Give keyboard users another way to reorder** (buttons or a menu that call the same move logic), announce changes with `LiveAnnouncer`, and test the whole flow with the keyboard only.
 - **Don't over-engineer virtualization for small lists.** Under a few hundred rows, `*ngFor` is simpler and the performance difference is imperceptible — reach for `*cdkVirtualFor` when lists are large or backed by paginated/streamed data.
 
 ## Summary
@@ -466,7 +487,7 @@ export class SettingsListComponent {
 - `cdkDragHandle`, `*cdkDragPreview`, `*cdkDragPlaceholder`, `cdkDragBoundary`, and `cdkDropListLockAxis` give fine-grained control over drag UX.
 - Mutating helper functions change arrays by reference — remember to trigger change detection (new array/signal update) under `OnPush`.
 - Combining virtual scroll with cross-list drag/drop across the *entire* virtualized dataset is a known hard problem; scope drag/drop to fully-rendered data when possible.
-- CDK drag/drop includes keyboard support out of the box — verify it in your final styled UI.
+- CDK drag/drop is pointer- and touch-based; provide a keyboard alternative for reordering, such as Move up / Move down buttons.
 
 ## Flash Cards
 

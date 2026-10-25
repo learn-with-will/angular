@@ -1,13 +1,13 @@
 ---
 id: lesson-28
 slug: unit-testing-jest-component-harnesses
-title: "Unit Testing with Jest & Component Harnesses"
+title: "Unit Testing with Vitest & Component Harnesses"
 level: advanced
-order: 29
+order: 31
 duration: 65
 tags:
   - testing
-  - jest
+  - vitest
   - testbed
   - component-harness
   - zoneless
@@ -17,19 +17,19 @@ tags:
 
 By the end of this lesson you will be able to:
 
-- Configure an isolated Angular test environment with `TestBed` and run it under Jest instead of Karma/Jasmine.
+- Configure an isolated Angular test environment with `TestBed` and run it with Vitest, the default test runner for new projects since Angular 21.
 - Explain the difference between `fixture.detectChanges()` and `await fixture.whenStable()`, and know which to prefer in zoneless applications.
 - Write a custom Angular CDK `ComponentHarness` that exposes a stable, behavior-based API for a component.
 - Use `TestbedHarnessEnvironment`, `HarnessLoader`, and `HarnessPredicate` to query and filter components in your tests.
-- Combine Jest mocking (`jest.fn()`, `jest.spyOn()`) with `TestBed` and harnesses to write refactor-resistant tests for realistic, service-backed components.
+- Combine Vitest mocking (`vi.fn()`, `vi.spyOn()`) with `TestBed` and harnesses to write refactor-resistant tests for realistic, service-backed components.
 
 ## Why This Concept Exists
 
 Angular components are not plain classes — they're wired into templates, dependency injection, change detection, and lifecycle hooks by the framework. You can't just `new MyComponent()` and expect it to behave correctly; there's no injector, no rendered DOM, and no change-detection loop backing it. **`TestBed`** exists to solve this: it builds a minimal, isolated Angular environment for a single test — its own injector, its own compiled component tree, its own change-detection cycle — without booting your entire application. Every test starts from a clean slate, so tests can't leak state into each other.
 
-**Jest** is a fast, Node-based test runner with a huge ecosystem, built-in mocking (`jest.fn()`, `jest.spyOn()`, `jest.mock()`), snapshot testing, and parallel test execution. None of that is Angular-specific — `TestBed` and the rest of Angular's testing utilities work the same way regardless of which runner drives them. Jest simply replaces the process that discovers, executes, and reports your `*.spec.ts` files.
+**Vitest** is a fast test runner with built-in mocking (`vi.fn()`, `vi.spyOn()`, `vi.mock()`), snapshot testing, watch mode, and parallel test execution. Since Angular 21, `ng test` runs Vitest by default in new projects. None of that is Angular-specific — `TestBed` and the rest of Angular's testing utilities work the same way regardless of which runner drives them. The runner simply discovers, executes, and reports your `*.spec.ts` files.
 
-> **A note on the current tooling landscape:** Angular's CLI historically shipped an experimental first‑party Jest builder, and more recently the CLI's built-in `@angular/build:unit-test` builder defaults new projects to [Vitest](https://vitest.dev). Jest remains a very widely used, community-supported option, driven by the [`jest-preset-angular`](https://thymikee.github.io/jest-preset-angular/) package. Whichever runner sits underneath, `TestBed` and Angular CDK harnesses behave identically — they operate at the *framework* layer, not the *runner* layer. This lesson uses Jest because it's still one of the most common choices in real-world Angular codebases, and everything you learn here transfers directly if a project later moves to Vitest.
+> **A note on the current tooling landscape:** since Angular 21, the CLI's built-in `@angular/build:unit-test` builder runs new projects' tests with [Vitest](https://vitest.dev). Projects created with Angular 20 or earlier usually still use Karma with Jasmine, and some teams use Jest through the community [`jest-preset-angular`](https://thymikee.github.io/jest-preset-angular/) package. Whichever runner sits underneath, `TestBed` and Angular CDK harnesses behave identically — they operate at the *framework* layer, not the *runner* layer. Only the mocking calls differ: `vi.fn()`/`vi.spyOn()` in Vitest, `jest.fn()`/`jest.spyOn()` in Jest, and `jasmine.createSpy()`/`spyOn()` in Jasmine. This lesson uses Vitest, the current default.
 
 Once you can render a component in isolation, a second problem appears: **how do you interact with it without your tests becoming brittle?** A test that does `fixture.nativeElement.querySelector('.btn.btn-primary.submit-btn')` breaks the moment a designer renames a CSS class or wraps the button in a new `<div>` — even though the component's actual *behavior* didn't change. **Angular CDK Component Harnesses** solve this by giving you a documented, versioned API (`click()`, `getText()`, `setValue()`, …) that hides the HTML structure behind it. The harness author updates the internal selectors once when markup changes; every test using the harness keeps working.
 
@@ -69,8 +69,8 @@ A crucial, easy-to-miss benefit: **`TestElement` methods automatically trigger A
 | **`ComponentFixture<T>`** | A handle to a `TestBed`-created component instance, its DOM (`nativeElement`), its `DebugElement`, and change-detection controls. |
 | **`fixture.detectChanges()`** | Forces a synchronous change-detection pass (classic, Zone.js-friendly pattern). |
 | **`fixture.whenStable()`** | Returns a promise that resolves once Angular has finished any pending async/scheduled work — the recommended pattern for zoneless apps. |
-| **`jest.fn()`** | Creates a bare mock function you can pass as a callback or provider stub. |
-| **`jest.spyOn(obj, 'method')`** | Wraps an existing object's method so you can assert on calls and optionally replace its implementation. |
+| **`vi.fn()`** | Creates a bare mock function you can pass as a callback or provider stub (Vitest). |
+| **`vi.spyOn(obj, 'method')`** | Wraps an existing object's method so you can assert on calls and optionally replace its implementation (Vitest). |
 | **`ComponentHarness`** | Abstract CDK base class for writing a component-specific testing API. |
 | **`TestElement`** | Environment-agnostic wrapper around a DOM element, exposing methods like `click()`, `sendKeys()`, `getProperty()`, `text()`. |
 | **`HarnessLoader`** | Object used to locate `ComponentHarness` instances within a DOM subtree. |
@@ -132,12 +132,14 @@ const harness = await loader.getHarness(MyHarness);
 await harness.click();
 ```
 
-**5. Jest mocking cheatsheet**
+**5. Vitest mocking cheatsheet**
 
 ```ts
-const onClick = jest.fn();                                   // bare mock
-jest.spyOn(service, 'save').mockReturnValue(of(true));        // replace return value
-jest.spyOn(service, 'save').mockImplementation(() => of(true)); // replace implementation
+import { vi } from 'vitest';
+
+const onClick = vi.fn();                                     // bare mock
+vi.spyOn(service, 'save').mockReturnValue(of(true));          // replace return value
+vi.spyOn(service, 'save').mockImplementation(() => of(true)); // replace implementation
 expect(onClick).toHaveBeenCalledWith('expected-arg');
 ```
 
@@ -149,7 +151,7 @@ Now think of a **Component Harness as a universal remote control** for a specifi
 
 ## Examples
 
-### 1. Basic Example — Testing a signal-based counter with `TestBed` + Jest
+### 1. Basic Example — Testing a signal-based counter with `TestBed` + Vitest
 
 This example covers the fundamentals: configuring `TestBed`, creating a fixture, driving change detection, and asserting against the rendered DOM and the component instance.
 
@@ -159,7 +161,6 @@ import { Component, signal } from '@angular/core';
 
 @Component({
   selector: 'app-counter',
-  standalone: true,
   template: `
     <p data-testid="count">Count: {{ count() }}</p>
     <button type="button" (click)="increment()">Increment</button>
@@ -239,7 +240,6 @@ import { Component, output, signal } from '@angular/core';
 
 @Component({
   selector: 'app-search-box',
-  standalone: true,
   template: `
     <label class="search-box">
       <span class="search-box__label">Search</span>
@@ -347,7 +347,7 @@ describe('SearchBoxComponent (via harness)', () => {
 
 ### 3. Best-Practice Example — Service-backed list with mocking, zoneless `TestBed`, and `HarnessPredicate`
 
-This example combines everything: a signal-based service, Jest spies, `provideZonelessChangeDetection()`, and a filterable harness built with `HarnessPredicate`.
+This example combines everything: a signal-based service, Vitest spies, `provideZonelessChangeDetection()`, and a filterable harness built with `HarnessPredicate`.
 
 ```ts
 // todo.model.ts
@@ -387,7 +387,6 @@ import { TodoService } from './todo.service';
 
 @Component({
   selector: 'app-todo-list',
-  standalone: true,
   template: `
     <ul class="todo-list">
       @for (todo of todoService.todos(); track todo.id) {
@@ -470,6 +469,7 @@ export class TodoListHarness extends ComponentHarness {
 
 ```ts
 // todo-list.component.spec.ts
+import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
@@ -496,7 +496,7 @@ describe('TodoListComponent', () => {
   });
 
   it('renders one item per todo and filters by completion state', async () => {
-    todoService.addTodo('Write the Jest lesson');
+    todoService.addTodo('Write the testing lesson');
     todoService.addTodo('Record the CDK harness demo');
     todoService.toggleTodo(1);
 
@@ -506,7 +506,7 @@ describe('TodoListComponent', () => {
 
     expect(doneItems).toHaveLength(1);
     expect(pendingItems).toHaveLength(1);
-    expect(await doneItems[0].getText()).toContain('Write the Jest lesson');
+    expect(await doneItems[0].getText()).toContain('Write the testing lesson');
   });
 
   it('toggles a todo when its checkbox is clicked', async () => {
@@ -523,7 +523,7 @@ describe('TodoListComponent', () => {
   });
 
   it('uses a mocked service call to verify interaction, not implementation', async () => {
-    const toggleSpy = jest.spyOn(todoService, 'toggleTodo');
+    const toggleSpy = vi.spyOn(todoService, 'toggleTodo');
     todoService.addTodo('Deploy to staging');
 
     const list = await loader.getHarness(TodoListHarness);
@@ -535,16 +535,16 @@ describe('TodoListComponent', () => {
 });
 ```
 
-**Why this is best practice:** the test never reads a raw CSS class, notice we don't need `detectChanges()`/`whenStable()` again inside each `it()` block — `TestElement` methods like `checkbox.click()` and `checkbox.getProperty()` already wait for Angular to stabilize. `jest.spyOn` verifies the component *called* the service correctly without duplicating the service's own logic in the test, and `provideZonelessChangeDetection()` keeps the test aligned with how modern Angular apps actually run in production.
+**Why this is best practice:** the test never reads a raw CSS class, notice we don't need `detectChanges()`/`whenStable()` again inside each `it()` block — `TestElement` methods like `checkbox.click()` and `checkbox.getProperty()` already wait for Angular to stabilize. `vi.spyOn` verifies the component *called* the service correctly without duplicating the service's own logic in the test, and `provideZonelessChangeDetection()` keeps the test aligned with how modern Angular apps actually run in production.
 
 ## Common Mistakes
 
 - **Forgetting `fixture.detectChanges()` / `await fixture.whenStable()`.** Nothing renders until change detection runs at least once; assertions against the DOM will see stale or empty content.
-- **Calling `detectChanges()` repeatedly for unrelated actions in one test.** With `OnPush`/zoneless components this can trigger `ExpressionChangedAfterItHasBeenCheckedError`. Prefer one action + one `await fixture.whenStable()` per assertion, or split into separate `it()` blocks.
+- **Mixing manual `detectChanges()` with zoneless scheduling.** In zoneless suites, prefer `await fixture.whenStable()` after each action so the test waits the same way production does. Forcing extra synchronous passes can hide scheduling bugs, such as state that only updates because the test happened to call `detectChanges()`.
 - **Reaching for raw DOM queries (`querySelector('.btn-primary')`) instead of a harness** for components that are shared across the app — this is exactly the brittleness harnesses exist to prevent.
 - **Exposing raw `TestElement` instances from a harness.** Doing so leaks implementation details to harness consumers; wrap them in intention-revealing methods like `click()`, `getText()`, `isDone()` instead.
 - **Forgetting to `await` async harness calls.** `harness.click()`, `loader.getHarness(...)`, and `locatorFor(...)()` are all `Promise`-returning; a missing `await` produces silent race conditions and flaky tests.
-- **Mixing test-framework APIs.** Using `jasmine.createSpy()` in a Jest project (or vice versa) throws a runtime error — stick to `jest.fn()` / `jest.spyOn()` once your runner is Jest.
+- **Mixing test-framework APIs.** Using `jasmine.createSpy()` or `jest.fn()` in a Vitest project (or vice versa) throws a runtime error — stick to `vi.fn()` / `vi.spyOn()` when your runner is Vitest. Code copied from older Karma/Jasmine or Jest projects needs its spies translated.
 - **Missing the CDK peer dependency.** `@angular/cdk/testing` imports fail with "Cannot find module" until you run `ng add @angular/cdk`.
 - **Using the old `provideExperimentalZonelessChangeDetection` name.** The API stabilized as `provideZonelessChangeDetection`; older blog posts and snippets still reference the experimental name.
 - **Writing a harness for a single-use, page-specific component.** Harnesses pay off for shared, reusable widgets. A component that only appears in one place can reasonably be tested against its own implementation details, since the test and component evolve together.
@@ -555,16 +555,16 @@ describe('TodoListComponent', () => {
 - Prefer `await fixture.whenStable()` over manual `fixture.detectChanges()` in new, zoneless-ready test suites; it more closely matches production scheduling behavior.
 - Write **one harness class per reusable component**, alongside the component's source file (e.g., `search-box.harness.ts` next to `search-box.component.ts`), and treat it as part of that component's public API.
 - Give every filterable harness a static `with(filters)` method backed by `HarnessPredicate` — this is the idiomatic way test authors expect to narrow down instances.
-- Retrieve services with `TestBed.inject(MyService)` and use `jest.spyOn` on the real instance rather than hand-rolling a fake class; you keep full type safety and catch signature drift automatically.
+- Retrieve services with `TestBed.inject(MyService)` and use `vi.spyOn` on the real instance rather than hand-rolling a fake class; you keep full type safety and catch signature drift automatically.
 - Avoid `NO_ERRORS_SCHEMA` — it silently swallows template binding errors that you actually want your tests to catch.
-- Run tests non-interactively in CI (`ng test --no-watch --no-progress`, or the equivalent Jest CLI flags) so pipelines don't hang waiting for watch mode.
+- Run tests non-interactively in CI (`ng test --watch=false`) so pipelines don't hang waiting for watch mode.
 - Reserve raw `fixture.nativeElement` queries for the component under test's *own*, private markup — reach for a harness the moment you're asserting on a child component's behavior.
 
 ## Summary
 
 - `TestBed` builds a fresh, isolated Angular test module and injector for every test, without booting a full application.
 - Standalone components are imported directly into `TestBed.configureTestingModule({ imports: [...] })` — no `NgModule` boilerplate required.
-- Jest can run Angular test suites via `jest-preset-angular`; the Angular CLI's own built-in unit-test builder now defaults new projects to Vitest, but `TestBed` and CDK harness APIs behave identically under either runner.
+- Since Angular 21, new projects run unit tests with Vitest (`ng test`); older projects often use Karma/Jasmine, and some use Jest. `TestBed` and CDK harness APIs behave identically under any runner; only the mocking calls differ.
 - `fixture.detectChanges()` forces synchronous change detection; `await fixture.whenStable()` waits for Angular to settle naturally and is the recommended pattern for zoneless apps.
 - Angular CDK Component Harnesses decouple test code from HTML structure by exposing a stable, documented, behavior-based API instead of raw selectors.
 - `locatorFor` / `locatorForOptional` / `locatorForAll` return *functions* that re-query the DOM on every call, so they stay correct across `@if`/`@for` re-renders.
@@ -578,7 +578,7 @@ describe('TodoListComponent', () => {
 A: It assembles a temporary Angular testing module — imports, providers, and (for non-standalone code) declarations — giving the component under test its own isolated injector and compilation context.
 
 **Q: Why prefer `await fixture.whenStable()` over `fixture.detectChanges()` in zoneless tests?**
-A: `whenStable()` waits for Angular's own reactive scheduling to settle, matching production behavior, while `detectChanges()` forces a synchronous pass that can mask real scheduling issues and trigger `ExpressionChangedAfterItHasBeenCheckedError` when called repeatedly.
+A: `whenStable()` waits for Angular's own scheduling to settle, matching production; `detectChanges()` forces a synchronous pass that can hide scheduling problems.
 
 **Q: What problem do Angular CDK Component Harnesses solve?**
 A: They replace brittle CSS-selector/DOM-structure queries in tests with a stable, purpose-built API, so refactoring a component's internal markup doesn't break every test that interacts with it.
@@ -593,7 +593,7 @@ A: Add a static `with(filters)` method on the harness that builds and returns a 
 
 ### Easy
 
-Write a Jest + `TestBed` spec for a standalone `GreetingComponent` with an `input()` called `name: string | undefined`. Its template should render `Hello, {{ name() || 'stranger' }}!`. Your test should:
+Write a Vitest + `TestBed` spec for a standalone `GreetingComponent` with an `input()` called `name: string | undefined`. Its template should render `Hello, {{ name() || 'stranger' }}!`. Your test should:
 
 1. Verify it renders `"Hello, stranger!"` when no name is provided.
 2. Set the input to `"Ada"` (via `fixture.componentRef.setInput('name', 'Ada')`) and verify it renders `"Hello, Ada!"` after change detection.
@@ -603,7 +603,7 @@ Write a Jest + `TestBed` spec for a standalone `GreetingComponent` with an `inpu
 Given a `RatingComponent` that renders five clickable `<span class="star">` elements (1 through 5) and emits the selected value through an `output<number>()` named `rated`, write:
 
 1. A `RatingHarness` with `getValue(): Promise<number>` (count how many stars have a `star--filled` class) and `setValue(n: number): Promise<void>` (click the nth star).
-2. A Jest test using `TestbedHarnessEnvironment.loader(fixture)` that sets the rating to `3` via the harness and asserts the component emitted `3`.
+2. A Vitest test using `TestbedHarnessEnvironment.loader(fixture)` that sets the rating to `3` via the harness and asserts the component emitted `3`.
 
 *Hint: use `locatorForAll('.star')` inside the harness to get all star elements as an array of `TestElement`s.*
 
@@ -615,7 +615,7 @@ Extend the `TodoListComponent` example from this lesson:
 2. Add a `clearCompleted()` method to `TodoListHarness` that clicks this button.
 3. Add a `getItemCount(filters?: TodoItemHarnessFilters): Promise<number>` convenience method to `TodoListHarness`.
 4. Extend `TodoItemHarnessFilters` to support filtering by a `RegExp` for `text` (the existing `HarnessPredicate.stringMatches` helper already supports this — confirm it with a test).
-5. Write a `provideZonelessChangeDetection()`-based Jest test that adds three todos, marks two as done, clicks "Clear completed" through the harness, and asserts exactly one todo remains — using `await fixture.whenStable()` rather than `detectChanges()` throughout.
+5. Write a `provideZonelessChangeDetection()`-based Vitest test that adds three todos, marks two as done, clicks "Clear completed" through the harness, and asserts exactly one todo remains — using `await fixture.whenStable()` rather than `detectChanges()` throughout.
 
 ## Further Reading
 
@@ -627,5 +627,5 @@ Extend the `TodoListComponent` example from this lesson:
 - [Angular — Zoneless change detection](https://angular.dev/guide/zoneless)
 - [Angular — Migrating from Karma to Vitest](https://angular.dev/guide/testing/migrating-to-vitest) (useful context on the current test-runner landscape)
 - [Angular CDK — Testing overview (Material docs)](https://material.angular.dev/cdk/testing/overview)
-- [jest-preset-angular documentation](https://thymikee.github.io/jest-preset-angular/)
-- [Jest documentation](https://jestjs.io/docs/getting-started)
+- [Vitest documentation](https://vitest.dev/guide/)
+- [Vitest mocking (`vi.fn`, `vi.spyOn`)](https://vitest.dev/guide/mocking)

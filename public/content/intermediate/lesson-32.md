@@ -3,7 +3,7 @@ id: lesson-32
 slug: feature-based-architecture-lazy-boundaries
 title: "Feature-Based Architecture & Lazy Boundaries"
 level: intermediate
-order: 20
+order: 21
 duration: 45
 tags:
   - architecture
@@ -114,6 +114,27 @@ This keeps feature state out of the root injector and out of other features. Not
 - **Preloading**: `withPreloading(PreloadAllModules)` downloads lazy chunks in the background after the first page is interactive. The first load stays small, and later navigations feel instant.
 - **`@defer`**: for heavy parts *inside* a page, such as a chart or an editor, defer them until they're visible or needed.
 - **Budgets**: `angular.json` budgets warn or fail the build when a bundle grows past a limit, so regressions are caught in CI instead of by users on slow connections.
+
+### Lazy boundaries inside a template: `@defer`
+
+Routes split code per page. `@defer` splits code *inside* a page: the deferred component's code is downloaded only when a trigger fires.
+
+```html
+@defer (on viewport; prefetch on idle) {
+  <app-progress-chart [entries]="store.entries()" />
+} @placeholder (minimum 300ms) {
+  <div class="h-64 rounded-xl bg-ink-100"></div>
+} @loading (after 100ms; minimum 500ms) {
+  <p>Loading chart…</p>
+} @error {
+  <p>The chart couldn't be loaded.</p>
+}
+```
+
+- **Triggers:** `on idle` (the default), `on viewport`, `on interaction`, `on hover`, `on immediate`, `on timer(2s)`, or `when someCondition()`. `prefetch on …` downloads the code early without rendering it.
+- **`@placeholder`** shows until the trigger fires. `on viewport`, `on interaction`, and `on hover` watch the placeholder unless you point them at another element, as in `on interaction(deleteButton)` with `<button #deleteButton>`.
+- **`@loading`** shows while the code downloads; `after` and `minimum` prevent a flicker on fast connections. **`@error`** shows if loading fails.
+- Only **standalone** components, directives, and pipes are deferred. If the same component is also used outside the `@defer` block in that file, it ends up in the main bundle anyway.
 
 ## Key Terminology
 

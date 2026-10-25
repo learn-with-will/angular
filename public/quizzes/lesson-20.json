@@ -75,6 +75,19 @@
       "prompt": "The async pipe works seamlessly under OnPush because it internally calls which ChangeDetectorRef method on every emission?",
       "answer": ["markForCheck", "markForCheck()"],
       "explanation": "The async pipe calls markForCheck() for you, so observable data 'just works' with OnPush."
+    },
+    {
+      "id": "q7",
+      "type": "single-choice",
+      "prompt": "Since Angular 22, which change detection strategy do components use if they don't set one?",
+      "options": [
+        { "id": "a", "text": "ChangeDetectionStrategy.Default" },
+        { "id": "b", "text": "ChangeDetectionStrategy.OnPush" },
+        { "id": "c", "text": "Zone-based checking of the whole tree" },
+        { "id": "d", "text": "No change detection at all" }
+      ],
+      "answer": "b",
+      "explanation": "Since Angular 22, OnPush is the default and the old behavior is called ChangeDetectionStrategy.Eager (Default is deprecated). On Angular 20 and 21 you opt in to OnPush per component."
     }
   ]
 }

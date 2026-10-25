@@ -1,0 +1,80 @@
+{
+  "id": "quiz-37",
+  "lessonId": "lesson-37",
+  "title": "HttpClient Fundamentals",
+  "passingScore": 70,
+  "questions": [
+    {
+      "id": "q1",
+      "type": "single-choice",
+      "prompt": "What must you add before a service can inject HttpClient?",
+      "options": [
+        { "id": "a", "text": "HttpClientModule in every component" },
+        { "id": "b", "text": "provideHttpClient() in the application providers" },
+        { "id": "c", "text": "Nothing; HttpClient is always available" },
+        { "id": "d", "text": "@Injectable({ providedIn: \"http\" })" }
+      ],
+      "answer": "b",
+      "explanation": "Register HttpClient once, usually in app.config.ts. Without it you get \"No provider for HttpClient\"."
+    },
+    {
+      "id": "q2",
+      "type": "single-choice",
+      "prompt": "When does this.http.get(\"/api/products\") send the request?",
+      "options": [
+        { "id": "a", "text": "Immediately when get() is called" },
+        { "id": "b", "text": "When something subscribes to the returned observable" },
+        { "id": "c", "text": "When the component is destroyed" },
+        { "id": "d", "text": "Only after calling .send()" }
+      ],
+      "answer": "b",
+      "explanation": "HTTP observables are cold: each subscription (subscribe, async pipe, toSignal) sends its own request."
+    },
+    {
+      "id": "q3",
+      "type": "single-choice",
+      "prompt": "What does an HttpErrorResponse with status 0 usually mean?",
+      "options": [
+        { "id": "a", "text": "The request succeeded with an empty body" },
+        { "id": "b", "text": "No response arrived: offline, server unreachable, or blocked by CORS" },
+        { "id": "c", "text": "The server returned 404" },
+        { "id": "d", "text": "The JSON could not be parsed" }
+      ],
+      "answer": "b",
+      "explanation": "Status 0 means the browser never got an HTTP response. Check the connection and the console for CORS errors."
+    },
+    {
+      "id": "q4",
+      "type": "single-choice",
+      "prompt": "What is the safest way to send ?q=rope&page=2 with a GET request?",
+      "options": [
+        { "id": "a", "text": "'/api/products?q=' + term + '&page=' + page" },
+        { "id": "b", "text": "http.get('/api/products', { params: { q: 'rope', page: 2 } })" },
+        { "id": "c", "text": "http.get('/api/products', { body: { q: 'rope', page: 2 } })" },
+        { "id": "d", "text": "Set window.location.search before the request" }
+      ],
+      "answer": "b",
+      "explanation": "The params option builds and encodes the query string for you."
+    },
+    {
+      "id": "q5",
+      "type": "fill-blank",
+      "prompt": "Which signal-based API loads data over HTTP and re-fetches automatically when signals in its URL function change (____(() => url))?",
+      "answer": ["httpResource", "httpResource()"],
+      "explanation": "httpResource() exposes value(), isLoading(), error(), and reload(). It is stable since Angular 22."
+    },
+    {
+      "id": "q6",
+      "type": "single-choice",
+      "prompt": "Your app on localhost:4200 cannot read responses from an API on localhost:3000 because of CORS. What is the usual fix during development?",
+      "options": [
+        { "id": "a", "text": "Disable CORS in Angular" },
+        { "id": "b", "text": "Use the dev-server proxy (proxy.conf.json) so the app calls /api on its own origin" },
+        { "id": "c", "text": "Switch from GET to POST" },
+        { "id": "d", "text": "Add withFetch() to provideHttpClient()" }
+      ],
+      "answer": "b",
+      "explanation": "CORS is enforced by the browser and allowed by the server. Locally, ng serve can forward /api calls; in production, configure the server."
+    }
+  ]
+}

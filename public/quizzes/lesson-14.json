@@ -15,7 +15,7 @@
         { "id": "d", "text": "ngOnChanges()" }
       ],
       "answer": "c",
-      "explanation": "The view isn't created during ngOnInit, so @ViewChild is undefined until ngAfterViewInit runs."
+      "explanation": "The view isn't created during ngOnInit, so @ViewChild is undefined until ngAfterViewInit runs. (Only a { static: true } query for an element outside @if/@for is available earlier.)"
     },
     {
       "id": "q2",

@@ -75,15 +75,16 @@ Occasionally a parent needs to imperatively call a method on a specific child in
 ## Syntax Overview
 
 ```typescript
-import { Component, input, output, model, viewChild } from '@angular/core';
+import { Component, ElementRef, booleanAttribute, input, output, model, viewChild } from '@angular/core';
 
 @Component({ /* ... */ })
 export class ExampleComponent {
   // A required input: the parent MUST provide a value, or Angular throws a compile-time error.
   title = input.required<string>();
 
-  // An optional input with a default value.
-  isDisabled = input<boolean>(false);
+  // An optional input with a default value. The booleanAttribute transform also lets
+  // a parent write the bare attribute: <app-example isDisabled /> means true.
+  isDisabled = input(false, { transform: booleanAttribute });
 
   // An output: the child calls `.emit(value)` to notify the parent.
   saved = output<string>();
@@ -91,8 +92,9 @@ export class ExampleComponent {
   // A two-way bindable value: creates both an input and an output under the hood.
   quantity = model<number>(1);
 
-  // A direct reference to a child component or DOM element declared in THIS component's template.
-  formRef = viewChild<HTMLFormElement>('form');
+  // A direct reference to a DOM element declared in THIS component's template (#form).
+  // Querying an element gives you an ElementRef; read it with this.formRef()?.nativeElement.
+  formRef = viewChild<ElementRef<HTMLFormElement>>('form');
 }
 ```
 
@@ -132,7 +134,6 @@ import { Component, input, output } from '@angular/core';
 
 @Component({
   selector: 'app-counter-display',
-  standalone: true,
   template: `
     <div class="counter">
       <p>Current count: {{ count() }}</p>
@@ -156,7 +157,6 @@ import { CounterDisplayComponent } from './counter-display.component';
 
 @Component({
   selector: 'app-counter-page',
-  standalone: true,
   imports: [CounterDisplayComponent],
   template: `
     <app-counter-display
@@ -193,11 +193,12 @@ export interface Product {
 ```typescript
 // product-card.component.ts
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { CurrencyPipe } from '@angular/common';
 import { Product } from './product.model';
 
 @Component({
   selector: 'app-product-card',
-  standalone: true,
+  imports: [CurrencyPipe], // needed for the | currency pipe below
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <article class="card">
@@ -223,7 +224,6 @@ import { Product } from './product.model';
 
 @Component({
   selector: 'app-product-list',
-  standalone: true,
   imports: [ProductCardComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -262,7 +262,6 @@ import { Component, model } from '@angular/core';
 
 @Component({
   selector: 'app-star-rating',
-  standalone: true,
   template: `
     <div class="stars">
       @for (star of [1, 2, 3, 4, 5]; track star) {
@@ -291,7 +290,6 @@ import { StarRatingComponent } from './star-rating.component';
 
 @Component({
   selector: 'app-review-form',
-  standalone: true,
   imports: [StarRatingComponent],
   template: `
     <app-star-rating [(rating)]="userRating" />
@@ -344,7 +342,6 @@ import { Product } from './product.model';
 
 @Component({
   selector: 'app-product-list',
-  standalone: true,
   imports: [ProductCardComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -370,7 +367,6 @@ import { CartService } from './cart.service';
 
 @Component({
   selector: 'app-cart-badge',
-  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `<span class="badge">{{ cart.itemCount() }}</span>`,
 })

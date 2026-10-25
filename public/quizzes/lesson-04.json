@@ -74,6 +74,19 @@
       "prompt": "Which modern function is the recommended way to retrieve a dependency, usable in guards, resolvers, and effect() as well as constructors?",
       "answer": ["inject", "inject()"],
       "explanation": "inject() works as a field initializer and in any valid injection context, not just constructors."
+    },
+    {
+      "id": "q7",
+      "type": "single-choice",
+      "prompt": "ThemeService is providedIn: 'root' and injects FEATURE_FLAGS. A component overrides FEATURE_FLAGS in its own providers and injects ThemeService. Which FEATURE_FLAGS value does ThemeService see?",
+      "options": [
+        { "id": "a", "text": "The component's override, because the component asked for ThemeService" },
+        { "id": "b", "text": "The root value, unless ThemeService is also provided in that component" },
+        { "id": "c", "text": "Both values, merged" },
+        { "id": "d", "text": "Neither: Angular throws a provider conflict error" }
+      ],
+      "answer": "b",
+      "explanation": "A service resolves its dependencies from the injector that created it. The root ThemeService was created by the root injector, so it reads the root value. Provide ThemeService in the component too if it must see the override."
     }
   ]
 }

@@ -1,7 +1,7 @@
 ---
 id: lesson-01
 slug: introduction-angular-cli
-title: Introduction & the Angular CLI
+title: "Introduction & the Angular CLI"
 level: beginner
 order: 1
 duration: 35
@@ -64,21 +64,25 @@ each project.
 
 ## What modern Angular generates
 
-As of **Angular 22** (the current stable release as of June 2026), new projects use
-modern defaults you should know about from day one:
+This course is written for **Angular 20 and later**. Where a later version changed a
+default, a short note tells you which version. New projects use modern defaults you
+should know about from day one:
 
-- **Standalone components by default.** No `NgModule` boilerplate is needed for most
-  apps — components declare their own dependencies in an `imports` array. (Standalone
-  became the default in Angular 19.)
-- **Zoneless change detection by default** in new projects, which removes the
-  `zone.js` dependency and relies on Angular's modern reactivity (signals) for better
-  performance.
+- **Standalone components.** New CLI projects have been standalone since Angular 17,
+  and since Angular 19 `standalone: true` is implied, so you no longer write it.
+  Components declare their own dependencies in an `imports` array, with no `NgModule`
+  boilerplate.
 - **A new file-naming convention.** Since Angular 20, generated files no longer add
   type suffixes like `.component` or `.service`. Running `ng generate component user`
-  now creates `user.ts` with a class named `User` (not `user.component.ts` /
+  creates `user.ts` with a class named `User` (not `user.component.ts` /
   `UserComponent`).
-- **Vitest as the default unit-test runner** (it replaced Karma/Jasmine as the default
-  in Angular 22).
+- **Zoneless change detection.** Since Angular 21, new projects don't include
+  `zone.js`. Angular schedules change detection from signals and template events
+  instead.
+- **Vitest as the default unit-test runner.** Since Angular 21, new projects run unit
+  tests with Vitest instead of Karma/Jasmine. Existing Karma projects keep working.
+- **`OnPush` by default.** Since Angular 22, components use `OnPush` change detection
+  unless you choose otherwise.
 
 These defaults matter because older tutorials show different file names and
 `NgModule`-based setups. This lesson follows the current conventions.
@@ -141,6 +145,11 @@ ng update
 > **Tip:** Almost every command supports `--help`, e.g. `ng generate --help`. Use it
 > whenever you are unsure about the available options.
 
+> **Tip:** `ng new my-app --defaults` skips the questions and accepts the defaults, and
+> `--inline-template` and `--minimal` give you a lighter project for experiments. New
+> projects don't include `environment.ts` files; run `ng generate environments` when you
+> need per-environment settings such as API URLs.
+
 # Real World Analogy
 
 Think of the Angular CLI as a **general contractor building a house to code**.
@@ -202,7 +211,7 @@ ng generate component greeting
 ng generate service data
 ```
 
-Using Angular 22's no-suffix naming, the component command creates:
+With the no-suffix naming of Angular 20+, the component command creates:
 
 ```text
 src/app/greeting/
@@ -284,7 +293,7 @@ ng build
 # Output is written to: dist/my-app/
 ```
 
-**Understand the scaffolded structure.** A new standalone Angular 22 workspace looks like:
+**Understand the scaffolded structure.** A new standalone workspace (Angular 20+) looks like:
 
 ```text
 my-app/
@@ -326,7 +335,7 @@ import { routes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideZonelessChangeDetection(),  // modern, zone.js-free change detection
+    provideZonelessChangeDetection(),  // zone.js-free change detection (the default since Angular 21)
     provideRouter(routes),
     // The CLI may include additional providers (e.g. global error listeners).
   ],
@@ -388,8 +397,9 @@ instead of guessing.
 - `ng build` produces an optimized bundle in `dist/`; never deploy `ng serve`.
 - `ng update` upgrades Angular safely via migrations; `ng add` installs and configures
   libraries.
-- Modern Angular (22) defaults to **standalone components**, **zoneless change detection**,
-  **no `.component`/`.service` file suffixes**, and **Vitest** as the test runner.
+- Modern Angular defaults to **standalone components**, **no `.component`/`.service` file
+  suffixes** (Angular 20+), **zoneless change detection** and **Vitest** as the test runner
+  (Angular 21+), and **`OnPush`** change detection (Angular 22+).
 
 # Flash Cards
 

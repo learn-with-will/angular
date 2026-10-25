@@ -3,7 +3,7 @@ id: lesson-33
 slug: singleton-services-facade-pattern
 title: "Singleton Services & the Facade Pattern"
 level: advanced
-order: 31
+order: 33
 duration: 55
 tags:
   - services
@@ -335,7 +335,8 @@ export class DiaryPage {
 Because the layers are separate, each can be tested with a simple stand-in for the layer below.
 
 ```typescript
-// diary.facade.spec.ts: stub the API, test the rules
+// diary.facade.spec.ts: stub the API, test the rules (Vitest)
+import { vi, type Mock } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { DiaryApi } from './diary.api';
@@ -346,17 +347,17 @@ const squat: ExerciseSet = { id: '1', exercise: 'Squat', sets: 3, reps: 10 };
 const deadlift: ExerciseSet = { id: '2', exercise: 'Deadlift', sets: 2, reps: 5 };
 
 describe('DiaryFacade', () => {
-  let api: jasmine.SpyObj<DiaryApi>;
+  let api: Record<'list' | 'create' | 'remove', Mock>;
   let facade: DiaryFacade;
 
   beforeEach(() => {
-    api = jasmine.createSpyObj<DiaryApi>('DiaryApi', ['list', 'create', 'remove']);
+    api = { list: vi.fn(), create: vi.fn(), remove: vi.fn() };
     TestBed.configureTestingModule({ providers: [{ provide: DiaryApi, useValue: api }] });
     facade = TestBed.inject(DiaryFacade);
   });
 
   it('loads once and reuses the cached list', () => {
-    api.list.and.returnValue(of([squat]));
+    api.list.mockReturnValue(of([squat]));
     facade.load();
     facade.load();
     expect(api.list).toHaveBeenCalledTimes(1);
@@ -364,8 +365,8 @@ describe('DiaryFacade', () => {
   });
 
   it('puts a deleted entry back when the server call fails', () => {
-    api.list.and.returnValue(of([squat, deadlift]));
-    api.remove.and.returnValue(throwError(() => new Error('500')));
+    api.list.mockReturnValue(of([squat, deadlift]));
+    api.remove.mockReturnValue(throwError(() => new Error('500')));
 
     facade.load();
     facade.remove(squat.id);
@@ -378,6 +379,7 @@ describe('DiaryFacade', () => {
 
 ```typescript
 // diary-page.spec.ts: replace the whole facade with a fake
+import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { DiaryPage } from './diary-page';
@@ -389,8 +391,8 @@ class FakeDiaryFacade {
   readonly loading = signal(false);
   readonly error = signal<string | null>('Could not load your diary.');
   readonly totalVolume = signal(30);
-  readonly load = jasmine.createSpy('load');
-  readonly remove = jasmine.createSpy('remove');
+  readonly load = vi.fn();
+  readonly remove = vi.fn();
 }
 
 describe('DiaryPage', () => {
@@ -424,6 +426,7 @@ describe('DiaryPage', () => {
 - **Leaking observables of raw responses.** If components still `subscribe()` to `facade.http$` and map the response, the facade isn't hiding anything.
 - **Facades depending on each other in circles.** If `DiaryFacade` injects `ExercisesFacade` and vice versa, extract the shared piece into a lower-level service.
 - **Long-lived subscriptions in services without cleanup.** HTTP calls complete on their own, but subscriptions to things like `interval()` or WebSocket streams need a teardown plan (`takeUntilDestroyed(this.destroyRef)` or a finite operator).
+- **Subscribing forever from a root service.** `toSignal()` or `subscribe()` inside a `providedIn: 'root'` service lives as long as the app. For a stream like a WebSocket, that keeps the connection open after every component that used it is gone. Let consumers connect and disconnect (for example a `connect(destroyRef)` method that counts listeners), or provide the service at the feature level so it's destroyed with the feature.
 
 ## Best Practices
 

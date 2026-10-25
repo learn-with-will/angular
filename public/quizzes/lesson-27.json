@@ -1,7 +1,7 @@
 {
   "id": "quiz-27",
   "lessonId": "lesson-27",
-  "title": "State Management with NgRx & Component Store",
+  "title": "State Management with NgRx Store & SignalStore",
   "passingScore": 70,
   "questions": [
     {
@@ -45,7 +45,7 @@
     {
       "id": "q4",
       "type": "single-choice",
-      "prompt": "When should you choose ComponentStore over the global Store?",
+      "prompt": "When should you choose a signalStore (@ngrx/signals) over the global Store?",
       "options": [
         { "id": "a", "text": "For state shared across many unrelated features" },
         { "id": "b", "text": "For state local to one component or small feature (filters, pagination, UI flags)" },
@@ -53,27 +53,39 @@
         { "id": "d", "text": "Never — always use the global Store" }
       ],
       "answer": "b",
-      "explanation": "ComponentStore keeps local state reactive and immutable without adding global actions/reducers."
+      "explanation": "A signalStore keeps local or feature state immutable and signal-based without adding global actions and reducers."
     },
     {
       "id": "q5",
       "type": "single-choice",
-      "prompt": "How do you scope a ComponentStore to a single component instance?",
+      "prompt": "How do you scope a signalStore to a single component instance?",
       "options": [
-        { "id": "a", "text": "Use @Injectable({ providedIn: 'root' })" },
+        { "id": "a", "text": "Pass { providedIn: 'root' } to signalStore()" },
         { "id": "b", "text": "Add it to that component's own providers array" },
         { "id": "c", "text": "Register it with provideStore()" },
         { "id": "d", "text": "It is always a singleton" }
       ],
       "answer": "b",
-      "explanation": "Providing it in the component's providers ties its lifecycle to that instance; providedIn: 'root' would make it an app-wide singleton."
+      "explanation": "Providing it in the component's providers ties its lifecycle to that instance; { providedIn: 'root' } would make it an app-wide singleton."
     },
     {
       "id": "q6",
       "type": "fill-blank",
-      "prompt": "Which @ngrx/operators helper safely handles success/error inside an effect so an error doesn't terminate the effect's source stream?",
+      "prompt": "Which @ngrx/operators helper safely handles success/error inside an effect or rxMethod so an error doesn't terminate the outer stream?",
       "answer": ["tapResponse", "tapResponse()"],
       "explanation": "A plain catchError that rethrows can kill the effect; tapResponse separates next/error handling safely."
+    },
+    {
+      "id": "q7",
+      "type": "match-pair",
+      "prompt": "Match each SignalStore feature to its job.",
+      "pairs": [
+        { "left": "withState", "right": "Adds state properties, each exposed as a signal" },
+        { "left": "withComputed", "right": "Adds read-only signals derived from the state" },
+        { "left": "withMethods", "right": "Adds the methods components call" },
+        { "left": "patchState", "right": "Updates state immutably from inside a method" }
+      ],
+      "explanation": "State, derived values, and methods are added as features; only the store's own methods change state, through patchState."
     }
   ]
 }

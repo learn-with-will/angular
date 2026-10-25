@@ -215,6 +215,24 @@ Notes on the provider object syntax:
 - `useFactory` — call a function to compute the value, optionally injecting further dependencies inside it.
 - `useExisting` — alias one token to an already-registered one.
 
+### Changing where the injector looks
+
+`inject()` takes an options object that changes the lookup. These options replace the `@Optional()`, `@Self()`, `@SkipSelf()`, and `@Host()` decorators used with constructor injection:
+
+```typescript
+// Return null instead of throwing if nothing provides Logger
+private readonly logger = inject(Logger, { optional: true });
+
+// Only accept a provider declared on this component or directive itself
+private readonly state = inject(EditorState, { self: true });
+
+// Skip this element and start at the parent (e.g. a nested menu finding its parent menu)
+private readonly parentMenu = inject(MenuComponent, { skipSelf: true, optional: true });
+
+// Stop the search at the host component
+private readonly form = inject(FormGroupDirective, { host: true, optional: true });
+```
+
 ---
 
 ## Real World Analogy
@@ -428,13 +446,16 @@ export class ThemeService {
 // beta-panel.component.ts
 // This component overrides FEATURE_FLAGS just for itself and its children,
 // without affecting the rest of the app.
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FEATURE_FLAGS } from './feature-flags.token';
 import { ThemeService } from './theme.service';
 
 @Component({
   selector: 'app-beta-panel',
   providers: [
+    // Provide ThemeService here too, so this subtree gets its own instance.
+    // That instance is created by this component's injector, so it sees the override below.
+    ThemeService,
     {
       provide: FEATURE_FLAGS,
       useValue: { darkModeEnabled: true, betaFeaturesEnabled: true },
@@ -443,13 +464,15 @@ import { ThemeService } from './theme.service';
   template: `<p>Dark mode here: {{ theme.isDarkModeEnabled() }}</p>`,
 })
 export class BetaPanelComponent {
-  constructor(public theme: ThemeService) {}
+  protected readonly theme = inject(ThemeService);
 }
 ```
 
+**Why `ThemeService` is listed too:** a service gets its own dependencies from the injector that created it. The app-wide `ThemeService` is created by the root injector, so it reads the root default for `FEATURE_FLAGS` and never sees an override placed lower in the tree. Listing `ThemeService` in this component's `providers` creates a separate instance whose `inject(FEATURE_FLAGS)` starts its lookup here, so it picks up the override. If only the component needs the flags, it can simply `inject(FEATURE_FLAGS)` itself.
+
 **Why this is a best practice:**
 - **Type-safe configuration**: `InjectionToken<FeatureFlags>` gives full TypeScript checking on what gets injected — unlike a raw string or magic value.
-- **Sensible defaults, easy overrides**: the `factory` gives every consumer a safe default, while any subtree of the app can override it via a local `providers` array — no global state mutation required.
+- **Sensible defaults, easy overrides**: the `factory` gives every consumer a safe default, while any subtree of the app can override it via a local `providers` array — no global state mutation required. Remember that only services created inside that subtree see the override.
 - **Testability**: in a unit test, you can supply a fake value for the same token instead of the real one:
 
 ```typescript
@@ -513,6 +536,9 @@ No mocking libraries, no monkey-patching — just provide a different value for 
    ```
    Prefer a strongly-typed `InjectionToken<string>` instead — it prevents collisions and gives you autocomplete and type checking.
 
+7. **Overriding a token "under" a root service.**
+   If `ApiService` is `providedIn: 'root'` and a component overrides `API_CONFIG` in its `providers`, the root `ApiService` still sees the root value. The override only affects services and components created at or below that component. Provide the service there as well if it must use the override.
+
 ---
 
 ## Best Practices
@@ -569,7 +595,7 @@ Create a standalone `CounterService` with `providedIn: 'root'` that exposes a `c
 Build a `NotificationService` that stores a list of in-app messages (e.g., `{ id: number; text: string; type: 'info' | 'error' }`) in a signal. Add methods `addNotification(text: string, type: 'info' | 'error')` and `dismiss(id: number)`. Create two components — a `HeaderComponent` that shows a notification count badge, and a `NotificationListComponent` that lists and can dismiss notifications — and confirm both are reading from the *same* shared instance of the service (since it's `providedIn: 'root'`).
 
 ### Challenging
-Create an `InjectionToken<{ retryAttempts: number }>` called `HTTP_RETRY_CONFIG` with a default factory value of `{ retryAttempts: 3 }`. Build an `ApiService` that injects this token and logs how many retry attempts it would perform before making a (simulated) request. Then create a feature component that overrides `HTTP_RETRY_CONFIG` in its own `providers` array with `{ retryAttempts: 0 }`, and verify — by injecting `ApiService` in both a "default" area of the app and inside this feature component — that each context receives a differently-configured behavior *without changing `ApiService`'s code*. Optionally, write a unit test using `TestBed` that supplies a mock value for `HTTP_RETRY_CONFIG`.
+Create an `InjectionToken<{ retryAttempts: number }>` called `HTTP_RETRY_CONFIG` with a default factory value of `{ retryAttempts: 3 }`. Build an `ApiService` that injects this token and logs how many retry attempts it would perform before making a (simulated) request. Then create a feature component that provides **both** `ApiService` and an override of `HTTP_RETRY_CONFIG` (`{ retryAttempts: 0 }`) in its own `providers` array. Inject `ApiService` in a "default" area of the app and inside the feature component, and confirm that each logs a different retry count *without changing `ApiService`'s code*. Then remove `ApiService` from the feature's `providers` and explain in a comment why the override stops working. Optionally, write a unit test using `TestBed` that supplies a mock value for `HTTP_RETRY_CONFIG`.
 
 ---
 

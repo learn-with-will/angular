@@ -1,13 +1,13 @@
 ---
-title: "State Management with NgRx & Component Store"
+title: "State Management with NgRx Store & SignalStore"
 level: "advanced"
-estimatedTime: 90
+estimatedTime: 75
 tags:
   - angular
   - ngrx
   - state-management
   - rxjs
-  - component-store
+  - signal-store
   - signals
   - effects
 ---
@@ -21,8 +21,8 @@ By the end of this lesson, you will be able to:
 1. Explain the Redux-inspired architecture behind NgRx (actions, reducers, selectors, effects) and identify when an Angular app actually needs it.
 2. Configure NgRx Store, Effects, and DevTools in a standalone Angular application using the modern `provide*` functions.
 3. Model feature state with `createActionGroup`, `createReducer`, `createFeature`, and memoized selectors, following current NgRx conventions.
-4. Use `@ngrx/component-store` to manage local, component-scoped reactive state (loading flags, filters, pagination) without polluting the global store.
-5. Decide — with concrete criteria — when to reach for global `Store`, when to reach for `ComponentStore`, and when the newer `@ngrx/signals` `SignalStore` is the better modern choice.
+4. Use NgRx **SignalStore** (`@ngrx/signals`) to manage local or feature-level state (loading flags, filters, pagination) with signals, without polluting the global store.
+5. Decide — with concrete criteria — when to reach for the global `Store`, when a `signalStore` is enough, and how to recognize the older `ComponentStore` in existing code.
 
 ---
 
@@ -35,7 +35,7 @@ As an Angular application grows, state stops living in one place. A "logged-in u
 - **Unpredictable mutations** — any service or component can mutate a shared object at any time, making bugs hard to reproduce.
 - **Hard-to-trace async bugs** — race conditions between multiple in-flight HTTP calls, with no single place to see "what happened and in what order."
 
-NgRx solves this by giving your application **one predictable, observable source of truth**, updated only through explicit, traceable events (actions), with side effects (HTTP calls, navigation, logging) isolated from your components. `ComponentStore` solves a *related but different* problem: not every piece of state deserves to live in the global store. A component's local UI state (is this dropdown open, what page am I on, what's the current filter text) doesn't need to be visible app-wide — but it still benefits from the same reactive, immutable patterns. `ComponentStore` gives you that without the full ceremony of actions and reducers.
+NgRx solves this by giving your application **one predictable, observable source of truth**, updated only through explicit, traceable events (actions), with side effects (HTTP calls, navigation, logging) isolated from your components. **SignalStore** solves a *related but different* problem: not every piece of state deserves to live in the global store. A component's or feature's local state (is this dropdown open, what page am I on, what's the current filter text) doesn't need to be visible app-wide — but it still benefits from the same immutable, predictable patterns. `signalStore` gives you that with signals, and without the full ceremony of actions and reducers.
 
 ---
 
@@ -61,18 +61,18 @@ Component → dispatch(action) → Reducer → new State → Selector → Compon
 
 This unidirectional flow is what makes NgRx apps predictable: to understand *any* state change, you only need to find the action that caused it.
 
-### ComponentStore: the same discipline, at a smaller scale
+### SignalStore: the same discipline, at a smaller scale
 
-`@ngrx/component-store` is a separate, lightweight library. It gives you a reactive, immutable state container *without* actions or reducers. Instead of dispatching actions, you call typed methods directly:
+`@ngrx/signals` is a separate, lightweight library. Its `signalStore()` function builds an injectable store out of small, composable *features*. There are no actions or reducers; you call typed methods directly:
 
-- **State** — a plain object, same as the global store, but scoped to wherever you provide the `ComponentStore` (usually one component or a small feature).
-- **Updaters** — pure functions similar to reducer cases, but called directly as methods (`store.setSearchTerm('shoes')`) instead of dispatched.
-- **Selectors** — created with `store.select(...)`, memoized just like NgRx selectors, and combinable.
-- **Effects** — created with `store.effect(...)`, used for anything that returns an `Observable` (typically HTTP calls), with built-in subscription management tied to the store's lifecycle.
+- **State** — `withState(initialState)` turns each property into a signal (`store.searchTerm()`, `store.loading()`).
+- **Computed values** — `withComputed(...)` derives read-only signals from the state, just like `computed()`.
+- **Methods** — `withMethods(...)` adds the operations components call (`store.search('shoes')`). Methods update state immutably with `patchState(store, { ... })`.
+- **RxJS-based methods** — `rxMethod()` (from `@ngrx/signals/rxjs-interop`) lets a method use operators such as `debounceTime` and `switchMap`, with subscriptions cleaned up when the store is destroyed.
 
-Because a `ComponentStore` is provided in a component's `providers` array, Angular's DI creates and destroys it along with that component — no manual unsubscribe logic needed, and no risk of one component's local filter state leaking into another instance of the same component.
+Where you provide the store decides its lifetime. Add it to a component's `providers` and every component instance gets its own store, created and destroyed with it. Pass `{ providedIn: 'root' }` to `signalStore()` for one app-wide instance.
 
-> **A note on the current NgRx landscape (2026):** `@ngrx/component-store` is still officially supported and used in many production codebases — the NgRx team has stated there are no plans to deprecate it. However, since Angular adopted **Signals**, NgRx now also ships `@ngrx/signals`, whose `signalStore` is the team's recommended *default* choice for new local and feature-level state, because it's Signal-native, lighter weight, and needs no `toSignal()` bridging. This lesson focuses on `ComponentStore` because it's still extremely common in existing codebases and teaches the underlying reactive patterns clearly — but you should know `signalStore` exists and is worth evaluating for new projects (see Further Reading).
+> **ComponentStore in existing code:** before SignalStore, NgRx offered `@ngrx/component-store`, an RxJS-based class you extend (`class FilterStore extends ComponentStore<FilterState>`) with `select()`, `updater()`, and `effect()`. It is still supported and you'll meet it in many codebases, but for new local or feature state the NgRx team recommends `signalStore`, because it's signal-native and needs no `toSignal()` bridging. The concepts map one to one: `select` → `withComputed`, `updater` → a method calling `patchState`, `effect` → `rxMethod`.
 
 ---
 
@@ -86,10 +86,12 @@ Because a `ComponentStore` is provided in a component's `providers` array, Angul
 | **Selector** | A memoized function that reads/derives data from state. Built with `createSelector` or generated by `createFeature`. |
 | **Effect** | A class that listens to a stream of actions and performs side effects, dispatching new actions with the result. Built with `createEffect`. |
 | **Feature State** | A named slice of the store (e.g. `'products'`), registered independently — often lazily — with `provideState`. |
-| **ComponentStore** | A local, injectable, RxJS-based state container from `@ngrx/component-store`, scoped by Angular DI. |
-| **Updater** | A `ComponentStore` method (`store.updater(...)`) that synchronously and immutably transforms state — the local equivalent of a reducer case. |
-| **tapResponse** | An RxJS operator (from `@ngrx/operators`) that safely handles the success/error of an inner Observable inside an effect, without accidentally terminating the effect's source stream on error. |
-| **SignalStore** | The newer, Signal-based store from `@ngrx/signals`, recommended by NgRx for new local/feature state as of the current Angular signal-first direction. |
+| **SignalStore** | An injectable, signal-based store built with `signalStore()` from `@ngrx/signals`; NgRx's recommended choice for local and feature-level state. |
+| **`withState` / `withComputed` / `withMethods`** | SignalStore features that add state signals, derived signals, and methods to a store. |
+| **`patchState`** | The function SignalStore methods use to update state immutably: `patchState(store, { loading: true })`. |
+| **`rxMethod`** | A SignalStore helper (from `@ngrx/signals/rxjs-interop`) for methods built from RxJS operators; it unsubscribes when the store is destroyed. |
+| **tapResponse** | An RxJS operator (from `@ngrx/operators`) that safely handles the success/error of an inner Observable inside an effect or `rxMethod`, without terminating the outer stream on error. |
+| **ComponentStore** | The older, RxJS-based local store from `@ngrx/component-store`. Still supported; common in existing code. |
 
 ---
 
@@ -164,6 +166,7 @@ import { catchError, map, of, switchMap } from 'rxjs';
 @Injectable()
 export class ProductsEffects {
   private readonly actions$ = inject(Actions);
+  private readonly productsService = inject(ProductsService);
 
   loadProducts$ = createEffect(() =>
     this.actions$.pipe(
@@ -179,29 +182,29 @@ export class ProductsEffects {
 }
 ```
 
-### 5. ComponentStore skeleton
+### 5. SignalStore skeleton
 
 ```typescript
-import { Injectable } from '@angular/core';
-import { ComponentStore } from '@ngrx/component-store';
+import { computed } from '@angular/core';
+import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 
-interface FilterState {
-  term: string;
-}
+export const FilterStore = signalStore(
+  withState({ term: '' }),
+  withComputed(({ term }) => ({
+    hasTerm: computed(() => term().length > 0),
+  })),
+  withMethods((store) => ({
+    setTerm(term: string): void {
+      patchState(store, { term });
+    },
+  })),
+);
 
-@Injectable()
-export class FilterStore extends ComponentStore<FilterState> {
-  constructor() {
-    super({ term: '' });
-  }
-
-  readonly term$ = this.select((state) => state.term);
-
-  readonly setTerm = this.updater((state, term: string) => ({ ...state, term }));
-}
+// In a component: providers: [FilterStore], then store = inject(FilterStore);
+// Read with store.term() and store.hasTerm(); change with store.setTerm('shoes').
 ```
 
-Every `ComponentStore` subclass **must** call `super(initialState)` before it can read or update state.
+Every state property becomes a read-only signal on the store. Only the store's own methods can change state, through `patchState`.
 
 ---
 
@@ -209,7 +212,7 @@ Every `ComponentStore` subclass **must** call `super(initialState)` before it ca
 
 Think of the **global NgRx Store** as a company's **central ledger and warehouse system**. Every department (feature module) can read from it and request changes, but no one is allowed to edit the ledger directly — they submit a *change request* (an action). A dedicated clerk (the reducer) applies the request following strict rules and writes the new balance. Anything that requires going outside the building — calling a supplier, checking a bank API — is handled by a separate courier (an effect), who comes back with a result and submits *that* as a new change request. Because every change is logged as a discrete, timestamped request, you can always answer "why does the ledger say this?" by looking at the log — this is exactly what NgRx DevTools' time-travel debugging gives you.
 
-`ComponentStore`, by contrast, is like a **department's own filing cabinet**. The sales team doesn't need to route "what page of results am I currently viewing" through the company-wide ledger — that's local, disposable information relevant only while that department's office is open. It still gets filed properly (immutably, reactively) but it's discarded the moment that department's office closes (the component is destroyed).
+A **SignalStore** provided in a component, by contrast, is like a **department's own filing cabinet**. The sales team doesn't need to route "what page of results am I currently viewing" through the company-wide ledger — that's local, disposable information relevant only while that department's office is open. It still gets filed properly (immutably, reactively) but it's discarded the moment that department's office closes (the component is destroyed).
 
 ---
 
@@ -465,20 +468,21 @@ export const PRODUCTS_ROUTES: Routes = [
 
 ---
 
-### Example 3 — Best Practice: Local Filter State with ComponentStore
+### Example 3 — Best Practice: Local Filter State with SignalStore
 
-Not every piece of state belongs in the app-wide store. Here, a search box's debounced filter term, loading flag, and result list are entirely local to one widget. Using `ComponentStore` avoids inventing three new global actions and a reducer case just for this widget's internal bookkeeping — while still keeping the same immutable, reactive discipline.
+Not every piece of state belongs in the app-wide store. Here, a search box's debounced filter term, loading flag, and result list are entirely local to one widget. A `signalStore` avoids inventing three new global actions and a reducer case just for this widget's internal bookkeeping, while keeping the same immutable, predictable discipline.
 
 ```typescript
 // state/product-filter.store.ts
-import { Injectable, inject } from '@angular/core';
-import { ComponentStore } from '@ngrx/component-store';
+import { computed, inject } from '@angular/core';
+import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
+import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { tapResponse } from '@ngrx/operators';
-import { debounceTime, distinctUntilChanged, pipe, switchMap } from 'rxjs';
+import { debounceTime, distinctUntilChanged, pipe, switchMap, tap } from 'rxjs';
 import { ProductsService } from '../products.service';
 import { Product } from '../models/product.model';
 
-export interface ProductFilterState {
+interface ProductFilterState {
   searchTerm: string;
   results: Product[];
   loading: boolean;
@@ -486,59 +490,42 @@ export interface ProductFilterState {
 
 const initialState: ProductFilterState = { searchTerm: '', results: [], loading: false };
 
-@Injectable() // NOT providedIn: 'root' — this store must be scoped per component instance
-export class ProductFilterStore extends ComponentStore<ProductFilterState> {
-  private readonly productsService = inject(ProductsService);
+// No providedIn: 'root' — the widget provides it, so each instance gets its own store.
+export const ProductFilterStore = signalStore(
+  withState(initialState),
 
-  constructor() {
-    super(initialState);
-  }
+  // ---- Derived signals ------------------------------------------------
+  withComputed(({ results, searchTerm }) => ({
+    resultCount: computed(() => results().length),
+    showEmptyState: computed(() => searchTerm().length > 0 && results().length === 0),
+  })),
 
-  // ---- Selectors -----------------------------------------------------
-  readonly loading$ = this.select((state) => state.loading);
-
-  // Combine multiple slices into a single view model the template can consume
-  readonly vm$ = this.select(
-    this.select((state) => state.results),
-    this.loading$,
-    this.select((state) => state.searchTerm),
-    (results, loading, searchTerm) => ({ results, loading, searchTerm }),
-  );
-
-  // ---- Updaters (synchronous, immutable) ------------------------------
-  readonly setSearchTerm = this.updater((state, searchTerm: string) => ({ ...state, searchTerm }));
-
-  private readonly setLoading = this.updater((state) => ({ ...state, loading: true }));
-
-  private readonly setResults = this.updater((state, results: Product[]) => ({
-    ...state,
-    results,
-    loading: false,
-  }));
-
-  // ---- Effect (asynchronous side effect, safely handled) --------------
-  readonly search = this.effect<string>(
-    pipe(
-      debounceTime(300),
-      distinctUntilChanged(),
-      switchMap((term) => {
-        this.setLoading();
-        return this.productsService.search(term).pipe(
-          tapResponse({
-            next: (results) => this.setResults(results),
-            error: () => this.setResults([]), // never let the effect's source stream die on error
-          }),
-        );
-      }),
+  // ---- Methods (the only way to change state) -------------------------
+  withMethods((store, productsService = inject(ProductsService)) => ({
+    search: rxMethod<string>(
+      pipe(
+        tap((searchTerm) => patchState(store, { searchTerm })),
+        debounceTime(300),
+        distinctUntilChanged(),
+        tap(() => patchState(store, { loading: true })),
+        switchMap((term) =>
+          productsService.search(term).pipe(
+            tapResponse({
+              next: (results) => patchState(store, { results, loading: false }),
+              // never let the method's stream die on error
+              error: () => patchState(store, { results: [], loading: false }),
+            }),
+          ),
+        ),
+      ),
     ),
-  );
-}
+  })),
+);
 ```
 
 ```typescript
 // product-filter-widget.component.ts
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { ProductFilterStore } from './state/product-filter.store';
 
 @Component({
@@ -549,14 +536,18 @@ import { ProductFilterStore } from './state/product-filter.store';
     <input
       type="search"
       placeholder="Search products…"
+      [value]="store.searchTerm()"
       (input)="onSearch($event)"
     />
 
-    @if (vm().loading) {
+    @if (store.loading()) {
       <p>Searching…</p>
+    } @else if (store.showEmptyState()) {
+      <p>No products match "{{ store.searchTerm() }}".</p>
     } @else {
+      <p>{{ store.resultCount() }} results</p>
       <ul>
-        @for (product of vm().results; track product.id) {
+        @for (product of store.results(); track product.id) {
           <li>{{ product.name }}</li>
         }
       </ul>
@@ -564,25 +555,20 @@ import { ProductFilterStore } from './state/product-filter.store';
   `,
 })
 export class ProductFilterWidgetComponent {
-  private readonly filterStore = inject(ProductFilterStore);
-
-  protected readonly vm = toSignal(this.filterStore.vm$, {
-    initialValue: { results: [] as const, loading: false, searchTerm: '' },
-  });
+  protected readonly store = inject(ProductFilterStore);
 
   onSearch(event: Event): void {
-    const term = (event.target as HTMLInputElement).value;
-    this.filterStore.setSearchTerm(term);
-    this.filterStore.search(term);
+    this.store.search((event.target as HTMLInputElement).value);
   }
 }
 ```
 
 **Why this is best practice:**
-- `providers: [ProductFilterStore]` scopes the store to this component's injector — every instance of the widget gets its own isolated state, and it's destroyed automatically with the component. No manual cleanup.
-- `tapResponse` guarantees an HTTP error doesn't silently kill the `search` effect's subscription (a plain `catchError` without re-emitting a new observable would do exactly that).
-- `debounceTime` + `distinctUntilChanged` live *inside* the store, not scattered across the component — the component only calls `search(term)` and reads `vm()`.
-- Selectors are composed (`vm$` combines three pieces of state), so the template does one `toSignal()` read instead of three, minimizing re-renders.
+- `providers: [ProductFilterStore]` scopes the store to this component's injector — every instance of the widget gets its own isolated state, and it's destroyed automatically with the component, along with the `rxMethod` subscription.
+- The template reads signals directly (`store.loading()`, `store.results()`), so there's no `toSignal()` bridging and `OnPush` views update precisely when state changes.
+- Components can't write state: they call `store.search(term)`, and only the store's methods call `patchState`.
+- `tapResponse` guarantees an HTTP error doesn't kill the `search` stream (a plain `catchError` that rethrows would end it, and later searches would silently stop working).
+- `debounceTime` + `distinctUntilChanged` live *inside* the store, not scattered across the component.
 
 ---
 
@@ -592,7 +578,7 @@ export class ProductFilterWidgetComponent {
    `state.count++` silently breaks change detection and NgRx DevTools' time travel. Always return a new object: `{ ...state, count: state.count + 1 }`.
 
 2. **Putting every piece of state in the global Store.**
-   A modal's "is it open" flag or a form's "current step" rarely needs to be visible app-wide. Overusing the global store creates unnecessary actions/reducers and couples unrelated features. Prefer `ComponentStore` (or component-local Signals) for state that's genuinely local.
+   A modal's "is it open" flag or a form's "current step" rarely needs to be visible app-wide. Overusing the global store creates unnecessary actions/reducers and couples unrelated features. Prefer component-local signals or a component-provided `signalStore` for state that's genuinely local.
 
 3. **Calling HTTP services directly from components instead of Effects.**
    This defeats the purpose of NgRx — side effects become untraceable, and you lose the single "this action caused this API call" narrative that effects give you.
@@ -603,13 +589,13 @@ export class ProductFilterWidgetComponent {
    // of this type will ever be handled again!
    switchMap(() => this.api.getAll().pipe(catchError((e) => { throw e; })))
    ```
-   Always catch the error *inside* the inner pipe and return a new observable (an action), or use `tapResponse` in `ComponentStore` effects, which does this for you automatically.
+   Always catch the error *inside* the inner pipe and return a new observable (an action), or use `tapResponse` (in effects, `rxMethod`, or ComponentStore effects), which does this for you.
 
 5. **Skipping selectors and reading raw state in components.**
    `store.select((s) => s.products.state.items)` inline in a template bypasses memoization and hardcodes the state shape into every consumer. Always export a named, reusable selector.
 
-6. **Providing a `ComponentStore` with `providedIn: 'root'`.**
-   This turns what should be per-component local state into an accidental app-wide singleton, shared across every instance of that component — usually not what you want. Add it to the component's own `providers` array instead.
+6. **Making a local store a root singleton by accident.**
+   `signalStore({ providedIn: 'root' }, ...)` (or a ComponentStore with `providedIn: 'root'`) turns what should be per-component state into one app-wide instance, shared by every instance of that component. For local state, leave out `providedIn` and add the store to the component's own `providers` array instead.
 
 7. **Forgetting that `createFeature` selector names are derived from state property names.**
    A state shape of `{ isLoading: boolean }` generates `selectIsLoading`, not `selectLoading`. Mismatched expectations here are a very common source of "selector doesn't exist" TypeScript errors.
@@ -618,16 +604,16 @@ export class ProductFilterWidgetComponent {
 
 ## Best Practices
 
-- **Default to component state (signals) first, then `ComponentStore`, then global `Store`** — escalate only when state genuinely needs to be shared across unrelated parts of the app or benefits from time-travel debugging and a documented action history.
+- **Default to component state (signals) first, then a `signalStore`, then the global `Store`** — escalate only when state genuinely needs to be shared across unrelated parts of the app or benefits from time-travel debugging and a documented action history.
 - **Register feature state and effects at the route level** with `provideState()` / `provideEffects()` so they load lazily with the feature, not at app bootstrap.
 - **Use `createActionGroup`** instead of many individual `createAction` calls — it reduces boilerplate and keeps related actions typed and discoverable together.
 - **Let `createFeature` generate your simple selectors**, and reserve hand-written `createSelector` for genuinely derived/composed data (e.g., filtering, sorting, joining two slices of state).
 - **Keep reducers and updaters pure** — no HTTP calls, no `Date.now()`, no random values; all of that belongs in effects.
-- **Always pair `switchMap`/`exhaustMap`/`mergeMap` in effects with proper error handling** (`catchError` returning an action, or `tapResponse` in `ComponentStore`) so a single failed request can't silently kill the effect.
-- **Use `OnPush` change detection** with `Store`/`ComponentStore` selectors converted via `toSignal()` (or the async pipe) — never call `.subscribe()` manually in a component just to assign a class field.
-- **Scope `ComponentStore` via the component's `providers` array**, not `providedIn: 'root'`, unless you deliberately want one shared instance.
+- **Always pair `switchMap`/`exhaustMap`/`mergeMap` in effects with proper error handling** (`catchError` returning an action, or `tapResponse` in `rxMethod`) so a single failed request can't silently kill the effect.
+- **Read state as signals.** A `signalStore` already exposes signals; for the global `Store`, use `store.selectSignal(selector)` (or `toSignal(store.select(...))`) — never call `.subscribe()` manually in a component just to assign a class field.
+- **Scope local stores via the component's `providers` array**, not `providedIn: 'root'`, unless you deliberately want one shared instance.
 - **Enable NgRx DevTools only in development** (`logOnly: !isDevMode()`), so production users don't pay for the debugging overhead.
-- **For new projects, evaluate `@ngrx/signals` `signalStore`** as your default for local/feature state — it covers most of what `ComponentStore` does with a Signal-native API and less boilerplate, while classic `Store` remains the right tool for large, event-driven, cross-cutting state.
+- **Use `signalStore` for new local/feature state** — it covers what `ComponentStore` does with a signal-native API and less boilerplate — while the classic `Store` remains the right tool for large, event-driven, cross-cutting state.
 
 ---
 
@@ -637,11 +623,11 @@ export class ProductFilterWidgetComponent {
 - State flows in **one direction**, making every state change traceable back to a specific dispatched action.
 - Use the standalone `provideStore`, `provideEffects`, and `provideStoreDevtools` functions to configure NgRx in a modern, non-NgModule Angular app.
 - `createActionGroup`, `createReducer`/`createFeature`, and `createSelector` are the current idiomatic APIs for defining state — they replace older, more verbose patterns.
-- `ComponentStore` (`@ngrx/component-store`) gives local, component-scoped state the same immutable/reactive discipline as the global store, without actions or reducers — ideal for filters, pagination, and UI-only flags.
-- Provide a `ComponentStore` in a component's own `providers` array so its lifecycle is tied to that component instance.
+- `signalStore` (`@ngrx/signals`) gives local or feature state the same immutable, predictable discipline as the global store, with signals and without actions or reducers — ideal for filters, pagination, and UI-only flags.
+- Provide a local `signalStore` in a component's own `providers` array so its lifecycle is tied to that component instance.
 - Always handle errors inside effects (`catchError` returning an action, or `tapResponse`) so a failed request can't silently break the effect stream.
-- Reach for the global `Store` when state is shared across unrelated features or needs an auditable history; reach for `ComponentStore` (or `signalStore`) for state that's local to one component or small feature.
-- `@ngrx/signals`' `signalStore` is the NgRx team's current recommendation for new local/feature state, built natively on Angular Signals.
+- Reach for the global `Store` when state is shared across unrelated features or needs an auditable history; reach for a `signalStore` for state that's local to one component or small feature.
+- `ComponentStore` is the older, RxJS-based local store you'll still find in existing code; its `select`/`updater`/`effect` map to `withComputed`/`patchState` methods/`rxMethod`.
 
 ---
 
@@ -650,17 +636,17 @@ export class ProductFilterWidgetComponent {
 **Q: What is the difference between an action and a reducer in NgRx?**
 A: An action is a plain object describing *that something happened* (with no logic). A reducer is a pure function that takes the current state and an action and computes the new state.
 
-**Q: Why must reducers and ComponentStore updaters be pure functions?**
+**Q: Why must reducers (and the functions that update a SignalStore) be pure?**
 A: Purity guarantees predictable, testable state transitions and enables features like DevTools time-travel debugging; it also ensures Angular's change detection can reliably detect that state actually changed.
 
 **Q: What problem does `tapResponse` solve that a plain `catchError` doesn't?**
 A: A plain `catchError` that rethrows (or doesn't return a new observable) can terminate the outer effect stream on error, so it stops reacting to future actions/calls. `tapResponse` safely separates success/error handling so the effect keeps running.
 
-**Q: When should you choose `ComponentStore` over the global `Store`?**
+**Q: When should you choose a `signalStore` over the global `Store`?**
 A: When the state is local to one component or small feature (filters, pagination, UI flags, form-wizard steps) and doesn't need to be shared across unrelated parts of the app or tracked in a global action history.
 
-**Q: How do you scope a `ComponentStore` to a single component instance instead of making it an app-wide singleton?**
-A: Add it to that component's own `providers` array (not `providedIn: 'root'`), so Angular DI creates and destroys it along with that component instance.
+**Q: How do you scope a `signalStore` to a single component instance instead of making it an app-wide singleton?**
+A: Leave out `providedIn: 'root'` and add the store to that component's own `providers` array, so Angular DI creates and destroys it along with that component instance.
 
 ---
 
@@ -675,13 +661,13 @@ Using Example 2 as a base:
 - Modify `ProductsEffects` so that if `getAll()` fails, it automatically retries the request once after a 2-second delay before dispatching `loadFailure` (hint: look into RxJS's `retry` or `retryWhen`-style operators combined with `catchError`).
 - Confirm that a genuinely persistent failure still eventually dispatches `ProductsApiActions.loadFailure` and displays the error message.
 
-### 3. Challenging — Build a Paginated, Sortable ComponentStore
+### 3. Challenging — Build a Paginated, Sortable SignalStore
 Extend Example 3's `ProductFilterStore` into a full local list-management store:
-- Add `page: number` and `sortBy: 'name' | 'price'` to `ProductFilterState`.
-- Add updaters `setPage` and `setSortBy`, and make sure changing the search term resets `page` back to `1`.
-- Change the `search` effect so it reacts to *any* of `searchTerm`, `page`, or `sortBy` changing (hint: you'll need to combine multiple source observables — e.g. with `combineLatest` — before piping into `switchMap`, since `this.effect()` only accepts a single origin observable).
-- Add "Next Page" / "Previous Page" buttons and a sort `<select>` to `ProductFilterWidgetComponent`, wired to the new updaters.
-- As a stretch goal, research how `@ngrx/signals`' `signalStore` with `withState`, `withMethods`, and `rxMethod` would express this same store, and compare the amount of boilerplate.
+- Add `page: number` and `sortBy: 'name' | 'price'` to the state.
+- Add methods `setPage` and `setSortBy` (using `patchState`), and make sure changing the search term resets `page` back to `1`.
+- Make the search re-run when *any* of `searchTerm`, `page`, or `sortBy` changes. Hint: `rxMethod` also accepts a signal, so you can pass it a `computed()` that combines all three into one query object.
+- Add "Next Page" / "Previous Page" buttons and a sort `<select>` to `ProductFilterWidgetComponent`, wired to the new methods.
+- Stretch goal: find a `ComponentStore` in an existing codebase (or write the same store with `@ngrx/component-store`) and compare the amount of boilerplate.
 
 ---
 
@@ -690,8 +676,8 @@ Extend Example 3's `ProductFilterStore` into a full local list-management store:
 - [NgRx Documentation](https://ngrx.io/docs) — official docs home
 - [NgRx Store Guide](https://ngrx.io/guide/store) — actions, reducers, selectors in depth
 - [NgRx Effects Guide](https://ngrx.io/guide/effects) — side-effect handling patterns
-- [NgRx Component Store Guide](https://ngrx.io/guide/component-store) — full API reference
+- [NgRx Component Store Guide](https://ngrx.io/guide/component-store) — for the older RxJS-based local store you'll meet in existing code
 - [NgRx Operators (`tapResponse`, `concatLatestFrom`)](https://ngrx.io/guide/operators/operators)
-- [NgRx Signals (SignalStore) Guide](https://ngrx.io/guide/signals) — the modern Signal-based alternative
+- [NgRx Signals (SignalStore) Guide](https://ngrx.io/guide/signals) — `signalStore`, `withState`, `withComputed`, `withMethods`, `rxMethod`
 - [Angular Signals Guide](https://angular.dev/guide/signals) — official Angular documentation on Signals
-- [Angular Dependency Injection Guide](https://angular.dev/guide/di) — background on how `providers` scoping works, relevant to `ComponentStore`
+- [Angular Dependency Injection Guide](https://angular.dev/guide/di) — background on how `providers` scoping works, relevant to local stores

@@ -36,12 +36,12 @@
       "prompt": "Why does the NG_VALUE_ACCESSOR provider need forwardRef(() => MyComponent)?",
       "options": [
         { "id": "a", "text": "To lazy-load the component" },
-        { "id": "b", "text": "Because the provider is evaluated in the class's own decorator metadata, before the class identifier is fully initialized" },
+        { "id": "b", "text": "Because the provider is part of the class's own decorator metadata, which may be evaluated before the class is fully defined" },
         { "id": "c", "text": "To enable OnPush change detection" },
         { "id": "d", "text": "It is optional and never needed" }
       ],
       "answer": "b",
-      "explanation": "forwardRef defers resolving the self-reference until Angular actually needs it."
+      "explanation": "forwardRef defers resolving the self-reference until Angular actually needs it, so it is the always-safe form."
     },
     {
       "id": "q4",
@@ -49,12 +49,12 @@
       "prompt": "What happens if you forget multi: true on the NG_VALUE_ACCESSOR provider?",
       "options": [
         { "id": "a", "text": "Nothing changes" },
-        { "id": "b", "text": "Your provider replaces the list of accessors instead of joining it, which can break others or cause 'no value accessor' errors" },
+        { "id": "b", "text": "The forms directive no longer receives a list of accessors, and you get a runtime error instead of a working control" },
         { "id": "c", "text": "The component throws a compile error" },
         { "id": "d", "text": "Validation stops working" }
       ],
       "answer": "b",
-      "explanation": "NG_VALUE_ACCESSOR is a multi-provider token; multi: true adds to the list rather than replacing it."
+      "explanation": "NG_VALUE_ACCESSOR is a multi-provider token: the forms directive expects a list of accessors, which multi: true provides."
     },
     {
       "id": "q5",
@@ -80,6 +80,19 @@
         { "left": "setDisabledState", "right": "Sync UI with .disable()/.enable()" }
       ],
       "explanation": "Together these four methods implement the full contract Angular's forms directives expect."
+    },
+    {
+      "id": "q7",
+      "type": "single-choice",
+      "prompt": "A custom control injects NgControl with { self: true } and also provides NG_VALIDATORS pointing to itself. What happens when it is used with formControlName?",
+      "options": [
+        { "id": "a", "text": "It works and validates itself" },
+        { "id": "b", "text": "Angular reports a circular dependency (NG0200)" },
+        { "id": "c", "text": "Validation is silently skipped" },
+        { "id": "d", "text": "The value accessor is registered twice" }
+      ],
+      "answer": "b",
+      "explanation": "formControlName asks the element for NG_VALIDATORS, which points back at the component while the component is still waiting for NgControl. A self-validating control should register both NG_VALUE_ACCESSOR and NG_VALIDATORS as providers instead."
     }
   ]
 }
