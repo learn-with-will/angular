@@ -1,0 +1,115 @@
+<div class="mx-auto max-w-4xl px-4 py-10 sm:px-6">
+  <header class="mb-8 max-w-2xl">
+    <h1 class="heading text-4xl">Test <span class="gradient-text">yourself</span></h1>
+    <p class="prose-muted mt-3 text-lg text-pretty">
+      One question at a time, with the answer and a link back to the lesson as soon as you check.
+      @if (quiz.bank().length) {
+        {{ quiz.bank().length }} questions across {{ topics().length }} topics.
+      }
+    </p>
+  </header>
+
+  <div class="grid gap-5 md:grid-cols-2">
+    <!-- Quick quiz -->
+    <section class="card p-6" aria-labelledby="quick-heading">
+      <h2 id="quick-heading" class="heading text-xl">Quick quiz</h2>
+      <p class="prose-muted mt-1 text-sm">A random mix from every topic.</p>
+      <div class="mt-5 flex flex-wrap gap-3">
+        @for (n of sizes; track n) {
+          <a
+            routerLink="/quiz/play"
+            [queryParams]="{ mode: 'quick', count: n }"
+            [class]="n === 5 ? 'btn-gradient' : 'btn-secondary'"
+          >
+            {{ n }} questions
+          </a>
+        }
+      </div>
+    </section>
+
+    <!-- Missed -->
+    <section class="card p-6" aria-labelledby="missed-heading">
+      <h2 id="missed-heading" class="heading text-xl">Missed questions</h2>
+      @if (missedCount() > 0) {
+        <p class="prose-muted mt-1 text-sm">
+          {{ missedCount() }} {{ missedCount() === 1 ? 'question' : 'questions' }} you got wrong last time.
+        </p>
+        <a
+          routerLink="/quiz/play"
+          [queryParams]="{ mode: 'missed', count: 10 }"
+          class="btn-secondary mt-5"
+        >
+          Practice them
+        </a>
+      } @else {
+        <p class="prose-muted mt-1 text-sm">
+          Nothing to review yet. Questions you miss will show up here.
+        </p>
+      }
+    </section>
+  </div>
+
+  <!-- By topic -->
+  <section class="card mt-5 p-6" aria-labelledby="topic-heading">
+    <div class="flex flex-wrap items-baseline justify-between gap-2">
+      <h2 id="topic-heading" class="heading text-xl">By topic</h2>
+      <div class="flex gap-1 text-sm font-bold">
+        <button type="button" (click)="selectAll()" class="focusable cursor-pointer rounded px-2 py-1 text-brand-600 hover:text-magenta-600 dark:text-brand-300">
+          Select all
+        </button>
+        <button type="button" (click)="clearAll()" class="focusable cursor-pointer rounded px-2 py-1 text-ink-500 hover:text-ink-800 dark:text-ink-400 dark:hover:text-white">
+          Clear
+        </button>
+      </div>
+    </div>
+
+    @if (topics().length) {
+      <div role="group" aria-label="Topics" class="mt-4 flex flex-wrap gap-2.5">
+        @for (t of topics(); track t.id) {
+          <button
+            type="button"
+            class="chip"
+            [class]="selected().has(t.id) ? 'border-brand-600! bg-brand-600! text-white!' : ''"
+            [attr.aria-pressed]="selected().has(t.id)"
+            (click)="toggleTopic(t.id)"
+          >
+            {{ t.title }}
+            <span class="text-xs font-bold tabular-nums opacity-70">{{ quiz.countByTopic().get(t.id) }}</span>
+          </button>
+        }
+      </div>
+    } @else {
+      <p class="prose-muted mt-3 text-sm">Loading topics…</p>
+    }
+
+    <div class="mt-6 flex flex-wrap items-center justify-between gap-4">
+      <div role="group" aria-label="Number of questions" class="flex items-center gap-2">
+        <span class="prose-muted text-sm font-semibold">Questions</span>
+        @for (n of sizes; track n) {
+          <button
+            type="button"
+            class="chip"
+            [class]="size() === n ? 'border-brand-600! bg-brand-600! text-white!' : ''"
+            [attr.aria-pressed]="size() === n"
+            (click)="size.set(n)"
+          >
+            {{ n }}
+          </button>
+        }
+      </div>
+
+      @if (chosen().length) {
+        <a routerLink="/quiz/play" [queryParams]="topicQuery()" class="btn-gradient">
+          Start · {{ chosen().length }} {{ chosen().length === 1 ? 'topic' : 'topics' }}
+        </a>
+      } @else {
+        <button type="button" class="btn-gradient" disabled>Pick a topic to start</button>
+      }
+    </div>
+    @if (chosen().length && poolSize() < size()) {
+      <p class="prose-muted mt-3 text-sm">
+        Only {{ poolSize() }} questions in your selection, so that’s how many you’ll get.
+      </p>
+    }
+  </section>
+</div>

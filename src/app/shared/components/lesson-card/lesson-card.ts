@@ -1,6 +1,7 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { LessonMeta, LEVEL_BADGES, LEVEL_LABELS } from '../../../core/models/lesson.model';
+import { KIND_CHIPS, KIND_LABELS, LessonMeta } from '../../../core/models/lesson.model';
+import { CourseService } from '../../../core/services/course.service';
 import { ProgressService } from '../../../core/services/progress.service';
 
 @Component({
@@ -13,15 +14,15 @@ export class LessonCard {
   readonly lesson = input.required<LessonMeta>();
 
   private readonly progress = inject(ProgressService);
+  private readonly course = inject(CourseService);
 
-  protected readonly levelLabel = computed(() => LEVEL_LABELS[this.lesson().level]);
-  protected readonly completed = computed(() => this.progress.isCompleted(this.lesson().id));
-  protected readonly bookmarked = computed(() => this.progress.isBookmarked(this.lesson().id));
-  protected readonly quiz = computed(() => this.progress.quizResult(this.lesson().id));
-
-  protected readonly badgeClass = computed(() => LEVEL_BADGES[this.lesson().level]);
+  protected readonly kindLabel = computed(() => KIND_LABELS[this.lesson().kind]);
+  protected readonly kindClass = computed(() => KIND_CHIPS[this.lesson().kind]);
+  protected readonly topicTitle = computed(() => this.course.getTopic(this.lesson().topic)?.title ?? '');
+  protected readonly learned = computed(() => this.progress.isLearned(this.lesson().slug));
+  protected readonly bookmarked = computed(() => this.progress.isBookmarked(this.lesson().slug));
 
   toggleBookmark(): void {
-    this.progress.toggleBookmark(this.lesson().id);
+    this.progress.toggleBookmark(this.lesson().slug);
   }
 }

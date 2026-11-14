@@ -1,5 +1,6 @@
 import { Component, computed, input } from '@angular/core';
 
+/** "Question 3 of 10" with a bar that fills as questions are completed. */
 @Component({
   selector: 'app-quiz-progress',
   template: `
@@ -10,7 +11,7 @@ import { Component, computed, input } from '@angular/core';
         [attr.aria-valuenow]="pct()"
         aria-valuemin="0"
         aria-valuemax="100"
-        aria-label="Questions answered"
+        aria-label="Quiz progress"
       >
         <div
           class="h-full rounded-full transition-all duration-300"
@@ -19,16 +20,17 @@ import { Component, computed, input } from '@angular/core';
         ></div>
       </div>
       <span class="prose-muted shrink-0 text-sm font-bold tabular-nums">
-        {{ answered() }}/{{ total() }} answered
+        Question {{ current() }} of {{ total() }}
       </span>
     </div>
   `,
 })
 export class QuizProgress {
-  readonly answered = input.required<number>();
+  /** 1-based number of the question on screen. */
+  readonly current = input.required<number>();
   readonly total = input.required<number>();
 
   protected readonly pct = computed(() =>
-    this.total() === 0 ? 0 : Math.round((this.answered() / this.total()) * 100),
+    this.total() === 0 ? 0 : Math.round(((this.current() - 1) / this.total()) * 100),
   );
 }

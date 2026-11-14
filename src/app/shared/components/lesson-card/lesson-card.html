@@ -7,19 +7,15 @@
   class="card-interactive group relative isolate flex h-full flex-col p-5 has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-brand-500 has-[a:focus-visible]:ring-offset-2 has-[a:focus-visible]:ring-offset-ink-50 dark:has-[a:focus-visible]:ring-offset-ink-950"
 >
   <div class="mb-3 flex items-center justify-between gap-2">
-    <span [class]="badgeClass()">
-      @if (completed()) {
-        <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3.5">
-          <path d="m5 13 4 4L19 7" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
-      }
-      {{ levelLabel() }}
+    <span class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+      <span [class]="kindClass()">{{ kindLabel() }}</span>
+      <span class="prose-muted truncate text-xs font-semibold">{{ topicTitle() }}</span>
     </span>
 
     <button
       type="button"
       (click)="toggleBookmark()"
-      class="focusable relative z-10 -mr-1.5 -mt-1.5 grid h-11 w-11 cursor-pointer place-items-center rounded-full transition hover:bg-ink-100 active:scale-90 dark:hover:bg-ink-800"
+      class="focusable relative z-10 -mr-1.5 -mt-1.5 grid h-11 w-11 shrink-0 cursor-pointer place-items-center rounded-full transition hover:bg-ink-100 active:scale-90 dark:hover:bg-ink-800"
       [class]="bookmarked() ? 'text-magenta-500' : 'text-ink-400 hover:text-magenta-500'"
       [attr.aria-label]="
         bookmarked() ? 'Remove bookmark from ' + lesson().title : 'Bookmark ' + lesson().title
@@ -48,9 +44,7 @@
     </a>
   </h3>
 
-  @if (lesson().summary) {
-    <p class="prose-muted mb-3 line-clamp-2 text-sm">{{ lesson().summary }}</p>
-  }
+  <p class="prose-muted mb-3 line-clamp-2 text-sm">{{ lesson().summary }}</p>
 
   <div class="prose-muted mt-auto flex flex-wrap items-center gap-x-3 gap-y-1.5 pt-3 text-xs font-medium">
     <span class="flex items-center gap-1">
@@ -58,28 +52,15 @@
         <circle cx="12" cy="12" r="9" />
         <path d="M12 7v5l3 2" stroke-linecap="round" />
       </svg>
-      {{ lesson().duration }} min
+      {{ lesson().minutes }} min
     </span>
 
-    @if (completed()) {
+    @if (learned()) {
       <span class="flex items-center gap-1 font-bold text-emerald-600 dark:text-emerald-400">
         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
           <path d="m5 13 4 4L19 7" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
-        Completed
-      </span>
-    }
-
-    @if (quiz(); as q) {
-      <span
-        class="ml-auto rounded-full px-2 py-0.5 font-bold tabular-nums"
-        [class]="
-          q.passed
-            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-            : 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
-        "
-      >
-        Quiz {{ q.score }}%
+        Learned
       </span>
     }
   </div>

@@ -1,20 +1,26 @@
 # Angular Learning Portal
 
-A **frontend-only** Angular learning platform: read Markdown lessons, take quizzes,
-and track your progress — all in the browser, no backend required. Built with
-Angular 20 standalone components, signals, Tailwind CSS, and ngx-markdown.
+A **frontend-only** Angular course made of short lessons ("bites"). Each bite teaches one
+idea in **3–5 minutes**, so you can read in any order, jump to a random one, or follow a
+topic from start to finish. Quizzes, progress and bookmarks all live in the browser; there is
+no backend.
 
-## Features
+Built with Angular 20+ standalone components, signals, Tailwind CSS v4 and ngx-markdown.
 
-- **Roadmap** of lessons grouped by level (beginner / intermediate / advanced).
-- **Lesson reader** with Markdown rendering, Prism syntax highlighting, a table of
-  contents, previous/next navigation, mark-complete, and bookmarking.
-- **Quizzes** supporting five question types: single-choice, multiple-choice,
-  fill-blank, ordering, and match-pair — with grading, review mode, and explanations.
-- **Dashboard** with completion stats, per-level progress, and quiz history.
-- **Search** and **bookmarks** pages.
-- **Dark mode** with persistence, and a responsive layout.
-- All progress persists to `localStorage`.
+## What is in it
+
+- **Home** with a continue-learning card, topic overview and a "surprise me" button.
+- **Lessons A–Z** with search, filters by topic and kind, and random browsing. There are no
+  levels: every lesson stands on its own and links to related ones.
+- **Lesson reader** with Markdown, syntax highlighting, tables, warning and takeaway cards,
+  and optional diagrams (sequence, tree, flow) drawn by the app itself.
+- **Quiz bank** with questions grouped by topic, in five types: single-choice,
+  multiple-choice, fill-blank, ordering and match-pair, with explanations and review.
+- **Dashboard** and **bookmarks**, with light and dark themes.
+- Old long-lesson URLs (`/lesson/<old-slug>`, `/roadmap`, `/search`) redirect to the new
+  structure, and v1 progress is imported on first load.
+
+The course currently has 14 topics, 212 lessons and 313 questions.
 
 ## Run it
 
@@ -22,111 +28,57 @@ Angular 20 standalone components, signals, Tailwind CSS, and ngx-markdown.
 npm install
 npm start          # dev server at http://localhost:4200
 npm run build      # production build into dist/
-npm test           # unit tests (Karma/Jasmine)
+npm test           # unit tests
+npm run validate   # check lessons, quiz bank and manifest
 ```
+
+`npm start` and `npm run build` regenerate `public/content/course-manifest.json` first.
+Node 22.18 or later is required, because the scripts import TypeScript directly.
 
 ## Project structure
 
 ```text
 src/app/
 ├── core/
+│   ├── guards/        # legacy URL and random-lesson redirects
 │   ├── models/        # Lesson, Quiz, Progress interfaces
-│   └── services/      # Course, Lesson, Quiz, Progress, Search, Theme
-├── shared/components/ # Navbar, Sidebar, Footer, LessonCard, Toc,
-│                      # LessonNavigation, QuizQuestion, QuizProgress, QuizResult
-├── features/          # home, roadmap, lesson, quiz, dashboard, search, bookmarks
-├── app.routes.ts      # lazy-loaded routes
-└── app.config.ts      # providers (router, HttpClient, markdown)
+│   ├── services/      # Course, Lesson, Quiz, Progress, Search, Theme
+│   └── util/
+├── shared/
+│   ├── diagram/       # parser and components for sequence, tree and flow diagrams
+│   └── components/    # navbar, footer, lesson cards, quiz parts, related lessons
+├── features/          # home, lessons, lesson, quiz-hub, quiz-play, dashboard, bookmarks
+└── app.routes.ts      # lazy-loaded routes
 
 public/
-├── content/           # lesson Markdown + course-manifest.json
-└── quizzes/           # one <lessonId>.json per quiz
+├── content/
+│   ├── lessons/             # one <slug>.md per lesson
+│   ├── topics.json          # the 14 topics
+│   ├── legacy.json          # old lesson id → new lessons, for redirects and imported progress
+│   └── course-manifest.json # generated; do not edit
+└── quiz/questions.json      # the question bank
+
+scripts/
+├── generate-manifest.mjs    # builds the manifest and computes reading time
+└── validate-course.mjs      # the release gate (--strict is used in CI)
 ```
 
-## Adding content — no code changes required
+## Adding a lesson
 
-### Add a lesson
+1. Create `public/content/lessons/<slug>.md` with front-matter (`slug`, `title`, `topic`,
+   `kind`, `summary`, `tags`, `related`) and the five standard sections.
+2. Add questions for it to `public/quiz/questions.json` with `"topic"` and `"lesson"`.
+3. Run `npm run manifest && npm run validate`.
 
-1. Create a Markdown file under `public/content/<level>/`, e.g.
-   `public/content/beginner/lesson-07.md`. Start it with YAML front-matter:
+[CONTENT_GUIDE.md](CONTENT_GUIDE.md) has the rules: length limits, which visual fits which kind
+of information, and the diagram syntax. The validator enforces them, so a lesson that is too
+long, too short or missing a visual fails the build.
 
-   ```md
-   ---
-   id: lesson-07
-   slug: forms-and-validation
-   title: Forms & Validation
-   level: beginner
-   order: 7
-   duration: 20
-   tags: [forms, validation]
-   ---
+## Deployment
 
-   # Learning Objectives
-   ...
-   ```
+Pushing to `main` runs `.github/workflows/deploy.yml`, which validates the course in strict
+mode, builds with the repository name as the base href, and publishes to GitHub Pages.
 
-2. Add a matching entry to `public/content/course-manifest.json`:
+## Earlier version
 
-   ```json
-   {
-     "id": "lesson-07",
-     "slug": "forms-and-validation",
-     "title": "Forms & Validation",
-     "level": "beginner",
-     "order": 7,
-     "duration": 20,
-     "file": "beginner/lesson-07.md",
-     "summary": "Build and validate reactive forms.",
-     "tags": ["forms", "validation"]
-   }
-   ```
-
-The lesson now appears in the roadmap, sidebar, search, and home — automatically.
-
-### Add a quiz
-
-Create `public/quizzes/<lessonId>.json` (e.g. `public/quizzes/lesson-07.json`):
-
-```json
-{
-  "id": "quiz-07",
-  "lessonId": "lesson-07",
-  "title": "Forms & Validation",
-  "passingScore": 70,
-  "questions": [
-    { "id": "q1", "type": "single-choice", "prompt": "…",
-      "options": [{ "id": "a", "text": "…" }], "answer": "a",
-      "explanation": "…" }
-  ]
-}
-```
-
-Supported question `type` values: `single-choice`, `multiple-choice`,
-`fill-blank`, `ordering`, `match-pair`. See `public/quizzes/lesson-31.json` for an
-example using all of them.
-
-## Tech stack
-
-Angular 20 · Standalone components · Signals · Tailwind CSS v4 · ngx-markdown +
-marked · PrismJS · localStorage.
-
-## Deploying
-
-The output in `dist/learning-portal/browser` is a static site — deploy it to
-GitHub Pages, Netlify, Vercel, or any static host. For hosts without SPA URL
-rewriting, configure a fallback to `index.html` so deep links work.
-
-### GitHub Pages (automated)
-
-This repo ships a workflow at `.github/workflows/deploy.yml` that builds and
-publishes the site on every push to `main`:
-
-- Builds with `--base-href "/<repo>/"` so assets resolve under the project
-  subpath (`https://<user>.github.io/<repo>/`).
-- Copies `index.html` to `404.html` so deep links (e.g. `/lesson/:slug`) work
-  without server-side rewriting.
-
-One-time setup: in the repo, go to **Settings → Pages → Build and deployment →
-Source** and select **GitHub Actions**. The next push to `main` deploys, and the
-live URL appears in the workflow run's summary and under Settings → Pages.
-```
+The original 35 long lessons are preserved at the git tag `v1-long-lessons`.

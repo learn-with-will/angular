@@ -217,16 +217,29 @@ body {
   @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold;
 }
 
-@utility badge-beginner {
+/* One chip colour per lesson kind (see KIND_CHIPS in lesson.model.ts). */
+@utility kind-concept {
+  @apply badge bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300;
+}
+
+@utility kind-api {
+  @apply badge bg-brand-100 text-brand-800 dark:bg-brand-950 dark:text-brand-300;
+}
+
+@utility kind-technique {
   @apply badge bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300;
 }
 
-@utility badge-intermediate {
+@utility kind-pattern {
   @apply badge bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300;
 }
 
-@utility badge-advanced {
-  @apply badge bg-magenta-100 text-magenta-800 dark:bg-magenta-950 dark:text-magenta-300;
+@utility kind-pitfall {
+  @apply badge bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300;
+}
+
+@utility kind-tool {
+  @apply badge bg-ink-100 text-ink-700 dark:bg-ink-800 dark:text-ink-200;
 }
 
 @utility input-field {
@@ -305,15 +318,37 @@ body {
 .lesson-content blockquote {
   @apply my-5 rounded-r-xl border-l-4 border-brand-400 bg-brand-50 py-3 pr-4 pl-4 text-ink-600 italic dark:bg-brand-950/40 dark:text-ink-300;
 }
-.lesson-content table {
-  @apply my-5 w-full border-collapse overflow-hidden rounded-xl text-sm;
+.lesson-content .dg-table {
+  margin: 1.25rem 0;
+  overflow-x: auto;
+  border: 1px solid var(--dg-border);
+  border-radius: 0.85rem;
+  background: var(--dg-surface);
 }
-.lesson-content th,
-.lesson-content td {
-  @apply border border-ink-200 px-3 py-2 text-left dark:border-ink-800;
+.lesson-content .dg-table table {
+  width: 100%;
+  margin: 0;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  line-height: 1.4;
 }
-.lesson-content th {
-  @apply bg-ink-100 font-bold text-ink-800 dark:bg-ink-800 dark:text-ink-100;
+.lesson-content .dg-table th,
+.lesson-content .dg-table td {
+  padding: 0.6rem 0.9rem;
+  text-align: left;
+  vertical-align: top;
+}
+.lesson-content .dg-table th {
+  background: var(--dg-chip-bg);
+  font-weight: 700;
+  color: var(--dg-title);
+}
+.lesson-content .dg-table td {
+  border-top: 1px solid var(--dg-border);
+}
+.lesson-content .dg-table td:first-child {
+  font-weight: 600;
+  color: var(--dg-title);
 }
 /* inline code (not inside a highlighted code block) */
 .lesson-content :not(pre) > code {
@@ -330,139 +365,422 @@ body {
 }
 
 /* ---------------------------------------------------------------------------
-   Flash cards
+   Callouts
 
-   LessonPage.onMarkdownReady() rewrites the "Flash Cards" markdown list into
-   this markup: a responsive grid of 3D flip cards. Question on the front,
-   gradient answer on the back. Spelled out in plain CSS (not @apply) so the
-   dark: variants survive Tailwind v4's utility composition.
+   LessonPage.onMarkdownReady() tags blockquotes that open with a bold label
+   ("In one line:", Tip, Note, Watch out) with these classes. Diagram styles
+   follow in their own section below.
 --------------------------------------------------------------------------- */
-.flashcard-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(15.5rem, 1fr));
-  gap: 1rem;
-  margin: 1.75rem 0 2.25rem;
+.lesson-content blockquote.callout {
+  margin: 1.25rem 0;
+  padding: 0.85rem 1.05rem;
+  border: 1px solid var(--t-border);
+  border-radius: 0.85rem;
+  background: var(--t-bg);
+  font-style: normal;
+  color: var(--dg-title);
 }
-
-.flashcard {
-  appearance: none;
-  border: 0;
-  padding: 0;
-  background: transparent;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-  perspective: 1200px;
-  min-height: 11rem;
+.lesson-content blockquote.callout > p {
+  margin: 0;
 }
-
-.flashcard-inner {
-  position: relative;
-  display: block;
-  width: 100%;
-  height: 100%;
-  min-height: inherit;
-  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
-  transform-style: preserve-3d;
+.lesson-content blockquote.callout > p + p {
+  margin-top: 0.5rem;
 }
-
-.flashcard.is-flipped .flashcard-inner {
-  transform: rotateY(180deg);
-}
-
-.flashcard-face {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.7rem;
-  padding: 1.15rem 1.25rem;
-  border-radius: 1rem;
-  overflow: auto;
-  border: 1px solid var(--color-ink-200);
-  box-shadow: var(--shadow-soft);
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  transition: box-shadow 0.2s ease;
-}
-
-.flashcard-front {
-  background: #fff;
-}
-
-.flashcard-back {
-  transform: rotateY(180deg);
-  border-color: transparent;
-  background-image: var(--gradient-angular);
-  color: #fff;
-}
-
-.dark .flashcard-face {
-  border-color: var(--color-ink-800);
-}
-.dark .flashcard-front {
-  background: var(--color-ink-900);
-}
-
-.flashcard:hover .flashcard-face {
-  box-shadow: var(--shadow-lift);
-}
-
-.flashcard-tag {
-  display: inline-grid;
-  place-items: center;
-  width: 1.9rem;
-  height: 1.9rem;
-  flex-shrink: 0;
-  border-radius: 9999px;
+/* The bold lead-in becomes a small chip: "In one line", "Tip", "Watch out"... */
+.lesson-content blockquote.callout > p:first-child > strong:first-child {
+  display: inline-block;
+  margin-right: 0.4rem;
+  padding: 0.05rem 0.55rem;
+  border-radius: 0.45rem;
+  background: color-mix(in srgb, var(--t-border) 24%, transparent);
   font-size: 0.8rem;
   font-weight: 800;
-  background: var(--color-brand-50);
-  color: var(--color-brand-700);
-}
-.dark .flashcard-front .flashcard-tag {
-  background: var(--color-brand-950);
-  color: var(--color-brand-300);
-}
-.flashcard-back .flashcard-tag {
-  background: rgb(255 255 255 / 0.22);
-  color: #fff;
+  color: var(--dg-title);
 }
 
-.flashcard-body {
-  flex: 1 1 auto;
-  font-size: 0.95rem;
-  line-height: 1.5;
-  color: var(--color-ink-800);
+/* "Watch out" and "Remember" lists become a stack of cards with a badge (! or 1, 2, 3).
+   LessonPage.enhanceSections() adds .dg-list and a tone class to the list after those headings. */
+.lesson-content ul.dg-list {
+  display: grid;
+  gap: 0.6rem;
+  margin: 1rem 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: dg-item;
 }
-.dark .flashcard-front .flashcard-body {
-  color: var(--color-ink-200);
+.lesson-content ul.dg-list > li {
+  position: relative;
+  margin: 0;
+  padding: 0.7rem 0.95rem 0.7rem 3.2rem;
+  border: 1px solid var(--t-border);
+  border-radius: 0.85rem;
+  background: var(--t-bg);
+  counter-increment: dg-item;
 }
-.flashcard-back .flashcard-body {
-  color: #fff;
-}
-/* Keep inline code legible on the gradient back face. */
-.flashcard-back .flashcard-body :not(pre) > code {
-  background: rgb(255 255 255 / 0.18);
-  color: #fff;
-  --tw-ring-color: transparent;
-}
-
-.flashcard-hint {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.68rem;
+.lesson-content ul.dg-list > li::before {
+  position: absolute;
+  top: 0.62rem;
+  left: 0.85rem;
+  display: grid;
+  place-items: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  border: 1px solid var(--dg-chip-border);
+  border-radius: 0.45rem;
+  background: var(--dg-chip-bg);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
   font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--color-ink-400);
+  color: var(--dg-chip-fg);
 }
-.flashcard-hint svg {
-  width: 0.85rem;
-  height: 0.85rem;
-  transition: transform 0.4s ease;
+.lesson-content ul.dg-list-warn > li::before {
+  content: '!';
 }
-.flashcard:hover .flashcard-hint svg {
-  transform: rotate(-90deg);
+.lesson-content ul.dg-list-remember > li::before {
+  content: counter(dg-item);
+}
+
+/* ---------------------------------------------------------------------------
+   Diagrams  (<app-diagram>, see src/app/shared/diagram/diagram-parser.ts)
+
+   Everything here is driven by CSS variables so light and dark need no
+   re-render. A box takes its colours from a tone class (.dg-tone-*), which
+   sets --t-bg and --t-border.
+--------------------------------------------------------------------------- */
+.lesson-content,
+.dg {
+  --dg-surface: #ffffff;
+  --dg-border: #e4e1ee;
+  --dg-line: #b9b3cc;
+  --dg-arrow: #3d3651;
+  --dg-title: #1b1630;
+  --dg-sub: #6f6889;
+  --dg-chip-bg: #f1eff7;
+  --dg-chip-fg: #3d3651;
+  --dg-chip-border: #dcd8ea;
+}
+.dg {
+  display: block;
+  margin: 1.5rem 0;
+  padding: 1.25rem;
+  overflow-x: auto;
+  border: 1px solid var(--dg-border);
+  border-radius: 1rem;
+  background: var(--dg-surface);
+  font-size: 0.875rem;
+  line-height: 1.35;
+  color: var(--dg-title);
+}
+.dark .lesson-content,
+.dark .dg {
+  --dg-surface: #14101f;
+  --dg-border: #2a2440;
+  --dg-line: #5a5273;
+  --dg-arrow: #e6e3f2;
+  --dg-title: #ffffff;
+  --dg-sub: #a59fbd;
+  --dg-chip-bg: #241f38;
+  --dg-chip-fg: #e6e3f2;
+  --dg-chip-border: #3d3651;
+}
+
+/* Tones: --t-bg / --t-border */
+.dg-tone-neutral {
+  --t-bg: #f8f7fb;
+  --t-border: #cdc8dd;
+}
+.dg-tone-primary {
+  --t-bg: #f3eeff;
+  --t-border: #a375ff;
+}
+.dg-tone-blue {
+  --t-bg: #edf2ff;
+  --t-border: #8aa4f5;
+}
+.dg-tone-green {
+  --t-bg: #e8faf1;
+  --t-border: #4cc38a;
+}
+.dg-tone-amber {
+  --t-bg: #fff6e0;
+  --t-border: #e9b441;
+}
+.dg-tone-red {
+  --t-bg: #ffeee7;
+  --t-border: #ee8a63;
+}
+.dark .dg-tone-neutral {
+  --t-bg: #1b1630;
+  --t-border: #4a4362;
+}
+.dark .dg-tone-primary {
+  --t-bg: #2a1761;
+  --t-border: #8a3ffc;
+}
+.dark .dg-tone-blue {
+  --t-bg: #1a2246;
+  --t-border: #7186e0;
+}
+.dark .dg-tone-green {
+  --t-bg: #12312a;
+  --t-border: #3fa57b;
+}
+.dark .dg-tone-amber {
+  --t-bg: #33280e;
+  --t-border: #c9992f;
+}
+.dark .dg-tone-red {
+  --t-bg: #3a1c10;
+  --t-border: #d9733f;
+}
+
+/* Boxes and text */
+/* Inside a box the title is already bold, so code there needs no chip (it would misalign the text). */
+.lesson-content .dg .dg-card .dg-title code,
+.lesson-content .dg .dg-label .dg-title code {
+  padding: 0;
+  background: transparent;
+}
+.dg .dg-card,
+.dg .dg-label {
+  background: var(--t-bg);
+  border: 1px solid var(--t-border);
+  border-radius: 0.75rem;
+}
+.dg .dg-card {
+  padding: 0.6rem 0.9rem;
+}
+.dg .dg-label {
+  padding: 0.45rem 0.85rem;
+}
+.dg .dg-title {
+  font-weight: 700;
+  color: var(--dg-title);
+}
+.dg .dg-sub {
+  margin-top: 0.1rem;
+  font-size: 0.78rem;
+  color: var(--dg-sub);
+}
+.lesson-content .dg code {
+  padding: 0.05rem 0.3rem;
+  border-radius: 0.3rem;
+  background: var(--dg-chip-bg);
+  color: var(--dg-chip-fg);
+  box-shadow: none;
+  font-size: 0.85em;
+  font-weight: 600;
+}
+
+/* sequence */
+.dg-seq {
+  position: relative;
+}
+.dg-seq-grid {
+  display: grid;
+  grid-template-columns: 2.75rem minmax(0, 1fr);
+}
+.dg-seq-actors {
+  display: grid;
+}
+.dg-seq-actor {
+  padding: 0 0.4rem;
+  text-align: center;
+}
+.dg-seq-row {
+  min-height: 3.6rem;
+}
+.dg-seq-num {
+  align-self: center;
+  display: grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border: 1px solid var(--dg-line);
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--dg-sub);
+}
+.dg-seq-lane {
+  position: relative;
+  padding: 0.7rem 0 1.4rem;
+}
+.dg-seq-life {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-left: 1px dashed var(--dg-line);
+}
+.dg-seq-label {
+  position: relative;
+  z-index: 1;
+  width: max-content;
+  max-width: min(26rem, 100%);
+  padding: 0 0.4rem;
+  transform: translateX(-50%);
+  text-align: center;
+  background: var(--dg-surface);
+}
+.dg-seq-arrow {
+  position: absolute;
+  bottom: 0.65rem;
+  height: 0;
+  border-top: 1.5px solid var(--dg-arrow);
+}
+.dg-seq-arrow::after {
+  content: '';
+  position: absolute;
+  top: -5.5px;
+  right: -1px;
+  border: 5px solid transparent;
+  border-left: 8px solid var(--dg-arrow);
+  border-right-width: 0;
+}
+.dg-seq-arrow.dg-dashed {
+  border-top-style: dashed;
+}
+.dg-seq-arrow.dg-leftward::after {
+  right: auto;
+  left: -1px;
+  border-left-width: 0;
+  border-right: 8px solid var(--dg-arrow);
+}
+.dg-seq-note {
+  position: relative;
+  z-index: 1;
+  margin-bottom: -0.3rem;
+  text-align: center;
+}
+
+/* tree */
+.dg-tree {
+  display: flex;
+  min-width: max-content;
+}
+.dg-tn {
+  display: flex;
+  align-items: center;
+}
+.dg-node {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 7.5rem;
+}
+.dg-node.dg-card {
+  min-width: 12rem;
+}
+.dg-node-text {
+  display: block;
+}
+.dg-node-text > span {
+  display: block;
+}
+.dg-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.9rem;
+  padding: 0.2rem 0.35rem;
+  border: 1px solid var(--dg-chip-border);
+  border-radius: 0.4rem;
+  background: var(--dg-chip-bg);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--dg-chip-fg);
+}
+.dg-node.dg-root {
+  border-color: transparent;
+  background: var(--dg-title);
+}
+.dg-node.dg-root .dg-title {
+  color: var(--dg-surface);
+}
+.dg-tkids {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-left: 1.25rem;
+}
+.dg-tkids::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -1.25rem;
+  width: 1.25rem;
+  border-top: 1px solid var(--dg-line);
+}
+.dg-tkid {
+  position: relative;
+  padding-left: 1.25rem;
+}
+.dg-tkid::before {
+  content: '';
+  position: absolute;
+  top: -0.3rem;
+  bottom: -0.3rem;
+  left: 0;
+  border-left: 1px solid var(--dg-line);
+}
+.dg-tkid:first-child::before {
+  top: 50%;
+}
+.dg-tkid:last-child::before {
+  bottom: 50%;
+}
+.dg-tkid:only-child::before {
+  display: none;
+}
+.dg-tkid::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 1.25rem;
+  border-top: 1px solid var(--dg-line);
+}
+
+/* flow */
+.dg-flow {
+  position: relative;
+  min-width: max-content;
+}
+.dg-flow-cols {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5rem;
+}
+.dg-flow-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+.dg-flow-col .dg-card {
+  min-width: 9.5rem;
+}
+.dg-flow-edges {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  color: var(--dg-arrow);
+  pointer-events: none;
+}
+.dg-edge {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
+.dg-edge-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-anchor: middle;
+  fill: var(--dg-sub);
+  paint-order: stroke;
+  stroke: var(--dg-surface);
+  stroke-width: 4px;
 }

@@ -2,7 +2,7 @@
   <header class="mb-8 flex flex-wrap items-end justify-between gap-4">
     <div>
       <h1 class="heading text-4xl">Your <span class="gradient-text">dashboard</span></h1>
-      <p class="prose-muted mt-3 text-lg">Track your learning progress and quiz history.</p>
+      <p class="prose-muted mt-3 text-lg">What you’ve learned and how the quizzes are going, by topic.</p>
     </div>
     <button type="button" (click)="resetProgress()" class="btn-danger">
       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -13,22 +13,24 @@
   </header>
 
   <!-- Top stats -->
-  <section class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+  <section class="grid grid-cols-2 gap-4 sm:grid-cols-4" aria-label="Summary">
     <div class="card p-5">
       <p class="text-3xl font-extrabold tabular-nums text-ink-900 dark:text-white">
-        {{ progress.completedCount() }}<span class="text-ink-400">/{{ totalLessons() }}</span>
+        {{ progress.learnedCount() }}<span class="text-ink-400">/{{ totalLessons() }}</span>
       </p>
-      <p class="prose-muted mt-0.5 text-sm font-medium">Lessons done</p>
+      <p class="prose-muted mt-0.5 text-sm font-medium">Lessons learned</p>
     </div>
     <div class="card p-5">
-      <p class="gradient-text text-3xl font-extrabold tabular-nums">{{ completionPct() }}%</p>
-      <p class="prose-muted mt-0.5 text-sm font-medium">Course complete</p>
+      <p class="gradient-text text-3xl font-extrabold tabular-nums">
+        {{ progress.accuracy() === null ? '—' : progress.accuracy() + '%' }}
+      </p>
+      <p class="prose-muted mt-0.5 text-sm font-medium">Quiz accuracy</p>
     </div>
     <div class="card p-5">
       <p class="text-3xl font-extrabold tabular-nums text-ink-900 dark:text-white">
-        {{ progress.averageScore() }}%
+        {{ progress.sessions().length }}
       </p>
-      <p class="prose-muted mt-0.5 text-sm font-medium">Avg quiz score</p>
+      <p class="prose-muted mt-0.5 text-sm font-medium">Quiz rounds</p>
     </div>
     <div class="card p-5">
       <p class="text-3xl font-extrabold tabular-nums text-ink-900 dark:text-white">
@@ -38,96 +40,97 @@
     </div>
   </section>
 
-  <!-- Progress by level -->
-  <section class="mt-12">
-    <h2 class="heading mb-5 text-xl">Progress by level</h2>
-    <div class="card divide-y divide-ink-100 dark:divide-ink-800">
-      @for (level of levels; track level) {
-        @let lp = levelProgress(level);
-        @if (lp.total) {
+  @if (missedCount() > 0) {
+    <aside class="card mt-5 flex flex-wrap items-center justify-between gap-3 p-4" role="note">
+      <p class="text-sm font-semibold text-ink-700 dark:text-ink-200">
+        {{ missedCount() }} {{ missedCount() === 1 ? 'question is' : 'questions are' }} waiting for another try.
+      </p>
+      <a routerLink="/quiz/play" [queryParams]="{ mode: 'missed', count: 10 }" class="btn-secondary">
+        Practice missed
+      </a>
+    </aside>
+  }
+
+  <!-- Progress by topic -->
+  <section class="mt-12" aria-labelledby="by-topic-heading">
+    <h2 id="by-topic-heading" class="heading mb-5 text-xl">Progress by topic</h2>
+    @if (topicRows().length) {
+      <div class="card divide-y divide-ink-100 dark:divide-ink-800">
+        @for (row of topicRows(); track row.topic.id) {
           <div class="p-5">
-            <div class="mb-2 flex items-center justify-between gap-3 text-sm">
-              <span class="flex items-center gap-2 font-bold text-ink-800 dark:text-ink-100">
-                <span class="h-2.5 w-2.5 rounded-full bg-gradient-to-r" [class]="levelAccents[level]"></span>
-                {{ levelLabels[level] }}
+            <div class="mb-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-sm">
+              <a
+                routerLink="/lessons"
+                [queryParams]="{ topic: row.topic.id }"
+                class="focusable rounded font-bold text-ink-800 hover:text-brand-600 dark:text-ink-100 dark:hover:text-brand-300"
+              >
+                {{ row.topic.title }}
+              </a>
+              <span class="prose-muted flex items-center gap-3 font-semibold tabular-nums">
+                <span>{{ row.learned }}/{{ row.total }} learned</span>
+                <span aria-hidden="true">·</span>
+                <span>{{ row.accuracy === null ? 'no quiz yet' : row.accuracy + '% correct' }}</span>
+                <a
+                  routerLink="/quiz/play"
+                  [queryParams]="{ mode: 'topic', topics: row.topic.id, count: 5 }"
+                  class="focusable rounded font-bold text-brand-600 hover:text-magenta-600 dark:text-brand-300"
+                >
+                  Practice
+                </a>
               </span>
-              <span class="prose-muted font-semibold tabular-nums">{{ lp.done }}/{{ lp.total }}</span>
             </div>
             <div
               class="h-2.5 overflow-hidden rounded-full bg-ink-200 dark:bg-ink-800"
               role="progressbar"
-              [attr.aria-valuenow]="lp.pct"
+              [attr.aria-valuenow]="row.learnedPct"
               aria-valuemin="0"
               aria-valuemax="100"
-              [attr.aria-label]="levelLabels[level] + ' progress'"
+              [attr.aria-label]="row.topic.title + ' lessons learned'"
             >
               <div
-                class="h-full rounded-full bg-gradient-to-r transition-all duration-500"
-                [class]="levelAccents[level]"
-                [style.width.%]="lp.pct"
+                class="h-full rounded-full transition-all duration-500"
+                style="background-image: var(--gradient-angular)"
+                [style.width.%]="row.learnedPct"
               ></div>
             </div>
           </div>
         }
-      }
-    </div>
+      </div>
+    } @else {
+      <div class="card border-dashed p-10 text-center">
+        <p class="prose-muted text-sm">Topics will appear here once the lessons have loaded.</p>
+      </div>
+    }
   </section>
 
-  <!-- Quiz history -->
-  <section class="mt-12">
-    <h2 class="heading mb-5 text-xl">Quiz history</h2>
-    @if (quizHistory().length) {
+  <!-- Recent quiz rounds -->
+  <section class="mt-12" aria-labelledby="history-heading">
+    <h2 id="history-heading" class="heading mb-5 text-xl">Recent quiz rounds</h2>
+    @if (sessions().length) {
       <div class="card overflow-hidden">
         <!-- Wide tables must scroll inside their own container, not the page. -->
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
             <thead class="bg-ink-50 text-left dark:bg-ink-950/50">
               <tr class="prose-muted">
-                <th scope="col" class="px-4 py-3 font-bold">Lesson</th>
+                <th scope="col" class="px-4 py-3 font-bold">Round</th>
                 <th scope="col" class="px-4 py-3 font-bold">Score</th>
-                <th scope="col" class="px-4 py-3 font-bold">Result</th>
                 <th scope="col" class="px-4 py-3 font-bold">Taken</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-ink-100 dark:divide-ink-800">
-              @for (row of quizHistory(); track row.completedAt) {
+              @for (s of sessions(); track s.at) {
                 <tr class="transition hover:bg-ink-50 dark:hover:bg-ink-800/50">
                   <td class="px-4 py-3">
-                    @if (row.lesson) {
-                      <a
-                        [routerLink]="['/lesson', row.lesson.slug]"
-                        class="focusable rounded font-bold text-brand-600 hover:text-magenta-600 dark:text-brand-300 dark:hover:text-magenta-400"
-                      >
-                        {{ row.lesson.title }}
-                      </a>
-                    } @else {
-                      <span class="text-ink-400">Unknown lesson</span>
+                    <span class="font-bold text-ink-800 dark:text-ink-100">{{ modeLabel(s.mode) }}</span>
+                    @if (s.topics.length) {
+                      <span class="prose-muted block text-xs">{{ topicTitles(s.topics) }}</span>
                     }
                   </td>
-                  <td class="px-4 py-3 font-bold tabular-nums text-ink-800 dark:text-ink-100">{{ row.score }}%</td>
-                  <td class="px-4 py-3">
-                    <span
-                      [class]="
-                        row.passed
-                          ? 'badge bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                          : 'badge bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
-                      "
-                    >
-                      <!-- Icon backs up the colour so pass/fail isn't colour-only. -->
-                      @if (row.passed) {
-                        <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3.5">
-                          <path d="m5 13 4 4L19 7" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                        Passed
-                      } @else {
-                        <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3.5">
-                          <path d="M6 6l12 12M18 6 6 18" stroke-linecap="round" />
-                        </svg>
-                        Failed
-                      }
-                    </span>
+                  <td class="px-4 py-3 font-bold tabular-nums text-ink-800 dark:text-ink-100">
+                    {{ s.correct }}/{{ s.total }}
                   </td>
-                  <td class="prose-muted px-4 py-3 whitespace-nowrap">{{ row.completedAt | date: 'medium' }}</td>
+                  <td class="prose-muted px-4 py-3 whitespace-nowrap">{{ s.at | date: 'medium' }}</td>
                 </tr>
               }
             </tbody>
@@ -136,27 +139,22 @@
       </div>
     } @else {
       <div class="card border-dashed p-10 text-center">
-        <p class="font-semibold text-ink-700 dark:text-ink-200">No quizzes taken yet.</p>
-        <p class="prose-muted mt-1 text-sm">Finish a lesson and take its quiz to see scores here.</p>
+        <p class="font-semibold text-ink-700 dark:text-ink-200">No quiz rounds yet.</p>
+        <p class="prose-muted mt-1 text-sm">Take a quick quiz and your scores will show up here.</p>
+        <a routerLink="/quiz" class="btn-primary mt-5">Go to quiz</a>
       </div>
     }
   </section>
 
-  <!-- Completed lessons -->
-  @if (completedLessons().length) {
-    <section class="mt-12">
-      <h2 class="heading mb-5 text-xl">Completed lessons</h2>
+  <!-- Recently learned -->
+  @if (recentlyLearned().length) {
+    <section class="mt-12" aria-labelledby="learned-heading">
+      <h2 id="learned-heading" class="heading mb-5 text-xl">Recently learned</h2>
       <ul class="flex flex-wrap gap-2">
-        @for (lesson of completedLessons(); track lesson.id) {
+        @for (lesson of recentlyLearned(); track lesson.slug) {
           <li>
             <a [routerLink]="['/lesson', lesson.slug]" class="chip">
-              <svg
-                class="h-3.5 w-3.5 text-emerald-500"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="3.5"
-              >
+              <svg class="h-3.5 w-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3.5">
                 <path d="m5 13 4 4L19 7" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
               {{ lesson.title }}

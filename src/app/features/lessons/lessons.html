@@ -1,0 +1,181 @@
+<div class="mx-auto max-w-7xl px-4 py-10 sm:px-6">
+  <header class="mb-6 max-w-2xl">
+    <h1 class="heading text-4xl">All <span class="gradient-text">lessons</span></h1>
+    <p class="prose-muted mt-3 text-lg text-pretty">
+      {{ course.lessons().length || '' }} short lessons, A–Z. Filter by topic or kind, or search.
+    </p>
+  </header>
+
+  @if (legacy(); as old) {
+    <aside
+      class="card mb-6 flex gap-3 border-brand-300 bg-brand-50/60 p-4 dark:border-brand-800 dark:bg-brand-950/30"
+      role="note"
+    >
+      <svg class="mt-0.5 h-5 w-5 shrink-0 text-brand-600 dark:text-brand-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 16v-4M12 8.5v.01" stroke-linecap="round" />
+      </svg>
+      <div class="text-sm">
+        @if (old.lessons.length) {
+          <p class="font-bold text-ink-900 dark:text-white">
+            “{{ old.title }}” is now a set of short lessons.
+          </p>
+          <p class="prose-muted mt-1">These {{ old.lessons.length }} lessons replace it, one idea each.</p>
+        } @else {
+          <p class="font-bold text-ink-900 dark:text-white">
+            “{{ old.title }}” is being split into short lessons.
+          </p>
+          <p class="prose-muted mt-1">It isn’t ready yet, so here is everything else in the meantime.</p>
+        }
+      </div>
+    </aside>
+  }
+
+  <!-- Search -->
+  <div class="relative">
+    <svg
+      class="pointer-events-none absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-ink-400"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      stroke-width="2"
+    >
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.5-3.5" stroke-linecap="round" />
+    </svg>
+    <input
+      type="search"
+      autocomplete="off"
+      [value]="query()"
+      (input)="onSearch($event)"
+      aria-label="Search lessons"
+      placeholder="Search by title, tag or topic…"
+      class="input-field py-3.5 pr-4 pl-12"
+    />
+  </div>
+
+  <!-- Filters -->
+  <div class="mt-5 space-y-3">
+    <div
+      role="group"
+      aria-label="Filter by topic"
+      class="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0"
+    >
+      <button
+        type="button"
+        class="chip shrink-0"
+        [class]="!topic() ? 'border-brand-600! bg-brand-600! text-white!' : ''"
+        [attr.aria-pressed]="!topic()"
+        (click)="setTopic(null)"
+      >
+        All topics
+      </button>
+      @for (t of course.topics(); track t.id) {
+        <button
+          type="button"
+          class="chip shrink-0"
+          [class]="topic() === t.id ? 'border-brand-600! bg-brand-600! text-white!' : ''"
+          [attr.aria-pressed]="topic() === t.id"
+          (click)="setTopic(t.id)"
+        >
+          {{ t.title }}
+          <span class="text-xs font-bold tabular-nums opacity-70">{{ t.count }}</span>
+        </button>
+      }
+    </div>
+
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div role="group" aria-label="Filter by kind" class="flex flex-wrap gap-2">
+        @for (k of kindsPresent(); track k) {
+          <button
+            type="button"
+            class="chip"
+            [class]="kind() === k ? 'border-brand-600! bg-brand-600! text-white!' : ''"
+            [attr.aria-pressed]="kind() === k"
+            [attr.title]="kindHints[k]"
+            (click)="setKind(k)"
+          >
+            {{ kindLabels[k] }}
+          </button>
+        }
+      </div>
+
+      <label class="flex items-center gap-2 text-sm font-semibold text-ink-600 dark:text-ink-300">
+        Sort
+        <select
+          class="focusable min-h-11 cursor-pointer rounded-xl border border-ink-200 bg-white px-3 py-1.5 text-ink-800 transition focus:border-brand-500 dark:border-ink-700 dark:bg-ink-800 dark:text-ink-100"
+          [disabled]="query().trim() !== ''"
+          (change)="setSort($any($event.target).value)"
+        >
+          @for (s of sorts; track s.id) {
+            <option [value]="s.id" [selected]="s.id === sort()">{{ s.label }}</option>
+          }
+        </select>
+      </label>
+    </div>
+  </div>
+
+  <!-- Jump to letter (A–Z view only) -->
+  @if (!flat() && groups().length) {
+    <nav
+      aria-label="Jump to letter"
+      class="sticky top-16 z-20 -mx-4 mt-6 border-b border-ink-200/80 bg-ink-50/90 px-4 backdrop-blur sm:-mx-6 sm:px-6 dark:border-ink-800/80 dark:bg-ink-950/90"
+    >
+      <ul class="flex gap-1 overflow-x-auto py-2">
+        @for (l of letters; track l) {
+          <li>
+            <button
+              type="button"
+              [disabled]="!presentLetters().has(l)"
+              (click)="jumpTo(l)"
+              class="focusable grid h-9 min-w-9 cursor-pointer place-items-center rounded-lg px-2 text-sm font-bold text-ink-600 transition hover:bg-brand-50 hover:text-brand-700 disabled:cursor-default disabled:opacity-30 disabled:hover:bg-transparent dark:text-ink-300 dark:hover:bg-ink-800 dark:hover:text-brand-300"
+              [attr.aria-label]="'Jump to ' + (l === '#' ? 'numbers' : l)"
+            >
+              {{ l }}
+            </button>
+          </li>
+        }
+      </ul>
+    </nav>
+  }
+
+  <!-- Results -->
+  <div class="mt-6" aria-live="polite">
+    @if (!course.loaded()) {
+      <div class="grid animate-pulse gap-3 sm:grid-cols-2" aria-busy="true" aria-label="Loading lessons">
+        @for (i of [1, 2, 3, 4, 5, 6]; track i) {
+          <div class="h-20 rounded-2xl bg-ink-200 dark:bg-ink-800"></div>
+        }
+      </div>
+    } @else if (results().length === 0) {
+      <div class="card border-dashed p-12 text-center">
+        <p class="font-semibold text-ink-700 dark:text-ink-200">No lessons match.</p>
+        <p class="prose-muted mt-1 text-sm">Try a broader word, or clear the filters.</p>
+        <button type="button" class="btn-secondary mt-5" (click)="clearFilters()">Clear filters</button>
+      </div>
+    } @else if (flat()) {
+      <p class="prose-muted mb-3 text-sm font-semibold">
+        {{ results().length }} {{ results().length === 1 ? 'lesson' : 'lessons' }}
+      </p>
+      <ul class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        @for (lesson of results(); track lesson.slug) {
+          <li><app-lesson-row [lesson]="lesson" /></li>
+        }
+      </ul>
+    } @else {
+      @for (group of groups(); track group.letter) {
+        <section [id]="'letter-' + group.letter" class="mt-2 mb-8 scroll-mt-32">
+          <h2 class="heading mb-3 flex items-center gap-3 text-2xl">
+            <span class="gradient-rule h-6 w-1 rounded-full"></span>
+            {{ group.letter }}
+          </h2>
+          <ul class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            @for (lesson of group.lessons; track lesson.slug) {
+              <li><app-lesson-row [lesson]="lesson" /></li>
+            }
+          </ul>
+        </section>
+      }
+    }
+  </div>
+</div>

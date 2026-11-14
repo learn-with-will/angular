@@ -1,59 +1,123 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { LessonLevel, LessonMeta } from '../models/lesson.model';
+import {
+  CourseManifest,
+  LegacyEntry,
+  LessonMeta,
+  LetterGroup,
+  Topic,
+  byTitle,
+  letterOf,
+} from '../models/lesson.model';
+import { shuffled } from '../util/shuffle';
+
+export interface SampleOptions {
+  /** Slugs already learned; bites outside this set are preferred. */
+  learned?: ReadonlySet<string>;
+  /** A slug to leave out (usually the lesson being read). */
+  exclude?: string;
+  /** Random source in [0, 1); injectable so tests are deterministic. */
+  rng?: () => number;
+}
+
+const EMPTY: CourseManifest = { topics: [], lessons: [], legacy: [] };
 
 /**
- * Loads and caches the course manifest. The manifest is the single source of
- * truth for which lessons exist; adding a lesson is just a manifest entry plus
- * a markdown file — no code change required.
+ * Loads and caches the course manifest, and answers every "which lessons?"
+ * question: A–Z order, by topic, related, random, and the old-URL mapping.
  */
 @Injectable({ providedIn: 'root' })
 export class CourseService {
   private readonly http = inject(HttpClient);
 
-  private readonly _lessons = signal<LessonMeta[]>([]);
+  private readonly _manifest = signal<CourseManifest>(EMPTY);
   private readonly _loaded = signal(false);
   private loadPromise?: Promise<void>;
 
-  readonly lessons = computed(() =>
-    [...this._lessons()].sort((a, b) => a.order - b.order),
-  );
   readonly loaded = this._loaded.asReadonly();
 
-  /** Loads the manifest once; subsequent calls reuse the in-flight/finished load. */
-  async load(): Promise<void> {
-    if (this.loadPromise) return this.loadPromise;
-    this.loadPromise = (async () => {
-      const data = await firstValueFrom(
-        this.http.get<LessonMeta[]>('content/course-manifest.json'),
+  /** Topics that have at least one lesson, in display order. */
+  readonly topics = computed(() => this._manifest().topics.filter((t) => t.count > 0));
+
+  /** Every lesson in A–Z order (leading symbols ignored). */
+  readonly lessons = computed(() => [...this._manifest().lessons].sort(byTitle));
+
+  /** Lessons grouped under A–Z, with `#` for titles that start with a digit. */
+  readonly alphabetical = computed<LetterGroup[]>(() => {
+    const groups = new Map<string, LessonMeta[]>();
+    for (const lesson of this.lessons()) {
+      const letter = letterOf(lesson.title);
+      groups.set(letter, [...(groups.get(letter) ?? []), lesson]);
+    }
+    return [...groups.entries()]
+      .map(([letter, lessons]) => ({ letter, lessons }))
+      .sort((a, b) => (a.letter === '#' ? 1 : b.letter === '#' ? -1 : a.letter.localeCompare(b.letter)));
+  });
+
+  readonly legacyEntries = computed(() => this._manifest().legacy);
+
+  private readonly bySlug = computed(() => new Map(this._manifest().lessons.map((l) => [l.slug, l])));
+
+  /** Loads the manifest once; later calls share the finished (or in-flight) load. */
+  load(): Promise<void> {
+    if (!this.loadPromise) {
+      this.loadPromise = firstValueFrom(
+        this.http.get<CourseManifest>('content/course-manifest.json'),
+      ).then(
+        (data) => {
+          this._manifest.set({ ...EMPTY, ...data });
+          this._loaded.set(true);
+        },
+        (error) => {
+          this.loadPromise = undefined; // allow a retry after a network failure
+          throw error;
+        },
       );
-      this._lessons.set(data ?? []);
-      this._loaded.set(true);
-    })();
+    }
     return this.loadPromise;
   }
 
-  lessonsByLevel(level: LessonLevel): LessonMeta[] {
-    return this.lessons().filter((l) => l.level === level);
-  }
-
   getBySlug(slug: string): LessonMeta | undefined {
-    return this.lessons().find((l) => l.slug === slug);
+    return this.bySlug().get(slug);
   }
 
-  getById(id: string): LessonMeta | undefined {
-    return this.lessons().find((l) => l.id === id);
+  getTopic(id: string): Topic | undefined {
+    return this._manifest().topics.find((t) => t.id === id);
   }
 
-  /** Previous/next lesson in global course order, for in-lesson navigation. */
-  neighbours(slug: string): { prev?: LessonMeta; next?: LessonMeta } {
-    const all = this.lessons();
-    const idx = all.findIndex((l) => l.slug === slug);
-    if (idx === -1) return {};
-    return {
-      prev: idx > 0 ? all[idx - 1] : undefined,
-      next: idx < all.length - 1 ? all[idx + 1] : undefined,
-    };
+  byTopic(topicId: string): LessonMeta[] {
+    return this.lessons().filter((l) => l.topic === topicId);
+  }
+
+  /** The bites a lesson points to as related, skipping any that no longer exist. */
+  related(slug: string): LessonMeta[] {
+    const meta = this.getBySlug(slug);
+    if (!meta) return [];
+    return meta.related.map((s) => this.getBySlug(s)).filter((l): l is LessonMeta => !!l);
+  }
+
+  /** Picks up to `n` distinct lessons at random, preferring ones not yet learned. */
+  sample(n: number, opts: SampleOptions = {}): LessonMeta[] {
+    const all = this.lessons().filter((l) => l.slug !== opts.exclude);
+    const isLearned = (l: LessonMeta) => opts.learned?.has(l.slug) ?? false;
+    // Unlearned bites come first (shuffled); learned ones only top the list up.
+    return [
+      ...shuffled(all.filter((l) => !isLearned(l)), opts.rng),
+      ...shuffled(all.filter(isLearned), opts.rng),
+    ].slice(0, n);
+  }
+
+  /** One random lesson, preferring unlearned ones; undefined if the course is empty. */
+  random(opts: SampleOptions = {}): LessonMeta | undefined {
+    return this.sample(1, opts)[0] ?? this.lessons()[0];
+  }
+
+  legacyBySlug(slug: string): LegacyEntry | undefined {
+    return this._manifest().legacy.find((e) => e.slug === slug);
+  }
+
+  legacyById(id: string): LegacyEntry | undefined {
+    return this._manifest().legacy.find((e) => e.id === id);
   }
 }

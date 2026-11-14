@@ -1,0 +1,16 @@
+[
+  { "id": "getting-started", "title": "Getting started & CLI", "blurb": "Install the CLI, scaffold a project, and find your way around.", "order": 1 },
+  { "id": "components", "title": "Components", "blurb": "Inputs, outputs, lifecycle, projection, and composition.", "order": 2 },
+  { "id": "templates", "title": "Templates & control flow", "blurb": "Bindings, events, and @if / @for / @switch.", "order": 3 },
+  { "id": "signals", "title": "Signals", "blurb": "Fine-grained reactive state: signal, computed, effect, and friends.", "order": 4 },
+  { "id": "directives-pipes", "title": "Directives & pipes", "blurb": "Reshape elements and values with built-in and custom helpers.", "order": 5 },
+  { "id": "di", "title": "Dependency injection", "blurb": "Services, providers, tokens, and the injector tree.", "order": 6 },
+  { "id": "routing", "title": "Routing", "blurb": "Routes, parameters, guards, resolvers, and lazy loading.", "order": 7 },
+  { "id": "forms", "title": "Forms", "blurb": "Template-driven and reactive forms, validation, custom controls.", "order": 8 },
+  { "id": "http", "title": "HTTP", "blurb": "Fetching data, interceptors, and handling errors.", "order": 9 },
+  { "id": "rxjs", "title": "RxJS", "blurb": "Observables, operators, and bridging to signals.", "order": 10 },
+  { "id": "state", "title": "State management", "blurb": "Stores and patterns for shared state.", "order": 11 },
+  { "id": "performance", "title": "Performance & rendering", "blurb": "OnPush, SSR, virtual scroll, and keeping the UI fast.", "order": 12 },
+  { "id": "testing", "title": "Testing", "blurb": "Unit, component, and end-to-end testing.", "order": 13 },
+  { "id": "architecture", "title": "Architecture & TypeScript", "blurb": "Structure, patterns, and TypeScript habits for large apps.", "order": 14 }
+]
