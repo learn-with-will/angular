@@ -61,13 +61,12 @@ export type QuizQuestion =
   | OrderingQuestion
   | MatchPairQuestion;
 
-export interface Quiz {
-  id: string;
-  lessonId: string;
-  title?: string;
-  passingScore: number;
-  questions: QuizQuestion[];
-}
+/** A question in public/quiz/questions.json: any question type, tagged with its topic. */
+export type BankQuestion = QuizQuestion & {
+  topic: string;
+  /** Slug of the lesson to link to as "Learn more". */
+  lesson?: string;
+};
 
 /** A user's answer to one question. Shape depends on the question type. */
 export type AnswerValue = string | string[] | Record<string, string>;
@@ -78,11 +77,13 @@ export interface QuestionResult {
   userAnswer: AnswerValue;
 }
 
-export interface QuizEvaluation {
-  total: number;
-  correctCount: number;
-  /** 0–100 */
-  score: number;
-  passed: boolean;
-  results: QuestionResult[];
+export type QuizMode = 'quick' | 'topic' | 'missed';
+
+export interface PickOptions {
+  mode: QuizMode;
+  count: number;
+  /** Restricts the pool to these topics (used by `topic` mode). */
+  topics?: readonly string[];
+  /** Question ids to draw from (used by `missed` mode). */
+  missed?: ReadonlySet<string>;
 }

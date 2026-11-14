@@ -29,6 +29,11 @@ jobs:
 
       - run: npm ci
 
+      # Release gate: fails on a broken lesson, an out-of-date manifest, a topic or
+      # old lesson that has not been migrated yet, or a bad quiz question.
+      - name: Validate course
+        run: npm run validate -- --strict
+
       # Project sites are served from https://<user>.github.io/<repo>/, so the
       # app must be built with that subpath as its base href. This derives it
       # from the repo name automatically — no need to hard-code it.

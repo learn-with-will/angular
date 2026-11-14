@@ -12,8 +12,8 @@ import { AngularLogo } from '../angular-logo/angular-logo';
           Angular <span class="gradient-text">Learn</span>
         </p>
         <p class="prose-muted max-w-md text-sm">
-          A frontend-only, file-driven course. Drop in a Markdown file and a manifest entry to add a
-          lesson — no backend required.
+          Short, focused lessons with one idea each. Frontend-only and file-driven: add a Markdown
+          file and run the manifest script to add a lesson.
         </p>
         <div class="gradient-rule mt-2 max-w-24 opacity-60"></div>
       </div>

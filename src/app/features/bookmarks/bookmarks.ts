@@ -14,6 +14,6 @@ export class Bookmarks {
   private readonly progress = inject(ProgressService);
 
   protected readonly bookmarked = computed(() =>
-    this.course.lessons().filter((l) => this.progress.isBookmarked(l.id)),
+    this.course.lessons().filter((l) => this.progress.isBookmarked(l.slug)),
   );
 }

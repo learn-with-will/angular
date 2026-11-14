@@ -1,21 +1,10 @@
-import { Component, computed, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, computed, inject, signal } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { CourseService } from '../../core/services/course.service';
 import { ProgressService } from '../../core/services/progress.service';
+import { SearchService } from '../../core/services/search.service';
+import { KIND_CHIPS, KIND_LABELS } from '../../core/models/lesson.model';
 import { LessonCard } from '../../shared/components/lesson-card/lesson-card';
-import {
-  LEVELS,
-  LEVEL_ACCENTS,
-  LEVEL_BLURBS,
-  LEVEL_LABELS,
-} from '../../core/models/lesson.model';
-
-const ICON_BOOK =
-  'M4 5.5A2.5 2.5 0 0 1 6.5 3H19v14H6.5A2.5 2.5 0 0 0 4 19.5V5.5ZM4 19.5A2.5 2.5 0 0 1 6.5 17H19v4H6.5A2.5 2.5 0 0 1 4 19.5Z';
-const ICON_CHECK = 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm-3.5-9.2 2.4 2.4 4.6-4.6';
-const ICON_CHART = 'M4 20V10M10 20V4M16 20v-7M22 20H2';
-const ICON_TROPHY =
-  'M8 4h8v5a4 4 0 1 1-8 0V4ZM8 5H5v2a3 3 0 0 0 3 3M16 5h3v2a3 3 0 0 1-3 3M10 17h4M9 21h6M12 13v4';
 
 @Component({
   selector: 'app-home',
@@ -25,40 +14,50 @@ const ICON_TROPHY =
 export class Home {
   protected readonly course = inject(CourseService);
   protected readonly progress = inject(ProgressService);
+  private readonly search = inject(SearchService);
+  private readonly router = inject(Router);
 
-  protected readonly levels = LEVELS;
-  protected readonly levelLabels = LEVEL_LABELS;
+  protected readonly kindLabels = KIND_LABELS;
+  protected readonly kindChips = KIND_CHIPS;
+
+  protected readonly query = signal('');
+  protected readonly suggestions = computed(() => this.search.search(this.query()).slice(0, 5));
 
   protected readonly totalLessons = computed(() => this.course.lessons().length);
 
-  protected readonly completionPct = computed(() => {
+  protected readonly learnedPct = computed(() => {
     const total = this.totalLessons();
-    return total === 0 ? 0 : Math.round((this.progress.completedCount() / total) * 100);
+    return total === 0 ? 0 : Math.round((this.progress.learnedCount() / total) * 100);
   });
 
+  /** The lesson the learner had open last, if it still exists. */
   protected readonly continueLesson = computed(() => {
-    const last = this.progress.lastOpenedLesson();
-    if (last) {
-      const meta = this.course.getById(last);
-      if (meta) return meta;
-    }
-    // Fall back to the first not-yet-completed lesson.
-    return this.course.lessons().find((l) => !this.progress.isCompleted(l.id));
+    const slug = this.progress.lastOpened();
+    return slug ? this.course.getBySlug(slug) : undefined;
   });
 
-  protected readonly featured = computed(() => this.course.lessons().slice(0, 3));
+  /** Bumped by "Shuffle" to draw a fresh set of suggestions. */
+  private readonly seed = signal(0);
 
-  protected readonly stats = computed(() => [
-    { label: 'Lessons', value: `${this.totalLessons()}`, icon: ICON_BOOK },
-    { label: 'Completed', value: `${this.progress.completedCount()}`, icon: ICON_CHECK },
-    { label: 'Progress', value: `${this.completionPct()}%`, icon: ICON_CHART },
-    { label: 'Avg quiz score', value: `${this.progress.averageScore()}%`, icon: ICON_TROPHY },
-  ]);
+  protected readonly picks = computed(() => {
+    this.seed();
+    return this.course.sample(3, {
+      learned: new Set(Object.keys(this.progress.learned())),
+      exclude: this.progress.lastOpened(),
+    });
+  });
 
-  protected readonly levelBlurbs = LEVEL_BLURBS;
-  protected readonly levelAccents = LEVEL_ACCENTS;
+  protected onInput(event: Event): void {
+    this.query.set((event.target as HTMLInputElement).value);
+  }
 
-  levelCount(level: (typeof LEVELS)[number]): number {
-    return this.course.lessonsByLevel(level).length;
+  protected submit(event: Event): void {
+    event.preventDefault();
+    const q = this.query().trim();
+    void this.router.navigate(['/lessons'], { queryParams: q ? { q } : {} });
+  }
+
+  protected shuffle(): void {
+    this.seed.update((n) => n + 1);
   }
 }

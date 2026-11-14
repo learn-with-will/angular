@@ -13,10 +13,11 @@ export class Navbar {
 
   protected readonly links = [
     { path: '/', label: 'Home', icon: 'M3 11.5 12 4l9 7.5M5.5 9.8V20h13V9.8' },
+    { path: '/lessons', label: 'Lessons', icon: 'M4 6h16M4 12h16M4 18h10' },
     {
-      path: '/roadmap',
-      label: 'Roadmap',
-      icon: 'M9 4.5 3 7v12.5l6-2.5 6 2.5 6-2.5V4.5l-6 2.5-6-2.5Zm0 0v12.5m6-10v12.5',
+      path: '/quiz',
+      label: 'Quiz',
+      icon: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM9.6 9.6a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1.1.8-1.1 1.5M12 16.6v.01',
     },
     {
       path: '/dashboard',
