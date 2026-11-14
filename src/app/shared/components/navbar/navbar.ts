@@ -1,11 +1,12 @@
 import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { ThemeService } from '../../../core/services/theme.service';
+import { AccountMenu } from '../account-menu/account-menu';
 import { AngularLogo } from '../angular-logo/angular-logo';
 
 @Component({
   selector: 'app-navbar',
-  imports: [RouterLink, RouterLinkActive, AngularLogo],
+  imports: [RouterLink, RouterLinkActive, AngularLogo, AccountMenu],
   templateUrl: './navbar.html',
 })
 export class Navbar {

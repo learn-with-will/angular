@@ -1,7 +1,12 @@
 import { TestBed } from '@angular/core/testing';
-import { ProgressService } from './progress.service';
+import { ProgressService, ProgressSink } from './progress.service';
 import { LegacyEntry } from '../models/lesson.model';
-import { LEGACY_PROGRESS_STORAGE_KEY, PROGRESS_STORAGE_KEY } from '../models/progress.model';
+import {
+  LEGACY_PROGRESS_STORAGE_KEY,
+  PROGRESS_STORAGE_KEY,
+  UserProgress,
+  emptyProgress,
+} from '../models/progress.model';
 
 const LEGACY: LegacyEntry[] = [
   { id: 'lesson-08', slug: 'introduction-to-signals', title: 'Signals', lessons: ['signal', 'computed'] },
@@ -80,6 +85,93 @@ describe('ProgressService', () => {
     TestBed.tick();
     expect(JSON.parse(localStorage.getItem(PROGRESS_STORAGE_KEY)!).learned.signal).toBeDefined();
     expect(create().isLearned('signal')).toBeTrue();
+  });
+
+  describe('cloud mode', () => {
+    class FakeSink implements ProgressSink {
+      pushes: { prev: UserProgress; next: UserProgress }[] = [];
+      replaced: UserProgress[] = [];
+      push(prev: UserProgress, next: UserProgress): void {
+        this.pushes.push({ prev, next });
+      }
+      replace(next: UserProgress): void {
+        this.replaced.push(next);
+      }
+    }
+
+    it('forwards each edit to the sink with the state before and after', () => {
+      const p = create();
+      const sink = new FakeSink();
+      p.attachCloud(sink, emptyProgress());
+
+      p.setLearned('signal', true);
+      p.toggleBookmark('effect');
+
+      expect(sink.pushes.length).toBe(2);
+      expect('signal' in sink.pushes[0].prev.learned).toBeFalse();
+      expect('signal' in sink.pushes[0].next.learned).toBeTrue();
+      expect(sink.pushes[1].next.bookmarks).toEqual(['effect']);
+      expect(p.isCloud()).toBeTrue();
+    });
+
+    it('keeps the account\'s progress off this device', () => {
+      const p = create();
+      p.attachCloud(new FakeSink(), emptyProgress());
+      p.setLearned('signal', true);
+      TestBed.tick();
+      expect(localStorage.getItem(PROGRESS_STORAGE_KEY)).toBeNull();
+    });
+
+    it('shows remote progress without echoing it back to the sink', () => {
+      const p = create();
+      const sink = new FakeSink();
+      p.attachCloud(sink, emptyProgress());
+      p.applyRemote({ ...emptyProgress(), learned: { computed: '2026-01-01' } });
+      expect(p.isLearned('computed')).toBeTrue();
+      expect(sink.pushes).toEqual([]);
+    });
+
+    it('replaces the account copy on reset', () => {
+      const p = create();
+      const sink = new FakeSink();
+      p.attachCloud(sink, { ...emptyProgress(), learned: { a: '2026-01-01' } });
+      p.reset();
+      expect(p.learnedCount()).toBe(0);
+      expect(sink.replaced.length).toBe(1);
+      expect(sink.replaced[0].learned).toEqual({});
+    });
+
+    it('returns to the device copy on detach, leaving nothing of the account behind', () => {
+      const p = create();
+      p.setLearned('local-lesson', true); // learned while signed out
+      TestBed.tick();
+
+      p.attachCloud(new FakeSink(), { ...emptyProgress(), learned: { 'account-lesson': '2026-01-01' } });
+      expect(p.isLearned('account-lesson')).toBeTrue();
+
+      p.detachCloud();
+      expect(p.isCloud()).toBeFalse();
+      expect(p.isLearned('account-lesson')).toBeFalse();
+      expect(p.isLearned('local-lesson')).toBeTrue();
+    });
+
+    it('stops forwarding after detach', () => {
+      const p = create();
+      const sink = new FakeSink();
+      p.attachCloud(sink, emptyProgress());
+      p.detachCloud();
+      p.setLearned('signal', true);
+      expect(sink.pushes).toEqual([]);
+    });
+
+    it('peekLocal returns the live device progress, even before it is flushed to storage', () => {
+      const p = create();
+      p.setLearned('signal', true); // effect has not run yet
+      expect(p.peekLocal().learned['signal']).toBeDefined();
+
+      p.clearLocal();
+      expect(localStorage.getItem(PROGRESS_STORAGE_KEY)).toBeNull();
+    });
   });
 
   describe('importLegacy', () => {

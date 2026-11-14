@@ -1,11 +1,14 @@
 import { Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
+import { AuthService } from '../../core/services/auth.service';
 import { CourseService } from '../../core/services/course.service';
 import { ProgressService } from '../../core/services/progress.service';
 import { QuizService } from '../../core/services/quiz.service';
+import { CloudSyncService } from '../../core/sync/cloud-sync.service';
 import { LessonMeta, Topic } from '../../core/models/lesson.model';
 import { QuizMode } from '../../core/models/quiz.model';
+import { SYNC_LABELS } from '../../shared/components/account-menu/account-menu';
 
 interface TopicRow {
   topic: Topic;
@@ -31,7 +34,11 @@ const MODE_LABELS: Record<QuizMode, string> = {
 export class Dashboard {
   protected readonly course = inject(CourseService);
   protected readonly progress = inject(ProgressService);
+  protected readonly auth = inject(AuthService);
   private readonly quiz = inject(QuizService);
+  private readonly sync = inject(CloudSyncService);
+
+  protected readonly syncInfo = computed(() => SYNC_LABELS[this.sync.state()]);
 
   constructor() {
     void this.course.load().catch(() => undefined);
@@ -97,7 +104,8 @@ export class Dashboard {
   }
 
   protected resetProgress(): void {
-    if (confirm('Reset everything you have learned, your bookmarks and your quiz history? This cannot be undone.')) {
+    const where = this.progress.isCloud() ? ', on every device you use,' : '';
+    if (confirm(`Reset everything you have learned, your bookmarks and your quiz history${where}? This cannot be undone.`)) {
       this.progress.reset();
     }
   }

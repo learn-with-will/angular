@@ -2,12 +2,13 @@ import { Component, OnInit, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { Navbar } from './shared/components/navbar/navbar';
 import { Footer } from './shared/components/footer/footer';
+import { SignInDialog } from './shared/components/sign-in-dialog/sign-in-dialog';
 import { CourseService } from './core/services/course.service';
 import { ProgressService } from './core/services/progress.service';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, Navbar, Footer],
+  imports: [RouterOutlet, Navbar, Footer, SignInDialog],
   templateUrl: './app.html',
 })
 export class App implements OnInit {

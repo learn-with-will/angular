@@ -10,7 +10,8 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "manifest": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=ExperimentalWarning scripts/generate-manifest.mjs",
-    "validate": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=ExperimentalWarning scripts/validate-course.mjs"
+    "validate": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=ExperimentalWarning scripts/validate-course.mjs",
+    "emulators": "npx --yes firebase-tools@latest emulators:start --only auth,firestore --project demo-angular-learn"
   },
   "prettier": {
     "printWidth": 100,
@@ -32,6 +33,7 @@
     "@angular/forms": "^20.3.0",
     "@angular/platform-browser": "^20.3.0",
     "@angular/router": "^20.3.0",
+    "firebase": "^13.3.0",
     "marked": "^16.4.2",
     "ngx-markdown": "^20.1.0",
     "prismjs": "^1.30.0",

@@ -12,6 +12,28 @@
     </button>
   </header>
 
+  <!-- Optional account: a gentle nudge when signed out, a status line when signed in. -->
+  @if (auth.status() === 'signed-out') {
+    <aside
+      class="card mb-6 flex flex-wrap items-center justify-between gap-4 border-brand-200 bg-brand-50/60 p-5 dark:border-brand-900 dark:bg-brand-950/30"
+      aria-labelledby="save-heading"
+    >
+      <div class="max-w-xl">
+        <h2 id="save-heading" class="font-bold text-ink-900 dark:text-white">Keep your progress safe</h2>
+        <p class="prose-muted mt-0.5 text-sm">
+          It only lives in this browser right now. Sign in to save it to your account and carry on
+          from any device. Learning stays open to everyone, signed in or not.
+        </p>
+      </div>
+      <button type="button" class="btn-primary" (click)="auth.openSignIn()">Sign in to save</button>
+    </aside>
+  } @else if (auth.status() === 'signed-in') {
+    <p class="prose-muted mb-6 flex items-center gap-2 text-sm font-semibold" role="status">
+      <span class="h-2 w-2 shrink-0 rounded-full" [class]="syncInfo().dot" aria-hidden="true"></span>
+      {{ syncInfo().text }}
+    </p>
+  }
+
   <!-- Top stats -->
   <section class="grid grid-cols-2 gap-4 sm:grid-cols-4" aria-label="Summary">
     <div class="card p-5">

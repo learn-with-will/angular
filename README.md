@@ -2,8 +2,9 @@
 
 A **frontend-only** Angular course made of short lessons ("bites"). Each bite teaches one
 idea in **3–5 minutes**, so you can read in any order, jump to a random one, or follow a
-topic from start to finish. Quizzes, progress and bookmarks all live in the browser; there is
-no backend.
+topic from start to finish. Quizzes, progress and bookmarks live in the browser, so you can
+learn without an account. Signing in is optional: once Firebase is configured, learners can sign
+in to keep their progress across devices (see [FIREBASE_SETUP.md](FIREBASE_SETUP.md)).
 
 Built with Angular 20+ standalone components, signals, Tailwind CSS v4 and ngx-markdown.
 
@@ -30,6 +31,7 @@ npm start          # dev server at http://localhost:4200
 npm run build      # production build into dist/
 npm test           # unit tests
 npm run validate   # check lessons, quiz bank and manifest
+npm run emulators  # optional: local Firebase Auth + Firestore (see FIREBASE_SETUP.md)
 ```
 
 `npm start` and `npm run build` regenerate `public/content/course-manifest.json` first.
@@ -41,8 +43,10 @@ Node 22.18 or later is required, because the scripts import TypeScript directly.
 src/app/
 ├── core/
 │   ├── guards/        # legacy URL and random-lesson redirects
+│   ├── firebase/      # optional sign-in: config and lazy SDK loader
 │   ├── models/        # Lesson, Quiz, Progress interfaces
-│   ├── services/      # Course, Lesson, Quiz, Progress, Search, Theme
+│   ├── services/      # Course, Lesson, Quiz, Progress, Search, Theme, Auth
+│   ├── sync/          # keeps progress in Firestore while signed in
 │   └── util/
 ├── shared/
 │   ├── diagram/       # parser and components for sequence, tree and flow diagrams

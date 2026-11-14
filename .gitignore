@@ -44,3 +44,7 @@ Thumbs.db
 
 # Claude Code local (per-developer) settings — not for the public repo
 .claude/settings.local.json
+
+# Firebase emulator output
+*-debug.log
+.firebase/
