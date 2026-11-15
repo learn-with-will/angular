@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import {
   KINDS,
@@ -16,6 +16,7 @@ import { CourseService } from '../../core/services/course.service';
 import { ProgressService } from '../../core/services/progress.service';
 import { SearchService } from '../../core/services/search.service';
 import { LessonRow } from '../../shared/components/lesson-row/lesson-row';
+import { LESSON_SEARCH_ID } from '../../shared/components/navbar/navbar';
 
 type SortMode = 'az' | 'unlearned' | 'shortest';
 
@@ -33,7 +34,7 @@ const LETTERS = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ', '#'];
  */
 @Component({
   selector: 'app-lessons',
-  imports: [LessonRow],
+  imports: [LessonRow, RouterLink],
   templateUrl: './lessons.html',
 })
 export class LessonsPage {
@@ -49,6 +50,7 @@ export class LessonsPage {
   protected readonly kindChips = KIND_CHIPS;
   protected readonly sorts = SORTS;
   protected readonly letters = LETTERS;
+  protected readonly searchId = LESSON_SEARCH_ID;
 
   private readonly params = toSignal(this.route.queryParamMap, { initialValue: this.route.snapshot.queryParamMap });
 
@@ -73,6 +75,27 @@ export class LessonsPage {
     return from ? this.course.legacyBySlug(from) : undefined;
   });
 
+  /** "Hide learned" switch, kept in the URL as `?hide=learned`. */
+  protected readonly hideLearned = computed(() => this.params().get('hide') === 'learned');
+
+  /** The selected topic with how much of it is learned, for the header card. */
+  protected readonly topicSummary = computed(() => {
+    const id = this.topic();
+    const topic = id ? this.course.getTopic(id) : undefined;
+    if (!topic) return null;
+    const learned = this.progress.learned();
+    const lessons = this.course.byTopic(topic.id);
+    const done = lessons.filter((l) => l.slug in learned).length;
+    const index = this.course.topics().findIndex((t) => t.id === topic.id);
+    return {
+      topic,
+      number: String(index + 1).padStart(2, '0'),
+      learned: done,
+      total: lessons.length,
+      pct: lessons.length === 0 ? 0 : Math.round((done / lessons.length) * 100),
+    };
+  });
+
   protected readonly query = signal(this.route.snapshot.queryParamMap.get('q') ?? '');
 
   /** Only notifies when `?q=` itself changes, so editing a chip never resets typed text. */
@@ -92,9 +115,16 @@ export class LessonsPage {
     const kind = this.kind();
     const legacy = this.legacy();
     const only = legacy && legacy.lessons.length ? new Set(legacy.lessons) : null;
+    const learned = this.hideLearned() ? this.progress.learned() : null;
     return this.course
       .lessons()
-      .filter((l) => (!topic || l.topic === topic) && (!kind || l.kind === kind) && (!only || only.has(l.slug)));
+      .filter(
+        (l) =>
+          (!topic || l.topic === topic) &&
+          (!kind || l.kind === kind) &&
+          (!only || only.has(l.slug)) &&
+          (!learned || !(l.slug in learned)),
+      );
   });
 
   /** True when results are a flat list (searching or a non-A–Z sort) rather than A–Z groups. */
@@ -148,6 +178,10 @@ export class LessonsPage {
 
   protected setKind(kind: LessonKind | null): void {
     this.navigate({ kind: kind && kind !== this.kind() ? kind : null });
+  }
+
+  protected toggleHideLearned(): void {
+    this.navigate({ hide: this.hideLearned() ? null : 'learned' });
   }
 
   protected setSort(sort: SortMode): void {

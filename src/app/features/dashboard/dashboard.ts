@@ -82,6 +82,43 @@ export class Dashboard {
 
   protected readonly sessions = computed(() => this.progress.sessions().slice(0, 10));
 
+  /** Score of each of the last 8 rounds, oldest first, for the small bar chart. */
+  protected readonly recentScores = computed(() =>
+    this.progress
+      .sessions()
+      .slice(0, 8)
+      .reverse()
+      .map((s) => ({ pct: s.total === 0 ? 0 : Math.round((s.correct / s.total) * 100), label: `${s.correct} of ${s.total}` })),
+  );
+
+  /** Answers given and answered right, across every question. */
+  protected readonly answerTotals = computed(() => {
+    const stats = Object.values(this.progress.questionStats());
+    return { seen: stats.reduce((n, s) => n + s.seen, 0), correct: stats.reduce((n, s) => n + s.correct, 0) };
+  });
+
+  /** A line of encouragement: what is finished, and the closest topic to finishing. */
+  protected readonly nudge = computed(() => {
+    const rows = this.topicRows();
+    const done = rows.filter((r) => r.total > 0 && r.learned === r.total);
+    const open = rows
+      .filter((r) => r.learned > 0 && r.learned < r.total)
+      .sort((a, b) => a.total - a.learned - (b.total - b.learned));
+    const parts: string[] = [];
+    if (done.length === 1) parts.push(`${done[0].topic.title} is complete.`);
+    else if (done.length > 1) parts.push(`${done.length} topics are complete.`);
+    if (open[0]) {
+      const left = open[0].total - open[0].learned;
+      parts.push(`${open[0].topic.title} is next closest: ${left} ${left === 1 ? 'bite' : 'bites'} to go.`);
+    }
+    return parts.join(' ') || 'Every bite you mark as learned counts here.';
+  });
+
+  protected readonly continueLesson = computed(() => {
+    const slug = this.progress.lastOpened();
+    return slug ? this.course.getBySlug(slug) : undefined;
+  });
+
   protected readonly recentlyLearned = computed<LessonMeta[]>(() =>
     Object.entries(this.progress.learned())
       .sort(([, a], [, b]) => b.localeCompare(a))

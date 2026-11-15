@@ -24,6 +24,32 @@ export class QuizQuestion {
 
   protected readonly reviewing = computed(() => this.result() !== undefined);
 
+  /** Option tiles show their key as 1, 2, 3… */
+  protected readonly keys = '123456789';
+
+  /**
+   * How a choice option is drawn: before checking, and after. A picked answer is
+   * drawn in ink, not brand red, so it can't be mistaken for a wrong one.
+   */
+  protected optionClass(selected: boolean, isAnswer: boolean): string {
+    if (!this.reviewing()) {
+      return selected
+        ? 'border-2 border-ink-900 bg-ink-100 dark:border-white dark:bg-ink-800'
+        : 'border border-ink-300 bg-white hover:border-ink-500 dark:border-ink-700 dark:bg-ink-900 dark:hover:border-ink-500';
+    }
+    if (isAnswer) return 'border-2 border-emerald-600 bg-emerald-50 dark:border-emerald-500 dark:bg-emerald-950/60';
+    if (selected) return 'border-2 border-rose-600 bg-rose-50 dark:border-rose-500 dark:bg-rose-950/50';
+    return 'border border-ink-200 bg-white opacity-60 dark:border-ink-800 dark:bg-ink-900';
+  }
+
+  /** The small key tile inside an option. */
+  protected keyClass(selected: boolean, isAnswer: boolean): string {
+    if (this.reviewing() && isAnswer) return 'bg-emerald-600 text-white';
+    if (this.reviewing() && selected) return 'bg-rose-600 text-white';
+    if (!this.reviewing() && selected) return 'bg-ink-900 text-white dark:bg-white dark:text-ink-950';
+    return 'bg-ink-100 text-ink-700 dark:bg-ink-800 dark:text-ink-300';
+  }
+
   // ---- single-choice -------------------------------------------------------
   selectSingle(optionId: string): void {
     if (this.reviewing()) return;

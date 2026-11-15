@@ -1,72 +1,48 @@
-<div
-  class="rounded-2xl border p-5 transition duration-200"
-  [class]="
-    reviewing()
-      ? result()?.correct
-        ? 'border-emerald-300 bg-emerald-50/60 dark:border-emerald-900 dark:bg-emerald-950/30'
-        : 'border-rose-300 bg-rose-50/60 dark:border-rose-900 dark:bg-rose-950/30'
-      : 'border-ink-200 bg-white shadow-soft dark:border-ink-800 dark:bg-ink-900'
-  "
->
-  <div class="mb-4 flex items-start gap-3">
-    <span
-      class="grid h-8 w-8 shrink-0 place-items-center rounded-full text-sm font-extrabold"
-      [class]="
-        reviewing()
-          ? result()?.correct
-            ? 'bg-emerald-500 text-white'
-            : 'bg-rose-500 text-white'
-          : 'bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300'
-      "
-    >
-      @if (reviewing()) {
-        @if (result()?.correct) {
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3.5">
-            <path d="m5 13 4 4L19 7" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-          <span class="sr-only">Correct. Question {{ index() + 1 }}</span>
-        } @else {
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3.5">
-            <path d="M6 6l12 12M18 6 6 18" stroke-linecap="round" />
-          </svg>
-          <span class="sr-only">Incorrect. Question {{ index() + 1 }}</span>
-        }
-      } @else {
-        {{ index() + 1 }}
-      }
-    </span>
-    <p class="pt-1 font-bold text-ink-900 dark:text-white">{{ question().prompt }}</p>
-  </div>
+<div>
+  <p
+    class="font-display leading-tight font-bold tracking-[-0.02em] text-balance text-ink-900 dark:text-white"
+    [class]="question().prompt.length > 90 ? 'text-[1.375rem] sm:text-[1.625rem]' : 'text-[1.75rem] sm:text-[2rem]'"
+  >
+    <span class="sr-only">Question {{ index() + 1 }}: </span>{{ question().prompt }}
+  </p>
+  @if (reviewing()) {
+    <span class="sr-only">{{ result()?.correct ? 'Your answer is correct.' : 'Your answer is incorrect.' }}</span>
+  }
 
+  <div class="mt-6">
   @switch (question().type) {
     <!-- single-choice -->
     @case ('single-choice') {
-      <div class="space-y-2 sm:pl-11">
-        @for (opt of $any(question()).options; track opt.id) {
+      <div class="grid gap-3 sm:grid-cols-2">
+        @for (opt of $any(question()).options; track opt.id; let i = $index) {
           <label
-            class="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border px-4 py-2.5 transition duration-200 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-500"
-            [class]="
-              isSingleSelected(opt.id) && !reviewing()
-                ? 'border-brand-400 bg-brand-50 dark:border-brand-600 dark:bg-brand-950/60'
-                : 'border-ink-200 hover:border-brand-300 hover:bg-ink-50 dark:border-ink-700 dark:hover:bg-ink-800'
-            "
+            class="flex min-h-16 cursor-pointer items-center gap-3.5 rounded-[0.875rem] px-4 py-3.5 transition duration-150 has-[:disabled]:cursor-default has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-500 has-[:focus-visible]:ring-offset-2 dark:has-[:focus-visible]:ring-offset-ink-950"
+            [class]="optionClass(isSingleSelected(opt.id), opt.id === $any(question()).answer)"
           >
             <input
               type="radio"
               [name]="question().id"
-              class="h-4 w-4 shrink-0 accent-brand-600"
+              class="sr-only"
               [checked]="isSingleSelected(opt.id)"
               [disabled]="reviewing()"
               (change)="selectSingle(opt.id)"
             />
-            <span class="text-ink-700 dark:text-ink-200">{{ opt.text }}</span>
+            <span
+              class="grid h-7.5 w-7.5 shrink-0 place-items-center rounded-lg font-mono text-[0.8125rem] font-semibold"
+              [class]="keyClass(isSingleSelected(opt.id), opt.id === $any(question()).answer)"
+              aria-hidden="true"
+            >{{ keys[i] || '•' }}</span>
+            <span class="min-w-0 flex-1 text-base font-medium text-ink-900 dark:text-white">{{ opt.text }}</span>
             @if (reviewing() && opt.id === $any(question()).answer) {
-              <span class="ml-auto flex shrink-0 items-center gap-1 text-sm font-bold text-emerald-600 dark:text-emerald-400">
-                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                  <path d="m5 13 4 4L19 7" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-                correct
-              </span>
+              <svg class="h-5 w-5 shrink-0 text-emerald-700 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                <path d="m5 13 4 4L19 7" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              <span class="sr-only">(correct answer)</span>
+            } @else if (reviewing() && isSingleSelected(opt.id)) {
+              <svg class="h-5 w-5 shrink-0 text-rose-700 dark:text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                <path d="M6 6l12 12M18 6 6 18" stroke-linecap="round" />
+              </svg>
+              <span class="sr-only">(your answer)</span>
             }
           </label>
         }
@@ -75,31 +51,36 @@
 
     <!-- multiple-choice -->
     @case ('multiple-choice') {
-      <div class="space-y-2 sm:pl-11">
-        @for (opt of $any(question()).options; track opt.id) {
+      <p class="prose-muted -mt-2 mb-3 text-sm font-semibold">Choose every answer that applies.</p>
+      <div class="grid gap-3 sm:grid-cols-2">
+        @for (opt of $any(question()).options; track opt.id; let i = $index) {
           <label
-            class="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border px-4 py-2.5 transition duration-200 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-500"
-            [class]="
-              isMultipleSelected(opt.id) && !reviewing()
-                ? 'border-brand-400 bg-brand-50 dark:border-brand-600 dark:bg-brand-950/60'
-                : 'border-ink-200 hover:border-brand-300 hover:bg-ink-50 dark:border-ink-700 dark:hover:bg-ink-800'
-            "
+            class="flex min-h-16 cursor-pointer items-center gap-3.5 rounded-[0.875rem] px-4 py-3.5 transition duration-150 has-[:disabled]:cursor-default has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-500 has-[:focus-visible]:ring-offset-2 dark:has-[:focus-visible]:ring-offset-ink-950"
+            [class]="optionClass(isMultipleSelected(opt.id), $any(question()).answer.includes(opt.id))"
           >
             <input
               type="checkbox"
-              class="h-4 w-4 shrink-0 accent-brand-600"
+              class="sr-only"
               [checked]="isMultipleSelected(opt.id)"
               [disabled]="reviewing()"
               (change)="toggleMultiple(opt.id)"
             />
-            <span class="text-ink-700 dark:text-ink-200">{{ opt.text }}</span>
-            @if (reviewing() && $any(question()).answer.includes(opt.id)) {
-              <span class="ml-auto flex shrink-0 items-center gap-1 text-sm font-bold text-emerald-600 dark:text-emerald-400">
-                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+            <span
+              class="grid h-7.5 w-7.5 shrink-0 place-items-center rounded-lg font-mono text-[0.8125rem] font-semibold"
+              [class]="keyClass(isMultipleSelected(opt.id), $any(question()).answer.includes(opt.id))"
+              aria-hidden="true"
+            >
+              @if (isMultipleSelected(opt.id)) {
+                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
                   <path d="m5 13 4 4L19 7" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
-                correct
-              </span>
+              } @else {
+                {{ keys[i] || '•' }}
+              }
+            </span>
+            <span class="min-w-0 flex-1 text-base font-medium text-ink-900 dark:text-white">{{ opt.text }}</span>
+            @if (reviewing() && $any(question()).answer.includes(opt.id)) {
+              <span class="shrink-0 text-sm font-bold text-emerald-700 dark:text-emerald-400">correct</span>
             }
           </label>
         }
@@ -116,7 +97,7 @@
           (input)="onFillInput($event)"
           placeholder="Type your answer…"
           [attr.aria-label]="question().prompt"
-          class="input-field max-w-md disabled:opacity-60"
+          class="input-field max-w-md font-mono disabled:opacity-60"
         />
         @if (reviewing()) {
           <p class="prose-muted mt-2 text-sm">
@@ -133,7 +114,7 @@
     @case ('ordering') {
       <ol class="space-y-2 sm:pl-11">
         @for (id of orderedIds(); track id; let i = $index) {
-          <li class="flex items-center gap-3 rounded-xl border border-ink-200 px-4 py-2 dark:border-ink-700">
+          <li class="flex items-center gap-3 rounded-[0.875rem] border border-ink-300 bg-white px-4 py-2 dark:border-ink-700 dark:bg-ink-900">
             <span class="w-5 shrink-0 font-mono text-sm font-bold text-ink-400 tabular-nums">{{ i + 1 }}.</span>
             <span class="min-w-0 text-ink-700 dark:text-ink-200">{{ orderedItemText(id) }}</span>
             <span class="ml-auto flex shrink-0 gap-1">
@@ -180,7 +161,7 @@
       <div class="space-y-2 sm:pl-11">
         @for (pair of $any(question()).pairs; track pair.left) {
           <div
-            class="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-ink-200 px-4 py-2.5 dark:border-ink-700"
+            class="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[0.875rem] border border-ink-300 bg-white px-4 py-2.5 dark:border-ink-700 dark:bg-ink-900"
           >
             <span class="min-w-32 font-bold text-ink-700 dark:text-ink-200">{{ pair.left }}</span>
             <svg class="h-4 w-4 shrink-0 text-ink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -207,19 +188,26 @@
     }
   }
 
-  @if (reviewing() && question().explanation) {
-    <div class="mt-4 flex gap-2.5 rounded-xl bg-ink-100 p-3.5 text-sm text-ink-600 dark:bg-ink-800 dark:text-ink-300">
-      <svg
-        class="h-4 w-4 shrink-0 translate-y-0.5 text-brand-500"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        stroke-width="2"
+  @if (reviewing()) {
+    <div
+      class="mt-5 animate-fade-up rounded-[1.125rem] border p-5.5"
+      [class]="
+        result()?.correct
+          ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/50'
+          : 'border-rose-200 bg-rose-50 dark:border-rose-900 dark:bg-rose-950/40'
+      "
+    >
+      <p
+        class="font-display text-2xl font-bold"
+        [class]="result()?.correct ? 'text-emerald-800 dark:text-emerald-300' : 'text-rose-800 dark:text-rose-300'"
       >
-        <path d="M12 16v-4M12 8.5v.5" stroke-linecap="round" />
-        <circle cx="12" cy="12" r="9" />
-      </svg>
-      <span><span class="font-bold">Explanation:</span> {{ question().explanation }}</span>
+        {{ result()?.correct ? 'Correct!' : 'Not quite' }}
+      </p>
+      @if (question().explanation) {
+        <p class="mt-2 leading-relaxed text-ink-800 dark:text-ink-200">{{ question().explanation }}</p>
+      }
+      <ng-content />
     </div>
   }
+  </div>
 </div>

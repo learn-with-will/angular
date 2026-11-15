@@ -23,6 +23,7 @@ const MAX_QUESTIONS = 20;
   selector: 'app-quiz-play',
   imports: [RouterLink, QuizQuestion, QuizProgress, QuizResult],
   templateUrl: './quiz-play.html',
+  host: { '(document:keydown)': 'onKeydown($event)' },
 })
 export class QuizPlay {
   private readonly route = inject(ActivatedRoute);
@@ -46,6 +47,8 @@ export class QuizPlay {
 
   protected readonly current = computed<BankQuestion | undefined>(() => this.questions()[this.index()]);
   protected readonly isLast = computed(() => this.index() >= this.questions().length - 1);
+  /** Right/wrong for each question answered so far, for the progress segments. */
+  protected readonly outcomeFlags = computed(() => this.outcomes().map((o) => o.correct));
   protected readonly correctCount = computed(() => this.outcomes().filter((o) => o.correct).length);
   protected readonly missed = computed(() => this.outcomes().filter((o) => !o.correct).map((o) => o.question));
 
@@ -61,6 +64,39 @@ export class QuizPlay {
     const slug = this.current()?.lesson;
     return slug ? this.course.getBySlug(slug) : undefined;
   });
+
+  /** The current question's topic, shown as a badge above it. */
+  protected readonly topicLabel = computed(() => {
+    const topic = this.current()?.topic;
+    return topic ? this.course.getTopic(topic)?.title : undefined;
+  });
+
+  /** Number keys pick a choice, Enter checks or moves on. */
+  protected onKeydown(event: KeyboardEvent): void {
+    if (this.phase() !== 'playing' || event.ctrlKey || event.metaKey || event.altKey) return;
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('button, a, select, textarea')) return;
+    const q = this.current();
+    if (!q) return;
+
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      if (this.result()) this.next();
+      else if (this.hasAnswer()) this.check();
+      return;
+    }
+
+    const typing = target instanceof HTMLInputElement && target.type === 'text';
+    const n = Number(event.key);
+    if (typing || this.result() || !Number.isInteger(n) || n < 1) return;
+    if (q.type === 'single-choice' && q.options[n - 1]) {
+      this.answer.set(q.options[n - 1].id);
+    } else if (q.type === 'multiple-choice' && q.options[n - 1]) {
+      const id = q.options[n - 1].id;
+      const current = Array.isArray(this.answer()) ? (this.answer() as string[]) : [];
+      this.answer.set(current.includes(id) ? current.filter((x) => x !== id) : [...current, id]);
+    }
+  }
 
   protected readonly title = computed(() => {
     const { mode, topics } = this.session();

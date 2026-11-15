@@ -4,63 +4,70 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ---------------------------------------------------------------------------
-   Design tokens
+   Design tokens: the "Bites" look
 
-   Colour is anchored on Angular's own brand gradient — red #E40035 through
-   magenta #F20089 into purple #6002EE. `brand-*` is the purple end (primary
-   actions, links), `magenta-*` is the warm end (accents, highlights).
+   Calm paper and ink surfaces with one accent: the domain's own brand colour.
+   Every portal under learning-portal/ anchors on its technology's brand (React
+   is cyan, this one is Angular). To re-brand, change only the `brand-*` scale
+   and `--gradient-brand` below.
+
+   `brand-*` is Angular red (#DD0031 at 600): primary actions, links, progress.
+   `--gradient-brand` is Angular's red → magenta → purple gradient, used for the
+   logo and highlighted headline words. `magenta-*` marks saved bites, `ink-*`
+   are the neutrals.
 --------------------------------------------------------------------------- */
 @theme {
-  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Bricolage Grotesque', 'Inter', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
-  /* Angular purple */
-  --color-brand-50: #f5f2ff;
-  --color-brand-100: #ece5ff;
-  --color-brand-200: #dbcdff;
-  --color-brand-300: #c2a8ff;
-  --color-brand-400: #a375ff;
-  --color-brand-500: #8a3ffc;
-  --color-brand-600: #6002ee;
-  --color-brand-700: #5202c9;
-  --color-brand-800: #4304a3;
-  --color-brand-900: #380683;
-  --color-brand-950: #21014f;
+  /* Domain brand: Angular red */
+  --color-brand-50: #fff1f3;
+  --color-brand-100: #ffe1e6;
+  --color-brand-200: #ffc7d1;
+  --color-brand-300: #ff9aab;
+  --color-brand-400: #ff5c7a;
+  --color-brand-500: #f5244f;
+  --color-brand-600: #dd0031;
+  --color-brand-700: #b8002a;
+  --color-brand-800: #990428;
+  --color-brand-900: #820726;
+  --color-brand-950: #48000f;
 
-  /* Angular magenta */
-  --color-magenta-50: #fff0f8;
-  --color-magenta-100: #ffe3f3;
-  --color-magenta-200: #ffc7e7;
-  --color-magenta-300: #ff9bd4;
-  --color-magenta-400: #ff5bb8;
-  --color-magenta-500: #f20089;
-  --color-magenta-600: #d40077;
-  --color-magenta-700: #b00062;
-  --color-magenta-800: #900051;
-  --color-magenta-900: #780045;
-  --color-magenta-950: #4a002a;
+  /* Magenta: saved bites */
+  --color-magenta-50: #fff0f7;
+  --color-magenta-100: #ffe1ef;
+  --color-magenta-200: #ffc2df;
+  --color-magenta-300: #ff8fc3;
+  --color-magenta-400: #f7529f;
+  --color-magenta-500: #e3126f;
+  --color-magenta-600: #c40d5f;
+  --color-magenta-700: #a00a4e;
+  --color-magenta-800: #800a40;
+  --color-magenta-900: #690b37;
+  --color-magenta-950: #40031f;
 
-  /* Angular red (gradient origin) */
+  /* Angular red (logo gradient origin) */
   --color-ember-500: #e40035;
   --color-ember-600: #c30030;
 
-  /* Purple-tinted neutrals — warmer and friendlier than stock slate */
-  --color-ink-50: #f8f7fb;
-  --color-ink-100: #f1eff7;
-  --color-ink-200: #e4e1ee;
-  --color-ink-300: #cdc8dd;
-  --color-ink-400: #9d96b4;
-  --color-ink-500: #6f6889;
-  --color-ink-600: #514a68;
-  --color-ink-700: #3d3651;
-  --color-ink-800: #2a2440;
-  --color-ink-900: #1b1630;
-  --color-ink-950: #100c1f;
+  /* Paper → ink neutrals with a faint violet tint */
+  --color-ink-50: #f7f7fa;
+  --color-ink-100: #eeedf3;
+  --color-ink-200: #e6e4ee;
+  --color-ink-300: #d6d3e2;
+  --color-ink-400: #8f88a6;
+  --color-ink-500: #5d5871;
+  --color-ink-600: #4a4560;
+  --color-ink-700: #3d3851;
+  --color-ink-800: #2a2238;
+  --color-ink-900: #18131f;
+  --color-ink-950: #0e0b16;
 
-  /* Soft, purple-tinted shadows — black shadows read harsh at this radius */
-  --shadow-soft: 0 1px 2px rgb(33 1 79 / 0.04), 0 4px 16px rgb(33 1 79 / 0.06);
-  --shadow-lift: 0 2px 6px rgb(33 1 79 / 0.05), 0 14px 32px rgb(33 1 79 / 0.13);
-  --shadow-glow: 0 6px 20px rgb(96 2 238 / 0.3);
+  --shadow-soft: 0 1px 2px rgb(20 17 28 / 0.04);
+  --shadow-lift: 0 2px 6px rgb(20 17 28 / 0.04), 0 18px 40px rgb(20 17 28 / 0.1);
+  --shadow-float: 0 2px 6px rgb(20 17 28 / 0.05), 0 30px 60px rgb(20 17 28 / 0.14);
+  --shadow-glow: 0 8px 22px rgb(221 0 49 / 0.26);
 
   --animate-fade-up: fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
   --animate-fade-in: fade-in 0.35s ease-out both;
@@ -99,7 +106,11 @@
 }
 
 :root {
-  --gradient-angular: linear-gradient(135deg, #e40035 0%, #f20089 48%, #6002ee 100%);
+  --gradient-brand: linear-gradient(100deg, #e40035 0%, #f20089 48%, #6002ee 100%);
+}
+/* Lighter stops in dark mode, so the purple end stays readable on ink. */
+.dark {
+  --gradient-brand: linear-gradient(100deg, #ff4d6d 0%, #ff5bb8 48%, #a77bff 100%);
 }
 
 html {
@@ -115,7 +126,7 @@ html.dark {
 }
 
 body {
-  @apply bg-ink-50 text-ink-700 antialiased;
+  @apply bg-ink-50 font-sans text-ink-700 antialiased;
 }
 
 .dark body {
@@ -149,13 +160,11 @@ body {
 /* ---------------------------------------------------------------------------
    Component classes
 
-   Templates were repeating ~8 utility classes per surface, which made the
-   markup hard to scan and let styles drift apart. These names are the
-   vocabulary the templates use instead.
+   The vocabulary the templates use. Each utility spells its classes out in
+   full rather than `@apply`-ing another custom utility: in Tailwind v4 that
+   composition silently drops the inner utility's `dark:`/`disabled:` variants.
+   Focus is handled by the global :focus-visible outline above.
 --------------------------------------------------------------------------- */
-/* Outline (not a ring) so it survives being pulled into other utilities via
-   `@apply`, which drops nested variants in Tailwind v4. outline-offset shows the
-   element's own background as the gap, so one rule works in light and dark. */
 @utility focusable {
   &:focus-visible {
     outline: 2px solid var(--color-brand-500);
@@ -164,121 +173,187 @@ body {
 }
 
 @utility card {
-  @apply rounded-2xl border border-ink-200 bg-white shadow-soft dark:border-ink-800 dark:bg-ink-900;
+  @apply rounded-[1.125rem] border border-ink-200 bg-white dark:border-ink-800 dark:bg-ink-900;
 }
 
-/* Hover lift uses transform only — animating box positions would reflow.
-   The card styles are spelled out in full rather than `@apply card`: composing a
-   custom utility that carries `dark:` variants drops those variants in Tailwind
-   v4, which left these surfaces white in dark mode. Focus is handled by the
-   global :focus-visible outline below, so no ring utilities are needed here. */
+/* Hover lift uses transform only — animating box positions would reflow. */
 @utility card-interactive {
-  @apply rounded-2xl border border-ink-200 bg-white shadow-soft transition duration-200 hover:-translate-y-1 hover:border-brand-300 hover:shadow-lift dark:border-ink-800 dark:bg-ink-900 dark:hover:border-brand-700;
+  @apply rounded-[1.125rem] border border-ink-200 bg-white transition duration-200 hover:-translate-y-[3px] hover:border-brand-200 hover:shadow-lift dark:border-ink-800 dark:bg-ink-900 dark:hover:border-brand-800;
 }
 
-@utility btn {
-  @apply focusable inline-flex cursor-pointer items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition duration-200 disabled:pointer-events-none disabled:opacity-50;
+/* The dark "ink" feature panel: continue card, quiz band, in-one-line box. */
+@utility panel-ink {
+  @apply rounded-[1.75rem] bg-ink-950 text-white dark:border dark:border-ink-800 dark:bg-ink-900;
 }
 
 @utility btn-primary {
-  @apply btn bg-brand-600 text-white hover:bg-brand-700 hover:shadow-glow active:scale-[0.97];
+  @apply inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-glow transition duration-200 hover:bg-brand-700 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none dark:shadow-none dark:hover:bg-brand-500;
 }
 
+/* Kept as an alias so older markup still renders as the primary button. */
 @utility btn-gradient {
-  @apply btn text-white active:scale-[0.97];
-  background-image: var(--gradient-angular);
-  background-size: 160% 160%;
-  background-position: 0% 50%;
+  @apply inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-semibold text-white shadow-glow transition duration-200 hover:bg-brand-700 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none dark:shadow-none dark:hover:bg-brand-500;
+}
 
-  &:hover {
-    background-position: 100% 50%;
-    box-shadow: var(--shadow-glow);
-  }
+@utility btn-ink {
+  @apply inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-ink-950 px-5 py-2.5 text-sm font-semibold text-white transition duration-200 hover:bg-ink-800 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-45 dark:bg-ink-50 dark:text-ink-950 dark:hover:bg-white;
+}
+
+/* White button for use on the ink panel. */
+@utility btn-light {
+  @apply inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-ink-950 transition duration-200 hover:bg-ink-100 active:scale-[0.97];
 }
 
 @utility btn-secondary {
-  @apply btn border border-ink-200 bg-white text-ink-700 hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 active:scale-[0.97] dark:border-ink-700 dark:bg-ink-900 dark:text-ink-200 dark:hover:border-brand-700 dark:hover:bg-ink-800 dark:hover:text-brand-300;
+  @apply inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-ink-300 bg-transparent px-5 py-2.5 text-sm font-semibold text-ink-900 transition duration-200 hover:border-ink-400 hover:bg-white active:scale-[0.97] disabled:pointer-events-none disabled:opacity-45 dark:border-ink-700 dark:text-white dark:hover:border-ink-600 dark:hover:bg-ink-900;
 }
 
 @utility btn-ghost {
-  @apply btn text-ink-500 hover:bg-ink-100 hover:text-ink-800 dark:text-ink-400 dark:hover:bg-ink-800 dark:hover:text-ink-100;
+  @apply inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-ink-600 transition duration-200 hover:bg-ink-100 hover:text-ink-900 disabled:pointer-events-none disabled:opacity-45 dark:text-ink-400 dark:hover:bg-ink-800 dark:hover:text-white;
 }
 
 @utility btn-danger {
-  @apply btn border border-rose-300 text-rose-600 hover:bg-rose-50 active:scale-[0.97] dark:border-rose-900 dark:text-rose-400 dark:hover:bg-rose-950/40;
+  @apply inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-4 py-2.5 text-sm font-semibold text-rose-700 transition duration-200 hover:border-rose-300 hover:bg-rose-50 active:scale-[0.97] dark:border-rose-900 dark:bg-transparent dark:text-rose-400 dark:hover:bg-rose-950/40;
 }
 
-/* Icon-only controls still need a 44px hit area even though the glyph is 20px. */
+/* Icon-only controls: a bordered 44px square, the glyph is 18–20px. */
 @utility btn-icon {
-  @apply focusable grid h-11 w-11 shrink-0 cursor-pointer place-items-center rounded-full text-ink-500 transition duration-200 hover:bg-ink-100 hover:text-brand-600 active:scale-95 dark:text-ink-400 dark:hover:bg-ink-800 dark:hover:text-brand-300;
+  @apply grid h-11 w-11 shrink-0 cursor-pointer place-items-center rounded-xl border border-ink-200 bg-white text-ink-700 transition duration-200 hover:border-ink-300 hover:text-ink-900 active:scale-95 dark:border-ink-800 dark:bg-ink-900 dark:text-ink-300 dark:hover:border-ink-700 dark:hover:text-white;
 }
 
 @utility badge {
-  @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold;
+  @apply inline-flex items-center gap-1.5 rounded-lg px-2 py-0.5 text-xs font-bold;
 }
 
-/* One chip colour per lesson kind (see KIND_CHIPS in lesson.model.ts). */
+/* One badge colour per lesson kind (see KIND_CHIPS in lesson.model.ts).
+   Soft tint + dark text of the same hue; every pair passes 4.5:1. */
 @utility kind-concept {
-  @apply badge bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300;
+  @apply inline-flex items-center gap-1.5 rounded-lg bg-violet-50 px-2 py-0.5 text-xs font-bold text-violet-700 dark:bg-violet-950 dark:text-violet-300;
 }
 
 @utility kind-api {
-  @apply badge bg-brand-100 text-brand-800 dark:bg-brand-950 dark:text-brand-300;
+  @apply inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-2 py-0.5 text-xs font-bold text-blue-700 dark:bg-blue-950 dark:text-blue-300;
 }
 
 @utility kind-technique {
-  @apply badge bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300;
+  @apply inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300;
 }
 
 @utility kind-pattern {
-  @apply badge bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300;
+  @apply inline-flex items-center gap-1.5 rounded-lg bg-cyan-50 px-2 py-0.5 text-xs font-bold text-cyan-800 dark:bg-cyan-950 dark:text-cyan-300;
 }
 
 @utility kind-pitfall {
-  @apply badge bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300;
+  @apply inline-flex items-center gap-1.5 rounded-lg bg-orange-50 px-2 py-0.5 text-xs font-bold text-orange-800 dark:bg-orange-950 dark:text-orange-300;
 }
 
 @utility kind-tool {
-  @apply badge bg-ink-100 text-ink-700 dark:bg-ink-800 dark:text-ink-200;
+  @apply inline-flex items-center gap-1.5 rounded-lg bg-ink-100 px-2 py-0.5 text-xs font-bold text-ink-700 dark:bg-ink-800 dark:text-ink-200;
 }
 
 @utility input-field {
-  @apply w-full rounded-2xl border border-ink-200 bg-white px-4 py-3 text-base text-ink-800 outline-none transition placeholder:text-ink-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15 dark:border-ink-700 dark:bg-ink-900 dark:text-ink-100;
+  @apply w-full rounded-2xl border border-ink-300 bg-white px-4 py-3 text-base text-ink-900 outline-none transition placeholder:text-ink-500 focus:border-brand-600 focus:ring-4 focus:ring-brand-600/12 dark:border-ink-700 dark:bg-ink-900 dark:text-white dark:placeholder:text-ink-400 dark:focus:border-brand-400;
+}
+
+/* A search box: icon + input + trailing control inside one bordered field. */
+@utility search-field {
+  @apply flex items-center gap-3 rounded-2xl border border-ink-300 bg-white transition focus-within:border-brand-600 focus-within:ring-4 focus-within:ring-brand-600/12 dark:border-ink-700 dark:bg-ink-900 dark:focus-within:border-brand-400;
 }
 
 @utility chip {
-  @apply focusable inline-flex items-center gap-1.5 rounded-full border border-ink-200 bg-white px-3 py-1.5 text-sm text-ink-700 transition hover:border-brand-300 hover:text-brand-700 dark:border-ink-800 dark:bg-ink-900 dark:text-ink-200 dark:hover:border-brand-700 dark:hover:text-brand-300;
+  @apply inline-flex min-h-10 cursor-pointer items-center gap-1.5 rounded-xl border border-ink-200 bg-white px-3.5 py-1.5 text-sm font-medium text-ink-700 transition hover:border-ink-300 hover:text-ink-900 dark:border-ink-800 dark:bg-ink-900 dark:text-ink-300 dark:hover:border-ink-700 dark:hover:text-white;
+}
+
+/* The selected state for a chip or segmented option. */
+@utility chip-on {
+  @apply border-ink-950! bg-ink-950! text-white! dark:border-white! dark:bg-white! dark:text-ink-950!;
+}
+
+@utility kbd {
+  @apply rounded-md border border-ink-200 bg-ink-50 px-1.5 py-0.5 font-mono text-[0.6875rem] font-semibold text-ink-500 dark:border-ink-700 dark:bg-ink-800 dark:text-ink-400;
 }
 
 @utility heading {
-  @apply font-extrabold tracking-tight text-ink-900 dark:text-white;
+  @apply font-display font-bold tracking-[-0.025em] text-ink-900 dark:text-white;
+}
+
+/* Small uppercase label above a heading or value. */
+@utility eyebrow {
+  @apply text-xs font-bold tracking-[0.08em] text-ink-500 uppercase dark:text-ink-400;
 }
 
 @utility prose-muted {
   @apply text-ink-500 dark:text-ink-400;
 }
 
+/* Highlighted words in a headline, in Angular's brand gradient. */
 @utility gradient-text {
-  background-image: var(--gradient-angular);
+  background-image: var(--gradient-brand);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
   @apply bg-clip-text text-transparent;
 }
 
 @utility gradient-rule {
-  background-image: var(--gradient-angular);
-  @apply h-1 w-full rounded-full;
-}
-
-/* The Angular shield, filled with the brand gradient. */
-@utility brand-mark {
-  background-image: var(--gradient-angular);
-  @apply grid place-items-center rounded-xl text-white shadow-glow;
+  @apply h-1 w-full rounded-full bg-brand-600 dark:bg-brand-400;
 }
 
 @utility surface-grid {
   background-image:
-    linear-gradient(to right, rgb(96 2 238 / 0.06) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(96 2 238 / 0.06) 1px, transparent 1px);
+    linear-gradient(to right, rgb(221 0 49 / 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(221 0 49 / 0.05) 1px, transparent 1px);
   background-size: 32px 32px;
+}
+
+/* Sideways-scrolling strips (topic chips, letters) scroll by touch or trackpad;
+   a visible scrollbar under them is just noise. */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Code reads character by character: no `=>` → ⇒ ligatures. */
+pre,
+code,
+kbd {
+  font-variant-ligatures: none;
+}
+
+/* ---------------------------------------------------------------------------
+   Code blocks: the copy button LessonPage adds to every highlighted block
+--------------------------------------------------------------------------- */
+.code-block {
+  position: relative;
+}
+.code-copy {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2rem;
+  padding: 0 0.7rem;
+  border: 1px solid #3a3150;
+  border-radius: 0.5rem;
+  background: #1c1628;
+  color: #e7e3f4;
+  font: 600 0.75rem var(--font-sans);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.code-block:hover .code-copy,
+.code-copy:focus-visible,
+.code-copy[data-copied] {
+  opacity: 1;
+}
+@media (hover: none) {
+  .code-copy {
+    opacity: 1;
+  }
 }
 
 /* ---------------------------------------------------------------------------
@@ -286,55 +361,52 @@ body {
    ngx-markdown renders into .lesson-content; style the raw HTML here.
 --------------------------------------------------------------------------- */
 .lesson-content {
-  @apply text-[1.0625rem] leading-relaxed text-ink-700 dark:text-ink-300;
+  @apply text-[1.09rem] leading-[1.75] text-ink-700 dark:text-ink-300;
 }
 .lesson-content h1 {
-  @apply mt-10 mb-4 scroll-mt-24 text-3xl font-extrabold tracking-tight text-ink-900 dark:text-white;
+  @apply mt-12 mb-4 scroll-mt-28 font-display text-3xl font-bold tracking-[-0.025em] text-ink-900 dark:text-white;
 }
 .lesson-content h2 {
-  @apply mt-10 mb-3 flex scroll-mt-24 items-center gap-3 text-2xl font-bold text-ink-900 dark:text-white;
-}
-/* Gradient tick instead of a full rule — lighter, and on-brand. */
-.lesson-content h2::before {
-  content: '';
-  background-image: var(--gradient-angular);
-  @apply h-6 w-1 shrink-0 rounded-full;
+  @apply mt-12 mb-4 scroll-mt-28 font-display text-[1.75rem] leading-tight font-bold tracking-[-0.02em] text-ink-900 dark:text-white;
 }
 .lesson-content h3 {
-  @apply mt-8 mb-2 scroll-mt-24 text-xl font-bold text-ink-900 dark:text-white;
+  @apply mt-8 mb-2 scroll-mt-28 text-xl font-bold text-ink-900 dark:text-white;
 }
 .lesson-content p {
-  @apply my-4;
+  @apply my-[1.1rem];
+}
+.lesson-content strong {
+  @apply font-semibold text-ink-900 dark:text-white;
 }
 .lesson-content ul {
   @apply my-4 list-disc space-y-1.5 pl-6 marker:text-brand-400;
 }
 .lesson-content ol {
-  @apply my-4 list-decimal space-y-1.5 pl-6 marker:font-bold marker:text-brand-500;
+  @apply my-4 list-decimal space-y-1.5 pl-6 marker:font-bold marker:text-brand-600 dark:marker:text-brand-300;
 }
 .lesson-content a {
-  @apply font-medium text-brand-600 underline decoration-brand-300 underline-offset-2 transition hover:text-magenta-600 hover:decoration-magenta-400 dark:text-brand-300 dark:decoration-brand-700 dark:hover:text-magenta-400;
+  @apply font-medium text-brand-600 underline decoration-brand-200 underline-offset-[3px] transition hover:text-brand-700 hover:decoration-brand-500 dark:text-brand-300 dark:decoration-brand-800 dark:hover:text-brand-200;
 }
 .lesson-content blockquote {
-  @apply my-5 rounded-r-xl border-l-4 border-brand-400 bg-brand-50 py-3 pr-4 pl-4 text-ink-600 italic dark:bg-brand-950/40 dark:text-ink-300;
+  @apply my-5 rounded-xl border-l-4 border-brand-400 bg-brand-50 py-3 pr-4 pl-4 text-ink-600 dark:bg-brand-950/40 dark:text-ink-300;
 }
 .lesson-content .dg-table {
-  margin: 1.25rem 0;
+  margin: 1.5rem 0;
   overflow-x: auto;
   border: 1px solid var(--dg-border);
-  border-radius: 0.85rem;
+  border-radius: 1rem;
   background: var(--dg-surface);
 }
 .lesson-content .dg-table table {
   width: 100%;
   margin: 0;
   border-collapse: collapse;
-  font-size: 0.875rem;
-  line-height: 1.4;
+  font-size: 0.9rem;
+  line-height: 1.5;
 }
 .lesson-content .dg-table th,
 .lesson-content .dg-table td {
-  padding: 0.6rem 0.9rem;
+  padding: 0.75rem 1rem;
   text-align: left;
   vertical-align: top;
 }
@@ -352,17 +424,73 @@ body {
 }
 /* inline code (not inside a highlighted code block) */
 .lesson-content :not(pre) > code {
-  @apply rounded-md bg-brand-50 px-1.5 py-0.5 font-mono text-[0.85em] font-medium text-brand-700 ring-1 ring-brand-100 ring-inset dark:bg-brand-950/60 dark:text-brand-300 dark:ring-brand-900;
+  @apply rounded-md bg-brand-100 px-1.5 py-0.5 font-mono text-[0.86em] font-medium text-brand-700 dark:bg-brand-950 dark:text-brand-300;
 }
 .lesson-content pre {
-  @apply my-5 overflow-x-auto rounded-2xl text-sm shadow-soft;
+  @apply my-6 overflow-x-auto rounded-2xl text-sm;
 }
 .lesson-content img {
-  @apply my-5 max-w-full rounded-2xl;
+  @apply my-6 max-w-full rounded-2xl;
 }
 .lesson-content hr {
   @apply my-10 border-ink-200 dark:border-ink-800;
 }
+
+/* Highlighted code: one deep ink surface in both themes, with a softer palette
+   than prism-tomorrow so it sits with the rest of the page. */
+.lesson-content pre[class*='language-'],
+.lesson-content :not(pre) > code[class*='language-'] {
+  background: #120e1c;
+}
+.lesson-content pre[class*='language-'] {
+  margin: 1.5rem 0;
+  padding: 1.25rem 1.4rem;
+  border: 1px solid #120e1c;
+  border-radius: 1rem;
+  text-shadow: none;
+}
+.dark .lesson-content pre[class*='language-'] {
+  border-color: var(--color-ink-800);
+}
+.lesson-content code[class*='language-'],
+.lesson-content pre[class*='language-'] {
+  color: #e7e3f4;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  line-height: 1.8;
+}
+.lesson-content .token.comment,
+.lesson-content .token.prolog,
+.lesson-content .token.doctype {
+  color: #8f88a6;
+}
+.lesson-content .token.keyword,
+.lesson-content .token.tag,
+.lesson-content .token.boolean,
+.lesson-content .token.important {
+  color: #c4a7ff;
+}
+.lesson-content .token.function,
+.lesson-content .token.class-name,
+.lesson-content .token.builtin {
+  color: #7fb2ff;
+}
+.lesson-content .token.number,
+.lesson-content .token.constant,
+.lesson-content .token.attr-name {
+  color: #ffb38a;
+}
+.lesson-content .token.string,
+.lesson-content .token.char,
+.lesson-content .token.attr-value,
+.lesson-content .token.template-string {
+  color: #a8e6a3;
+}
+.lesson-content .token.punctuation,
+.lesson-content .token.operator {
+  color: #b9b2d0;
+}
+
 
 /* ---------------------------------------------------------------------------
    Callouts
@@ -473,13 +601,13 @@ body {
 }
 .dark .lesson-content,
 .dark .dg {
-  --dg-surface: #14101f;
+  --dg-surface: #18131f;
   --dg-border: #2a2440;
   --dg-line: #5a5273;
   --dg-arrow: #e6e3f2;
   --dg-title: #ffffff;
   --dg-sub: #a59fbd;
-  --dg-chip-bg: #241f38;
+  --dg-chip-bg: #241c33;
   --dg-chip-fg: #e6e3f2;
   --dg-chip-border: #3d3651;
 }
@@ -783,4 +911,34 @@ body {
   paint-order: stroke;
   stroke: var(--dg-surface);
   stroke-width: 4px;
+}
+
+/* "In one line" is the lesson's thesis: draw it as the dark ink panel. */
+.lesson-content blockquote.callout.dg-tone-primary {
+  padding: 1.15rem 1.35rem;
+  border-color: #14111c;
+  background: #14111c;
+  color: #e7e3f4;
+}
+.dark .lesson-content blockquote.callout.dg-tone-primary {
+  border-color: var(--color-ink-800);
+  background: var(--color-ink-900);
+}
+.lesson-content blockquote.callout.dg-tone-primary > p:first-child > strong:first-child {
+  display: block;
+  width: max-content;
+  margin: 0 0 0.4rem;
+  padding: 0;
+  background: none;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-brand-300);
+}
+.lesson-content blockquote.callout.dg-tone-primary strong {
+  color: #ffffff;
+}
+.lesson-content blockquote.callout.dg-tone-primary :not(pre) > code {
+  background: #2a2238;
+  color: #ffffff;
 }

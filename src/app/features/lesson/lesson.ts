@@ -25,6 +25,21 @@ import { RelatedLessons } from '../../shared/components/related-lessons/related-
 import { Diagram } from '../../shared/diagram/diagram';
 import { DiagramSpec, isDiagramKind, parseDiagram } from '../../shared/diagram/diagram-parser';
 
+interface TocEntry {
+  id: string;
+  text: string;
+}
+
+/** Turns a heading into a URL-safe id: "Go deeper" → "go-deeper". */
+function slugify(text: string): string {
+  return (
+    text
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'section'
+  );
+}
+
 /** Callout labels (the bold lead-in of a blockquote) → the tone they are drawn in. */
 const CALLOUTS: Record<string, string> = {
   'in one line': 'dg-tone-primary',
@@ -43,6 +58,7 @@ const LIST_SECTIONS: Record<string, string[]> = {
   selector: 'app-lesson-page',
   imports: [RouterLink, MarkdownComponent, RelatedLessons],
   templateUrl: './lesson.html',
+  host: { '(window:scroll)': 'onScroll()', '(window:resize)': 'onScroll()' },
 })
 export class LessonPage {
   private readonly route = inject(ActivatedRoute);
@@ -84,6 +100,35 @@ export class LessonPage {
     return l ? KIND_CHIPS[l.meta.kind] : 'badge';
   });
 
+  /** Every bite in this lesson's topic, A–Z, for the side outline and prev/next. */
+  protected readonly topicLessons = computed(() => {
+    const l = this.lesson();
+    return l ? this.course.byTopic(l.meta.topic) : [];
+  });
+  protected readonly topicLearned = computed(() => {
+    const learned = this.progress.learned();
+    return this.topicLessons().filter((l) => l.slug in learned).length;
+  });
+  private readonly position = computed(() => {
+    const slug = this.lesson()?.meta.slug;
+    return this.topicLessons().findIndex((l) => l.slug === slug);
+  });
+  protected readonly prev = computed(() => {
+    const i = this.position();
+    return i > 0 ? this.topicLessons()[i - 1] : undefined;
+  });
+  protected readonly next = computed(() => {
+    const i = this.position();
+    return i >= 0 ? this.topicLessons()[i + 1] : undefined;
+  });
+
+  /** The lesson's sections, read from its rendered h2s, for "On this page". */
+  protected readonly toc = signal<TocEntry[]>([]);
+  protected readonly activeSection = signal<string | null>(null);
+  /** 0–100: how far through the article the reader has scrolled. */
+  protected readonly readProgress = signal(0);
+  private scrollFrame = 0;
+
   /** Diagram components mounted into the rendered markdown; destroyed when it re-renders. */
   private diagrams: ComponentRef<Diagram>[] = [];
 
@@ -92,7 +137,10 @@ export class LessonPage {
       const slug = this.slug();
       if (slug) void this.loadLesson(slug);
     });
-    inject(DestroyRef).onDestroy(() => this.destroyDiagrams());
+    inject(DestroyRef).onDestroy(() => {
+      this.destroyDiagrams();
+      cancelAnimationFrame(this.scrollFrame);
+    });
   }
 
   private async loadLesson(slug: string): Promise<void> {
@@ -111,6 +159,9 @@ export class LessonPage {
 
     const lesson = await this.lessonService.loadLesson(meta);
     if (this.slug() !== slug) return;
+    this.toc.set([]);
+    this.activeSection.set(null);
+    this.readProgress.set(0);
     this.lesson.set(lesson);
     this.progress.setLastOpened(meta.slug);
     this.title.setTitle(`${meta.title} · Angular Learn`);
@@ -125,6 +176,86 @@ export class LessonPage {
     this.enhanceTables(container);
     this.enhanceSections(container);
     this.mountDiagrams(container);
+    this.enhanceCode(container);
+    this.collectToc(container);
+    this.onScroll();
+  }
+
+  /** Gives each h2 a stable id and lists them for "On this page". */
+  private collectToc(root: Element): void {
+    const used = new Set<string>();
+    const entries: TocEntry[] = [];
+    root.querySelectorAll('h2').forEach((heading) => {
+      const text = (heading.textContent ?? '').trim();
+      let id = heading.id || slugify(text);
+      for (let n = 2; used.has(id); n++) id = `${slugify(text)}-${n}`;
+      used.add(id);
+      heading.id = id;
+      entries.push({ id, text });
+    });
+    this.toc.set(entries);
+  }
+
+  /** Adds a Copy button to every highlighted code block. */
+  private enhanceCode(root: Element): void {
+    root.querySelectorAll('pre').forEach((pre) => {
+      if (pre.parentElement?.classList.contains('code-block')) return;
+      const code = pre.querySelector('code');
+      if (!code) return;
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'code-block';
+      pre.replaceWith(wrapper);
+      wrapper.appendChild(pre);
+
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'code-copy';
+      button.textContent = 'Copy';
+      button.setAttribute('aria-label', 'Copy code to clipboard');
+      button.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(code.textContent ?? '');
+          button.textContent = 'Copied';
+          button.setAttribute('data-copied', '');
+        } catch {
+          button.textContent = 'Press Ctrl+C';
+        }
+        setTimeout(() => {
+          button.textContent = 'Copy';
+          button.removeAttribute('data-copied');
+        }, 1600);
+      });
+      wrapper.appendChild(button);
+    });
+  }
+
+  protected scrollToSection(event: Event, id: string): void {
+    event.preventDefault();
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    history.replaceState(history.state, '', `${location.pathname}${location.search}#${id}`);
+  }
+
+  /** Updates the reading bar and the highlighted section, at most once a frame. */
+  protected onScroll(): void {
+    if (this.scrollFrame) return;
+    this.scrollFrame = requestAnimationFrame(() => {
+      this.scrollFrame = 0;
+      const article = this.host.nativeElement.querySelector('article');
+      if (!article) return;
+
+      const rect = article.getBoundingClientRect();
+      const span = rect.height - window.innerHeight;
+      const pct = span <= 0 ? 100 : Math.min(100, Math.max(0, (-rect.top / span) * 100));
+      this.readProgress.set(Math.round(pct));
+
+      let active: string | null = this.toc()[0]?.id ?? null;
+      for (const entry of this.toc()) {
+        const el = document.getElementById(entry.id);
+        if (el && el.getBoundingClientRect().top <= 140) active = entry.id;
+      }
+      this.activeSection.set(active);
+    });
   }
 
   /** Wraps each table in a panel that scrolls sideways on narrow screens. */

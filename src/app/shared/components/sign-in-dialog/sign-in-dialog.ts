@@ -1,6 +1,7 @@
 import { Component, ElementRef, effect, inject, viewChild } from '@angular/core';
 import { AuthService } from '../../../core/services/auth.service';
 import { AuthProviderId } from '../../../core/firebase/firebase.config';
+import { BrandMark } from '../brand-mark/brand-mark';
 
 const LABELS: Record<AuthProviderId, string> = {
   google: 'Continue with Google',
@@ -14,6 +15,7 @@ const LABELS: Record<AuthProviderId, string> = {
  */
 @Component({
   selector: 'app-sign-in-dialog',
+  imports: [BrandMark],
   templateUrl: './sign-in-dialog.html',
 })
 export class SignInDialog {

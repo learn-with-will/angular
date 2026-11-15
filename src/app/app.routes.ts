@@ -37,12 +37,12 @@ export const routes: Routes = [
   {
     path: 'dashboard',
     loadComponent: () => import('./features/dashboard/dashboard').then((m) => m.Dashboard),
-    title: `Dashboard · ${SITE}`,
+    title: `Progress · ${SITE}`,
   },
   {
     path: 'bookmarks',
     loadComponent: () => import('./features/bookmarks/bookmarks').then((m) => m.Bookmarks),
-    title: `Bookmarks · ${SITE}`,
+    title: `Saved · ${SITE}`,
   },
   // Old pages that no longer exist as such.
   { path: 'roadmap', redirectTo: 'lessons' },
