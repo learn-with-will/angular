@@ -1,88 +1,55 @@
-# Angular Learning Portal
+# Angular Learn
 
-A **frontend-only** Angular course made of short lessons ("bites"). Each bite teaches one
-idea in **3–5 minutes**, so you can read in any order, jump to a random one, or follow a
-topic from start to finish. Quizzes, progress and bookmarks live in the browser, so you can
-learn without an account. Signing in is optional: once Firebase is configured, learners can sign
-in to keep their progress across devices (see [FIREBASE_SETUP.md](FIREBASE_SETUP.md)).
+The content of the Angular course at <https://learn-with-will.github.io/angular/>: 212 short
+lessons ("bites") in 14 topics, each teaching one idea in 3–5 minutes, plus a bank of 313 quiz
+questions.
 
-Built with Angular 20+ standalone components, signals, Tailwind CSS v4 and ngx-markdown.
-
-## What is in it
-
-- **Home** with a continue-learning card, topic overview and a "surprise me" button.
-- **Lessons A–Z** with search, filters by topic and kind, and random browsing. There are no
-  levels: every lesson stands on its own and links to related ones.
-- **Lesson reader** with Markdown, syntax highlighting, tables, warning and takeaway cards,
-  and optional diagrams (sequence, tree, flow) drawn by the app itself.
-- **Quiz bank** with questions grouped by topic, in five types: single-choice,
-  multiple-choice, fill-blank, ordering and match-pair, with explanations and review.
-- **Dashboard** and **bookmarks**, with light and dark themes.
-- Old long-lesson URLs (`/lesson/<old-slug>`, `/roadmap`, `/search`) redirect to the new
-  structure, and v1 progress is imported on first load.
-
-The course currently has 14 topics, 212 lessons and 313 questions.
-
-## Run it
-
-```bash
-npm install
-npm start          # dev server at http://localhost:4200
-npm run build      # production build into dist/
-npm test           # unit tests
-npm run validate   # check lessons, quiz bank and manifest
-npm run emulators  # optional: local Firebase Auth + Firestore (see FIREBASE_SETUP.md)
-```
-
-`npm start` and `npm run build` regenerate `public/content/course-manifest.json` first.
-Node 22.18 or later is required, because the scripts import TypeScript directly.
-
-## Project structure
+This repository holds **content only**. The site itself (lesson reader, quizzes, progress,
+optional sign-in) is the shared [course shell](https://github.com/learn-with-will/course-shell),
+which every course uses.
 
 ```text
-src/app/
-├── core/
-│   ├── guards/        # legacy URL and random-lesson redirects
-│   ├── firebase/      # optional sign-in: config and lazy SDK loader
-│   ├── models/        # Lesson, Quiz, Progress interfaces
-│   ├── services/      # Course, Lesson, Quiz, Progress, Search, Theme, Auth
-│   ├── sync/          # keeps progress in Firestore while signed in
-│   └── util/
-├── shared/
-│   ├── diagram/       # parser and components for sequence, tree and flow diagrams
-│   └── components/    # navbar, footer, lesson cards, quiz parts, related lessons
-├── features/          # home, lessons, lesson, quiz-hub, quiz-play, dashboard, bookmarks
-└── app.routes.ts      # lazy-loaded routes
-
-public/
-├── content/
-│   ├── lessons/             # one <slug>.md per lesson
-│   ├── topics.json          # the 14 topics
-│   ├── legacy.json          # old lesson id → new lessons, for redirects and imported progress
-│   └── course-manifest.json # generated; do not edit
-└── quiz/questions.json      # the question bank
-
-scripts/
-├── generate-manifest.mjs    # builds the manifest and computes reading time
-└── validate-course.mjs      # the release gate (--strict is used in CI)
+course.json              name, brand colours, home page copy, code languages
+content/topics.json      the 14 topics
+content/lessons/*.md     one bite per file
+content/legacy.json      old long-lesson URLs → the bites that replaced them
+quiz/questions.json      the question bank
+assets/favicon.ico
 ```
+
+## Working on the course
+
+Clone the shell next to this folder, then run its commands with this folder as the argument:
+
+```bash
+git clone https://github.com/learn-with-will/course-shell.git ../course-shell
+cd ../course-shell
+npm ci
+npm run dev -- ../angular                 # live preview at http://localhost:4200
+npm run validate -- ../angular --strict   # the check the deploy runs
+```
+
+Node 22.18 or later is required.
 
 ## Adding a lesson
 
-1. Create `public/content/lessons/<slug>.md` with front-matter (`slug`, `title`, `topic`,
-   `kind`, `summary`, `tags`, `related`) and the five standard sections.
-2. Add questions for it to `public/quiz/questions.json` with `"topic"` and `"lesson"`.
-3. Run `npm run manifest && npm run validate`.
+1. Create `content/lessons/<slug>.md` with front-matter (`slug`, `title`, `topic`, `kind`,
+   `summary`, `tags`, `related`) and the standard sections.
+2. Add questions for it to `quiz/questions.json` with `"topic"` and `"lesson"`.
+3. Run `npm run validate -- ../angular --strict` from the shell folder.
 
-[CONTENT_GUIDE.md](CONTENT_GUIDE.md) has the rules: length limits, which visual fits which kind
-of information, and the diagram syntax. The validator enforces them, so a lesson that is too
-long, too short or missing a visual fails the build.
+The rules (length limits, which visual fits which kind of information, the diagram syntax) are
+in the shell's [CONTENT_GUIDE.md](https://github.com/learn-with-will/course-shell/blob/main/CONTENT_GUIDE.md).
 
 ## Deployment
 
-Pushing to `main` runs `.github/workflows/deploy.yml`, which validates the course in strict
-mode, builds with the repository name as the base href, and publishes to GitHub Pages.
+Pushing to `main` runs `.github/workflows/deploy.yml`, which calls the shell's reusable
+workflow: it validates this course in strict mode, builds it with the latest shell and
+publishes it to GitHub Pages. To pick up a shell change without a content change, run the
+workflow by hand from the Actions tab.
 
-## Earlier version
+## Earlier versions
 
-The original 35 long lessons are preserved at the git tag `v1-long-lessons`.
+The original 35 long lessons are preserved at the git tag `v1-long-lessons`. Up to the commit
+"Redesign the UI as Bites" this repository also contained the Angular app that is now the
+course shell.

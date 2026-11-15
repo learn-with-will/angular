@@ -1,0 +1,43 @@
+{
+  "$schema": "https://raw.githubusercontent.com/learn-with-will/course-shell/main/course.schema.json",
+  "id": "angular",
+  "name": "Angular Learn",
+  "subject": "Angular",
+  "description": "Learn Angular in five-minute bites: 212 short lessons, quizzes and progress tracking.",
+  "brand": {
+    "color": "#DD0031",
+    "scale": {
+      "50": "#fff1f3",
+      "100": "#ffe1e6",
+      "200": "#ffc7d1",
+      "300": "#ff9aab",
+      "400": "#ff5c7a",
+      "500": "#f5244f",
+      "600": "#dd0031",
+      "700": "#b8002a",
+      "800": "#990428",
+      "900": "#820726",
+      "950": "#48000f"
+    },
+    "gradient": ["#E40035", "#F20089", "#6002EE"],
+    "gradientDark": ["#ff4d6d", "#ff5bb8", "#a77bff"],
+    "favicon": "assets/favicon.ico"
+  },
+  "home": {
+    "badge": "Rebuilt for Angular 20: signals first",
+    "headline": ["Learn Angular one ", "five‑minute bite", " at a time."],
+    "searchExamples": ["computed", "guards", "forms"],
+    "featuredLesson": "computed",
+    "featuredCode": {
+      "lang": "typescript",
+      "code": "const price = signal(25);\nconst quantity = signal(4);\n\nconst total = computed(() => price() * quantity());\n\ntotal(); // 100, cached until a dependency changes"
+    },
+    "quizPreview": {
+      "topic": "Signals",
+      "prompt": "Which function creates a read-only value derived from other signals?",
+      "options": ["effect()", "computed()", "linkedSignal()"],
+      "selected": 1
+    }
+  },
+  "codeLanguages": ["typescript", "html", "css", "bash", "json"]
+}
